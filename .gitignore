@@ -1,0 +1,14 @@
+.idea/
+.pytest_cache/
+__pycache__/
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+*/data/
+*/credentials/
+sketches/
+build/
+*.log
+*/*.egg-info/
+venv/
+/.project
+/.run/

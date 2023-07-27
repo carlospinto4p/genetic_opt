@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "genetic-opt"
+version = "0.1.0"
+description = "Genetic algorithm optimizers package."
+authors = ["Carlos Pinto <carlospinto4p@gmail.com>"]
+readme = "README.md"
+packages = [{include = "genetic_opt", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "^1.25.1"
+cpinto = {version = "^0.2.13", source = "gitlab_cpinto"}
+
+
+[[tool.poetry.source]]
+name = "gitlab_cpinto"
+url = "https://gitlab.com/api/v4/projects/42232103/packages/pypi/simple"
+priority = "primary"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
