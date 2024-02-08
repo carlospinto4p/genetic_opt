@@ -6,7 +6,7 @@ from numpy.random import RandomState
 
 
 # TODO 2021.06.06 I'd like to set this as an iterator (a sized iterator?)
-#  because this could be arbitrary big.
+#  because this could be arbitrarily big.
 class GeneSpace(set):
     """
     Genetic material class to apply Genetic Algorithms.
@@ -17,6 +17,9 @@ class GeneSpace(set):
     def __init__(self, *args, random_seed: int = 442, **kwargs):
         """
         Initialize the Gene Space.
+        Elements inside are genes, which form chromosomes.
+        A chromosome is a collection of genes that encodes a determined
+        problem state.
         :param args: arguments for the superclass (set).
         :param random_seed: random seed to use internally.
         :param kwargs: kwargs for the superclass (set).

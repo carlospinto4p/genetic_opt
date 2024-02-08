@@ -33,7 +33,7 @@ class GeneticAlgorithm(ABC):
         a list, depending on the chromosome nature.
     :param decode_func: method that receives the genotype (chromosome) and
         returns the phenotype (original problem representation).
-    :param fitness_func: method to value each chromosome (genotype).
+    :param algo_fitness_func: method to value each chromosome (genotype).
     :param opt_is_min: whether the optimum fitness value is the minimum (True)
         or the maximum (False) of the `fitness_func`.
     :param score_name: name of the score that the `fitness_func` will optimize.
@@ -94,6 +94,7 @@ class GeneticAlgorithm(ABC):
             and returns the phenotype (original problem representation).
         :param fitness_func: function to value each chromosome (genotype)
             returning a Score object.
+            Will be stored internally as `algo_fitness_func`.
         :param opt_is_min: whether the optimum fitness value is the minimum
             (True) or the maximum (False) of the `fitness_func`.
         :param score_name: name of the score that the `fitness_func` will
@@ -106,7 +107,7 @@ class GeneticAlgorithm(ABC):
         self.chromosome_length: int = chromosome_length
         self.chromosome_as_set: bool = chromosome_as_set
         self.decode_func: Callable[[Chromosome], Any] = decode_func
-        self.fitness_func: Callable[[Chromosome], Score] = fitness_func
+        self.algo_fitness_func: Callable[[Chromosome], Score] = fitness_func
         self.opt_is_min: bool = opt_is_min
         self.score_name: str = score_name or 'score'
         self.experiment_name: str = \
@@ -279,7 +280,7 @@ class GeneticAlgorithm(ABC):
         :param chromosome: Chromosome to get the Score from.
         :return: the Chromosome Score.
         """
-        return chromosome.get_score(self.fitness_func)
+        return chromosome.get_score(self.algo_fitness_func)
 
     def get_best(self, population_idx: int = -1) -> tuple[Score, Any]:
         """
