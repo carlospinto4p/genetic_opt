@@ -81,7 +81,8 @@ class GeneticAlgorithm(ABC):
                  decode_func: Callable[[Chromosome], Any],
                  fitness_func: Callable[[Chromosome], Score],
                  opt_is_min: bool, score_name: str = None,
-                 experiment_name: str = None, random_seed: int = 442):
+                 experiment_name: str = None, random_seed: int = 442,
+                 extra_config: dict = None):
         """
         Initialize the GeneticAlgorithm base class.
         :param gene_space: GeneSpace object. Set of possible genes inside
@@ -101,7 +102,9 @@ class GeneticAlgorithm(ABC):
             optimize. Default to 'score'.
         :param experiment_name: Genetic algorithm experiment name.
             Default to the class name.
-        :param random_seed: random seed to handle the internal methods.
+        :param random_seed: random seed to handle internal methods.
+        :param extra_config: additional dictionary that will be returned
+            by the `fit` method, as a new key named `config`.
         """
         self.gene_space: GeneSpace = gene_space
         self.chromosome_length: int = chromosome_length
@@ -123,6 +126,9 @@ class GeneticAlgorithm(ABC):
         self.historial: list[list[tuple[Score, Chromosome]]] = []
         # historial of the metrics of each generation
         self.metrics: list[Metric] = []
+        # extra configuration of the experiment, that depends on the custom,
+        # child classes.
+        self.extra_config: dict = extra_config or {}
 
     @abstractmethod
     def crossover_func(self, c1: Chromosome,
@@ -432,13 +438,14 @@ class GeneticAlgorithm(ABC):
                     population.
                 - fitting_seconds: number of seconds that it took for the
                     population to get fitted.
-            - fit_parameters: fit parameters used un the experiment:
+            - fit_parameters: fit parameters used in the experiment:
                 - n_generations
                 - population_size
                 - crossovers_prop
                 - besties_prop
                 - mutate_prob
                 - random_seed
+            - config: optional, custom dictionary added by the child classes.
         """
         cached_info = self.get_chromosome_score.cache_info()
         summary = {
@@ -468,6 +475,8 @@ class GeneticAlgorithm(ABC):
             'historial': self.historial,
             'metrics': self.metrics,
             'fit_parameters': fit_parameters}
+        if self.extra_config:
+            summary['config'] = self.extra_config
         summary['fit_metrics']['total_fit_time']['formatted'] = \
             format_seconds(summary['fit_metrics']['total_fit_time']['raw'])
         return summary
