@@ -183,7 +183,7 @@ class GeneticAlgorithm(ABC):
                 - fitting_seconds: difference of the number of seconds
                     that it took for the populations to get fitted.
             and return True if the exist condition is met. If so, the
-            training will end before reach all `n_generations`.
+            training will end before reaching all `n_generations`.
         :param callback_func: function that receives the `GeneticAlgorithm`
             instance as input and is called after measuring each generation
             and before checking the exit conditions.

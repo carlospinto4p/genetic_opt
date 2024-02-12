@@ -82,6 +82,7 @@ class GeneList(GeneCollection):
             raise GeneticOptException(
                 'Chromosome must be initialized with the `genes` '
                 'parameter or using a `gene_space`')
+        self.size = size
         if not genes:
             genes = self.select_random(gene_space, n=size)
         if (size_dif := size - len(genes)) > 0:
@@ -148,6 +149,7 @@ class GeneSet(GeneCollection):
             raise GeneticOptException(
                 'Chromosome must be initialized with the `genes` '
                 'parameter or using a `gene_space`')
+        self.size = size
         if not genes:
             genes = self.select_random(gene_space, n=size)
         if size > len(genes):
