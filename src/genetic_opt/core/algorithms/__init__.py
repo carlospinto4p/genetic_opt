@@ -23,6 +23,8 @@ from genetic_opt.exceptions import GeneticOptException
 from genetic_opt.logs import logger
 
 
+# TODO 2024.02.13 Add joblib.
+# TODO 2024.02.13 Add pickle checkpoints?
 class GeneticAlgorithm(ABC):
     """
     Genetic algorithm base class.
@@ -129,6 +131,8 @@ class GeneticAlgorithm(ABC):
         # extra configuration of the experiment, that depends on the custom,
         # child classes.
         self.extra_config: dict = extra_config or {}
+        # inner mapping to keep track of the cached chromosome values
+        self._chromosome_cache: set[int] = set()
 
     @abstractmethod
     def crossover_func(self, c1: Chromosome,
@@ -231,15 +235,6 @@ class GeneticAlgorithm(ABC):
                 - random_seed
         """
         # Default parameters
-        def identity_func(x):
-            return x
-
-        def no_exit_condition(improvement: dict) -> bool:
-            return False
-
-        def no_improvement_condition(improvement: dict) -> bool:
-            return improvement['mean'] == 0
-
         iter_func = iter_func or identity_func
         exit_condition = exit_condition or no_exit_condition
         callback_func = callback_func or identity_func
@@ -256,11 +251,11 @@ class GeneticAlgorithm(ABC):
                     f'Using:\n\t{log_format(fit_parameters)}')
         for n_generation in iter_func(list(range(0, n_generations + 1))):
             if n_generation == 0:
-                self.init_population(population_size)
+                self.init_population(population_size, iter_func=iter_func)
             else:
                 self.next_generation_selection(
                     crossovers_prop=crossovers_prop, besties_prop=besties_prop,
-                    mutate_prob=mutate_prob)
+                    mutate_prob=mutate_prob, iter_func=iter_func)
             logger.info(f'iteration {n_generation} - Metrics:'
                         f'\n\t{log_format(self.metrics[-1])}')
             iteration_improvement = self._get_iteration_improvement()
@@ -286,6 +281,7 @@ class GeneticAlgorithm(ABC):
         :param chromosome: Chromosome to get the Score from.
         :return: the Chromosome Score.
         """
+        self._chromosome_cache.add(chromosome.__hash__())
         return chromosome.get_score(self.algo_fitness_func)
 
     def get_best(self, population_idx: int = -1) -> tuple[Score, Any]:
@@ -311,22 +307,30 @@ class GeneticAlgorithm(ABC):
         return [(score, self.decode_func(chromosome))
                 for score, chromosome in bests]
 
-    def init_population(self, population_size: int) -> None:
+    def init_population(self, population_size: int,
+                        iter_func: Callable = None) -> None:
         """
         Initializes the Algorithm population.
         Note that the internal parameters `self.population` is always
         sorted by their Score.
         :param population_size: number of Chromosomes of each population.
             This is a `self.fit` parameter.
+        :param iter_func: function to keep track of the iterations.
+            For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :return: None.
         """
+        iter_func = iter_func or identity_func
         init_time = time()
-        self.population = [Chromosome(
-            size=self.chromosome_length, gene_space=self.gene_space,
-            is_gene_set=self.chromosome_as_set, random_seed=self.random_seed)
-            for _ in range(population_size)]
+        population = []
+        for _ in iter_func(list(range(population_size))):
+            population.append(Chromosome(
+                size=self.chromosome_length, gene_space=self.gene_space,
+                is_gene_set=self.chromosome_as_set,
+                random_seed=self.random_seed))
+        self.population = population
+        logger.info(f'measuring first population...')
+        self._sort_population(iter_func=iter_func)
         init_population_time = round(time() - init_time, 2)
-        self._sort_population()
         self._update_metrics(generation_fitting_time=init_population_time)
 
     def mutate(self, chromosome: Chromosome, prob: float) -> Chromosome:
@@ -353,9 +357,9 @@ class GeneticAlgorithm(ABC):
         return [self.mutate(chromosome, mutate_prob)
                 for chromosome in chromosomes]
 
-    def next_generation_selection(self, crossovers_prop: float = 0.7,
-                                  besties_prop: float = 0.6,
-                                  mutate_prob: float = 0.05) -> None:
+    def next_generation_selection(
+            self, crossovers_prop: float = 0.7, besties_prop: float = 0.6,
+            mutate_prob: float = 0.05, iter_func: Callable = None) -> None:
         """
         Handles the selection of the next generation.
         Default option (not overriding this function) is a
@@ -365,6 +369,8 @@ class GeneticAlgorithm(ABC):
         :param besties_prop: proportion of bests chromosomes to maintain for
             each generation.
         :param mutate_prob: probability of a chromosome mutation.
+        :param iter_func: function to keep track of the iterations.
+            For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :return: None.
         """
         init_time = time()
@@ -388,7 +394,7 @@ class GeneticAlgorithm(ABC):
         # previous population
         self.population = mutated_children + self.population
         # Sort the new population
-        self._sort_population()
+        self._sort_population(iter_func=iter_func)
         # Cap the new population to maintain its original size
         self.population = self.population[:population_length]
         generation_fitting_time = round(time() - init_time, 2)
@@ -515,14 +521,26 @@ class GeneticAlgorithm(ABC):
         }
         return iteration_improvement
 
-    def _sort_population(self) -> None:
+    def _sort_population(self, iter_func: Callable = None) -> None:
         """
         Sort the current `self.population` list using the
         Chromosome Score values.
+        :param iter_func: function to keep track of the iterations.
+            For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :return: None.
         """
         if not self.population:
             raise GeneticOptException('Tried to sort an empty population')
+
+        iter_func = iter_func or identity_func
+        # Split the population between the cached one and the new one
+        cached_population = [c for c in self.population
+                             if c.__hash__() in self._chromosome_cache]
+        new_population = [c for c in self.population
+                          if c not in cached_population]
+        # Iterate only over the non-cached population
+        for chromosome in iter_func(new_population):
+            self.get_chromosome_score(chromosome)
         self.population.sort(key=lambda x: self.get_chromosome_score(x).value,
                              reverse=not self.opt_is_min)
 
@@ -610,3 +628,18 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         cr1 = Chromosome(size=self.chromosome_length, genes=genes_1)
         cr2 = Chromosome(size=self.chromosome_length, genes=genes_2)
         return cr1, cr2
+
+
+def identity_func(x):
+    return x
+
+
+def no_exit_condition(improvement: dict) -> bool:
+    return False
+
+
+def no_improvement_condition(improvement: dict) -> bool:
+    if 'mean' not in improvement:
+        logger.error('looking for the key `mean` in the improvement '
+                     'dict, but not found')
+    return improvement.get('mean', 0) == 0
