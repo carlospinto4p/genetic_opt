@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import lru_cache
-
+from os import cpu_count
 from time import time
 from typing import Any, Callable
 
+from joblib import Parallel, delayed
 from numpy.random import RandomState
 
+from cpinto.exceptions import ValidationException
 from cpinto.formatters import format_seconds
 from cpinto.logs import log_format
 from cpinto.random import random_string
@@ -23,8 +25,8 @@ from genetic_opt.exceptions import GeneticOptException
 from genetic_opt.logs import logger
 
 
-# TODO 2024.02.13 Add joblib.
 # TODO 2024.02.13 Add pickle checkpoints?
+#  I could use joblib for this one as well
 class GeneticAlgorithm(ABC):
     """
     Genetic algorithm base class.
@@ -162,7 +164,7 @@ class GeneticAlgorithm(ABC):
             mutate_prob: float = 0.05,
             exit_condition: Callable[[dict], bool] = None,
             callback_func: Callable[[GeneticAlgorithm], None] = None,
-            iter_func: Callable = None) -> dict:
+            iter_func: Callable = None, n_jobs: int = -2) -> dict:
         """
         Fit the Genetic Algorithm.
         :param n_generations: number of iterations to run.
@@ -195,6 +197,8 @@ class GeneticAlgorithm(ABC):
             even saving checkpoints for the training.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
+        :param n_jobs: number of jobs to use to parallelize the evaluation of
+            each element of the population. Default to -2 (all cpus except one).
         :return: dictionary with keys:
             - result: dict:
                 - best_5_scores: list with the 5 best scores.
@@ -238,6 +242,14 @@ class GeneticAlgorithm(ABC):
         iter_func = iter_func or identity_func
         exit_condition = exit_condition or no_exit_condition
         callback_func = callback_func or identity_func
+        # Validate n_jobs
+        if n_jobs < 0:
+            n_jobs = cpu_count() + n_jobs + 1
+        if n_jobs <= 0 or n_jobs > cpu_count():
+            raise ValidationException(f'{n_jobs = } received is not valid! '
+                                      f'{cpu_count() = }')
+        if n_jobs > 1:
+            logger.info(f'Using {n_jobs} jobs')
 
         fit_parameters = {
             'n_generations': n_generations,
@@ -251,11 +263,13 @@ class GeneticAlgorithm(ABC):
                     f'Using:\n\t{log_format(fit_parameters)}')
         for n_generation in iter_func(list(range(0, n_generations + 1))):
             if n_generation == 0:
-                self.init_population(population_size, iter_func=iter_func)
+                self.init_population(population_size, iter_func=iter_func,
+                                     n_jobs=n_jobs)
             else:
                 self.next_generation_selection(
                     crossovers_prop=crossovers_prop, besties_prop=besties_prop,
-                    mutate_prob=mutate_prob, iter_func=iter_func)
+                    mutate_prob=mutate_prob, iter_func=iter_func,
+                    n_jobs=n_jobs)
             logger.info(f'iteration {n_generation} - Metrics:'
                         f'\n\t{log_format(self.metrics[-1])}')
             iteration_improvement = self._get_iteration_improvement()
@@ -308,7 +322,7 @@ class GeneticAlgorithm(ABC):
                 for score, chromosome in bests]
 
     def init_population(self, population_size: int,
-                        iter_func: Callable = None) -> None:
+                        iter_func: Callable = None, n_jobs: int = -2) -> None:
         """
         Initializes the Algorithm population.
         Note that the internal parameters `self.population` is always
@@ -317,19 +331,25 @@ class GeneticAlgorithm(ABC):
             This is a `self.fit` parameter.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
+        :param n_jobs: number of jobs to use to parallelize the evaluation of
+            each element of the population. Default to -2 (all cpus except one).
         :return: None.
         """
         iter_func = iter_func or identity_func
         init_time = time()
-        population = []
-        for _ in iter_func(list(range(population_size))):
-            population.append(Chromosome(
+
+        def get_chromosome() -> Chromosome:
+            return Chromosome(
                 size=self.chromosome_length, gene_space=self.gene_space,
                 is_gene_set=self.chromosome_as_set,
-                random_seed=self.random_seed))
+                random_seed=self.random_seed)
+
+        population = Parallel(n_jobs=n_jobs)(
+            delayed(get_chromosome)()
+            for _ in iter_func(list(range(population_size))))
         self.population = population
         logger.info(f'measuring first population...')
-        self._sort_population(iter_func=iter_func)
+        self._sort_population(iter_func=iter_func, n_jobs=n_jobs)
         init_population_time = round(time() - init_time, 2)
         self._update_metrics(generation_fitting_time=init_population_time)
 
@@ -359,7 +379,8 @@ class GeneticAlgorithm(ABC):
 
     def next_generation_selection(
             self, crossovers_prop: float = 0.7, besties_prop: float = 0.6,
-            mutate_prob: float = 0.05, iter_func: Callable = None) -> None:
+            mutate_prob: float = 0.05, iter_func: Callable = None,
+            n_jobs: int = -2) -> None:
         """
         Handles the selection of the next generation.
         Default option (not overriding this function) is a
@@ -371,6 +392,8 @@ class GeneticAlgorithm(ABC):
         :param mutate_prob: probability of a chromosome mutation.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
+        :param n_jobs: number of jobs to use to parallelize the evaluation of
+            each element of the population. Default to -2 (all cpus except one).
         :return: None.
         """
         init_time = time()
@@ -394,7 +417,7 @@ class GeneticAlgorithm(ABC):
         # previous population
         self.population = mutated_children + self.population
         # Sort the new population
-        self._sort_population(iter_func=iter_func)
+        self._sort_population(iter_func=iter_func, n_jobs=n_jobs)
         # Cap the new population to maintain its original size
         self.population = self.population[:population_length]
         generation_fitting_time = round(time() - init_time, 2)
@@ -521,12 +544,15 @@ class GeneticAlgorithm(ABC):
         }
         return iteration_improvement
 
-    def _sort_population(self, iter_func: Callable = None) -> None:
+    def _sort_population(self, iter_func: Callable = None,
+                         n_jobs: int = -2) -> None:
         """
         Sort the current `self.population` list using the
         Chromosome Score values.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
+        :param n_jobs: number of jobs to use to parallelize the evaluation of
+            each element of the population. Default to -2 (all cpus except one).
         :return: None.
         """
         if not self.population:
@@ -539,8 +565,9 @@ class GeneticAlgorithm(ABC):
         new_population = [c for c in self.population
                           if c not in cached_population]
         # Iterate only over the non-cached population
-        for chromosome in iter_func(new_population):
-            self.get_chromosome_score(chromosome)
+        Parallel(n_jobs=n_jobs)(
+            delayed(self.get_chromosome_score)(chromosome)
+            for chromosome in iter_func(new_population))
         self.population.sort(key=lambda x: self.get_chromosome_score(x).value,
                              reverse=not self.opt_is_min)
 

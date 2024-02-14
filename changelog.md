@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.3 - 14th February 2024
+
+- Added `joblib` dependency.
+- Class `GeneticAlgorithm`: 
+  - Added the parameter `n_jobs` with a default value of `-2` to the methods:
+    - `fit`.
+    - `init_population`.
+    - `next_generation_selection`.
+    - `_sort_population`.
+- `Chromosome.__hash__` maximum length reduced to 30. 
+
+
 ### 0.1.2 - 13th February 2024
 
 - Class `GeneticAlgorithm`: 

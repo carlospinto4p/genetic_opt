@@ -65,10 +65,10 @@ class Chromosome:
 
     @property
     def id(self) -> int:
-        """ Hash id limited to a length of 100. """
+        """ Hash id limited to a length of 30. """
         m = md5()
         m.update(self.__repr__().encode('utf-8'))
-        return int(str(int(m.hexdigest(), 16))[:100])
+        return int(str(int(m.hexdigest(), 16))[:30])
 
     def get_score(self, fitness_func: Callable[[Chromosome], Score]) -> Score:
         """
