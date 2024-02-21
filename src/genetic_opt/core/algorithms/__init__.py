@@ -286,7 +286,8 @@ class GeneticAlgorithm(ABC):
                 logger.info(f'exit condition reached!\n\t'
                             f'Training finished at iteration {n_generation}')
                 break
-        return self._get_fitted_data(fit_parameters=fit_parameters)
+        return self._get_fitted_data(fit_parameters=fit_parameters,
+                                     n_jobs=n_jobs)
 
     @lru_cache(maxsize=None)
     def get_chromosome_score(self, chromosome: Chromosome) -> Score:
@@ -423,7 +424,7 @@ class GeneticAlgorithm(ABC):
         generation_fitting_time = round(time() - init_time, 2)
         self._update_metrics(generation_fitting_time=generation_fitting_time)
 
-    def _get_fitted_data(self, fit_parameters: dict) -> dict:
+    def _get_fitted_data(self, fit_parameters: dict, n_jobs: int) -> dict:
         """
         Post-fit method that returns a dictionary with main parameters of
         the experiment.
@@ -436,6 +437,7 @@ class GeneticAlgorithm(ABC):
                 - besties_prop
                 - mutate_prob
                 - random_seed
+        :param n_jobs: number of jobs used for the ´fit´ function.
         :return dictionary with keys:
             - result: dict:
                 - best_5_scores: list with the 5 best Scores.
@@ -477,14 +479,18 @@ class GeneticAlgorithm(ABC):
             - config: optional, custom dictionary added by the child classes.
         """
         cached_info = self.get_chromosome_score.cache_info()
+        # Get the bests (unique) chromosomes
+        bests = []
+        for chromosome in self.population:
+            if len(bests) < 5 and chromosome not in bests:
+                bests.append(chromosome)
         summary = {
             'result': {
                 'best_5_scores': [self.get_chromosome_score(chromosome)
-                                  for chromosome in self.population[:5]],
+                                  for chromosome in bests],
                 'bests_5': [self.decode_func(chromosome)
-                            for chromosome in self.population[:5]],
-                'best_5_encoded':
-                    [chromosome for chromosome in self.population[:5]]
+                            for chromosome in bests],
+                'best_5_encoded': [chromosome for chromosome in bests]
             },
             'last_population': [(self.decode_func(chromosome),
                                  self.get_chromosome_score(chromosome))
@@ -498,6 +504,7 @@ class GeneticAlgorithm(ABC):
                     'cached': cached_info.hits - cached_info.misses
                 },
                 'total_fit_time': {
+                    'n_jobs': n_jobs,
                     'raw': sum(m.fitting_seconds for m in self.metrics)
                 },
             },

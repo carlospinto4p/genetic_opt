@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.4 - 21st February 2024
+
+- Class `GeneticAlgorithm`: 
+  - Changes in the method `_get_fitted_data`:
+    - Added the parameter `n_jobs`. Now it appears in the metrics data.
+    - Within the result dictionary of the summary, the part of `bests_5`
+    now includes only non-unique chromosomes.
+- Function `metrics.get_population_metrics` rounds up the received 
+  `fitting_seconds` to 2 decimals.
+
+
 ### 0.1.3 - 14th February 2024
 
 - Added `joblib` dependency.

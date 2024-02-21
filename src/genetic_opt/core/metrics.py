@@ -63,6 +63,6 @@ def get_population_metrics(
         var=float(var(values)),
         n_uniques=n_uniques,
         percent_uniques=100 * n_uniques / len(population_with_scores),
-        fitting_seconds=fitting_seconds
+        fitting_seconds=round(fitting_seconds, 2)
     )
     return genetic_algo_metrics
