@@ -7,6 +7,8 @@
 - Class `GeneticAlgorithm`: 
   - Bug fixed in the `init_population` method: all chromosomes of this
   initial population were the same. 
+  - Added the value `genetic_opt_version` in the metrics returned, inside 
+  the section `fit_metrics`.
 
 
 ### 0.1.4 - 21st February 2024

@@ -17,6 +17,7 @@ from cpinto.logs import log_format
 from cpinto.random import random_string
 from cpinto.time import time_it_with_logger
 
+from genetic_opt import __version__
 from genetic_opt.core import Score
 from genetic_opt.core.chromosome import Chromosome
 from genetic_opt.core.gene_space import GeneSpace
@@ -260,7 +261,7 @@ class GeneticAlgorithm(ABC):
             'random_seed': self.random_seed
         }
         logger.info(f'initializing population. '
-                    f'Using:\n\t{log_format(fit_parameters)}')
+                    f'Using:\n{log_format(fit_parameters)}')
         for n_generation in iter_func(list(range(0, n_generations + 1))):
             if n_generation == 0:
                 self.init_population(population_size, iter_func=iter_func,
@@ -507,6 +508,7 @@ class GeneticAlgorithm(ABC):
                     'n_jobs': n_jobs,
                     'raw': sum(m.fitting_seconds for m in self.metrics)
                 },
+                'genetic_opt_version': __version__
             },
             'historial': self.historial,
             'metrics': self.metrics,
