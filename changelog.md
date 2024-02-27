@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.5 - 27th February 2024 - Not yet released!
+
+- Class `GeneticAlgorithm`: 
+  - Bug fixed in the `init_population` method: all chromosomes of this
+  initial population were the same. 
+
+
 ### 0.1.4 - 21st February 2024
 
 - Class `GeneticAlgorithm`: 

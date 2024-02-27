@@ -339,15 +339,15 @@ class GeneticAlgorithm(ABC):
         iter_func = iter_func or identity_func
         init_time = time()
 
-        def get_chromosome() -> Chromosome:
+        def get_chromosome(extra_seed: int = 0) -> Chromosome:
             return Chromosome(
                 size=self.chromosome_length, gene_space=self.gene_space,
                 is_gene_set=self.chromosome_as_set,
-                random_seed=self.random_seed)
+                random_seed=self.random_seed + extra_seed)
 
         population = Parallel(n_jobs=n_jobs)(
-            delayed(get_chromosome)()
-            for _ in iter_func(list(range(population_size))))
+            delayed(get_chromosome)(idx)
+            for idx in iter_func(list(range(population_size))))
         self.population = population
         logger.info(f'measuring first population...')
         self._sort_population(iter_func=iter_func, n_jobs=n_jobs)
