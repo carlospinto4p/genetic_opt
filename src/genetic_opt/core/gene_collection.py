@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Collection
 
+from numpy import ndarray
 from numpy.random import RandomState
 
 from genetic_opt.core.gene_space import GeneSpace
@@ -78,12 +79,14 @@ class GeneList(GeneCollection):
         :param genes: list of received genes.
         :param gene_space: GeneSpace object to get genes from.
         """
+        if isinstance(genes, ndarray):
+            genes = genes.tolist()
         if not (genes or gene_space):
             raise GeneticOptException(
                 'Chromosome must be initialized with the `genes` '
                 'parameter or using a `gene_space`')
         self.size = size
-        if not genes:
+        if gene_space:
             genes = self.select_random(gene_space, n=size)
         if (size_dif := size - len(genes)) > 0:
             genes = genes + self.select_random(gene_space, n=size_dif)
@@ -145,12 +148,14 @@ class GeneSet(GeneCollection):
         :param genes: set of received genes.
         :param gene_space: GeneSpace object to get genes from.
         """
+        if isinstance(genes, ndarray):
+            genes = set(genes.flatten())
         if not (genes or gene_space):
             raise GeneticOptException(
                 'Chromosome must be initialized with the `genes` '
                 'parameter or using a `gene_space`')
         self.size = size
-        if not genes:
+        if gene_space:
             genes = self.select_random(gene_space, n=size)
         if size > len(genes):
             genes = self._complete_genes(

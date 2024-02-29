@@ -1,6 +1,8 @@
 """ Genetic Opt Gene Space submodule. """
 
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, Iterable
 
 from numpy.random import RandomState
 
@@ -28,6 +30,9 @@ class GeneSpace(set):
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
 
-    def select_random(self) -> Any:
-        """ Get a random element of the Gene Space. """
-        return self.random_state.choice(list(self))
+    def select_random(self, n: int | Iterable | tuple[int] = None) -> Any:
+        """
+        Get a random element of the Gene Space.
+        :param n: dimensions of the output. Default to 1.
+        """
+        return self.random_state.choice(list(self), size=n)

@@ -6,6 +6,7 @@ from hashlib import md5
 from time import time
 from typing import Callable, Collection
 
+from numpy import ndarray
 from numpy.random import RandomState
 
 from genetic_opt.core import Score
@@ -34,7 +35,9 @@ class Chromosome:
         :param random_seed: for experiments control.
         :param is_gene_set: whether inner genes are a list or a set.
         """
-        if not (genes or gene_space):
+        if isinstance(genes, ndarray):
+            pass
+        elif not (genes or gene_space):
             raise GeneticOptException(
                 'Chromosome must be initialized with the `genes` '
                 'parameter or using a `gene_space`', locals())

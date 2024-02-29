@@ -2,13 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
-### 0.1.5 - 27th February 2024 - Not yet released!
+### 0.1.5 - 29th February 2024
 
 - Class `GeneticAlgorithm`: 
-  - Bug fixed in the `init_population` method: all chromosomes of this
-  initial population were the same. 
+  - Method `init_population`:
+    - Bug fixed: all chromosomes of the initial population were the 
+    same when using joblib.
+    - Initial population pick is now faster.
   - Added the value `genetic_opt_version` in the metrics returned, inside 
-  the section `fit_metrics`.
+    the section `fit_metrics`.
+- Added the parameter `n` to `GeneSpace.select_random`. 
+- Classes `Chromosome` and `GeneCollection`s are compatible with numpy arrays
+  when receiving the `genes` parameter.
 
 
 ### 0.1.4 - 21st February 2024

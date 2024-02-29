@@ -249,16 +249,14 @@ class GeneticAlgorithm(ABC):
         if n_jobs <= 0 or n_jobs > cpu_count():
             raise ValidationException(f'{n_jobs = } received is not valid! '
                                       f'{cpu_count() = }')
-        if n_jobs > 1:
-            logger.info(f'Using {n_jobs} jobs')
-
         fit_parameters = {
             'n_generations': n_generations,
             'population_size': population_size,
             'crossovers_prop': crossovers_prop,
             'besties_prop': besties_prop,
             'mutate_prob': mutate_prob,
-            'random_seed': self.random_seed
+            'random_seed': self.random_seed,
+            'n_jobs': n_jobs
         }
         logger.info(f'initializing population. '
                     f'Using:\n{log_format(fit_parameters)}')
@@ -340,15 +338,24 @@ class GeneticAlgorithm(ABC):
         iter_func = iter_func or identity_func
         init_time = time()
 
-        def get_chromosome(extra_seed: int = 0) -> Chromosome:
-            return Chromosome(
-                size=self.chromosome_length, gene_space=self.gene_space,
+        population = []
+        init_population = self.gene_space.select_random(
+            n=(population_size, self.chromosome_length))
+        for gene_collection in init_population:
+            population.append(Chromosome(
+                size=self.chromosome_length, genes=gene_collection,
                 is_gene_set=self.chromosome_as_set,
-                random_seed=self.random_seed + extra_seed)
+                random_seed=self.random_seed))
 
-        population = Parallel(n_jobs=n_jobs)(
-            delayed(get_chromosome)(idx)
-            for idx in iter_func(list(range(population_size))))
+        # def get_chromosome() -> Chromosome:
+        #     return Chromosome(
+        #         size=self.chromosome_length, gene_space=self.gene_space,
+        #         is_gene_set=self.chromosome_as_set,
+        #         random_seed=self.random_seed)
+        #
+        # population = Parallel(n_jobs=n_jobs)(
+        #     delayed(get_chromosome)()
+        #     for _ in iter_func(list(range(population_size))))
         self.population = population
         logger.info(f'measuring first population...')
         self._sort_population(iter_func=iter_func, n_jobs=n_jobs)
