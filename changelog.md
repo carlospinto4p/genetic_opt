@@ -2,6 +2,11 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.6 - 1st March 2024
+
+- Added the method `to_dict` to the classes `Chromosome`, `Score` and `Metrics`.  
+
+
 ### 0.1.5 - 29th February 2024
 
 - Class `GeneticAlgorithm`: 

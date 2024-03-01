@@ -107,3 +107,15 @@ class Chromosome:
             gene_space_func_kwargs=gene_space_func_kwargs)
         self.genes = self.gene_collection.genes
         return self
+
+    def to_dict(self) -> dict:
+        """
+        Get a dictionary that describes the Chromosome.
+        Keys: `genes`, `score`, `score_time`, `random_seed`.
+        """
+        return {
+            'genes': self.genes,
+            'score': self.score.to_dict() if self.score is not None else None,
+            'score_time': self.score_time,
+            'random_seed': self.random_seed
+        }

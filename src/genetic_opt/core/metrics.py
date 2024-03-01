@@ -31,6 +31,28 @@ class Metric:
     percent_uniques: float
     fitting_seconds: float
 
+    def to_dict(self) -> dict:
+        """
+        Get a dictionary that describes the Metrics.
+        Keys:
+            - best
+            - mean
+            - median
+            - var
+            - n_uniques
+            - percent_uniques
+            - fitting_seconds
+        """
+        return {
+            'best': self.best[1].to_dict(),
+            'mean': self.mean,
+            'median': self.median,
+            'var': self.var,
+            'n_uniques': self.n_uniques,
+            'percent_uniques': self.percent_uniques,
+            'fitting_seconds': self.fitting_seconds
+        }
+
 
 def get_population_metrics(
         population_with_scores: list[tuple[Score, Chromosome]],
