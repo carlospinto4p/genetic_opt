@@ -19,5 +19,5 @@ class Score:
         """
         response = {'value': self.value}
         if self.extra_metrics:
-            response.update(self.extra_metrics)
+            response['extra_metrics'] = self.extra_metrics
         return response

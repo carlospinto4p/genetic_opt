@@ -12,18 +12,20 @@ from joblib import Parallel, delayed
 from numpy.random import RandomState
 
 from cpinto.exceptions import ValidationException
+from cpinto.files import ensure_folder_format, save_json
 from cpinto.formatters import format_seconds
 from cpinto.logs import log_format
-from cpinto.random import random_string
-from cpinto.time import time_it_with_logger
+from cpinto.time import now_for_file_path, time_it_with_logger
 
 from genetic_opt import __version__
 from genetic_opt.core import Score
 from genetic_opt.core.chromosome import Chromosome
 from genetic_opt.core.gene_space import GeneSpace
 from genetic_opt.core.metrics import Metric, get_population_metrics
+from genetic_opt.core.utils import serialize_fit_result
 from genetic_opt.exceptions import GeneticOptException
 from genetic_opt.logs import logger
+from genetic_opt.utils import identity_func
 
 
 # TODO 2024.02.13 Add pickle checkpoints?
@@ -77,39 +79,48 @@ class GeneticAlgorithm(ABC):
     In order to set constraints to the Chromosomes and populations, operations
     used by this algorithm are `crossover_func` (between two Chromosomes)
     and `mutate` (applied to only one Chromosome). These two functions can
-    be overriden to constraint the whole algorithm by keeping certain
+    be overridden to constraint the whole algorithm by keeping certain
     families of Chromosomes.
     """
 
-    def __init__(self, gene_space: GeneSpace, chromosome_length: int,
-                 chromosome_as_set: bool,
-                 decode_func: Callable[[Chromosome], Any],
-                 fitness_func: Callable[[Chromosome], Score],
-                 opt_is_min: bool, score_name: str = None,
-                 experiment_name: str = None, random_seed: int = 442,
-                 extra_config: dict = None):
+    def __init__(
+            self, gene_space: GeneSpace, chromosome_length: int,
+            chromosome_as_set: bool,
+            decode_func: Callable[[Chromosome], Any],
+            fitness_func: Callable[[Chromosome], Score],
+            opt_is_min: bool, score_name: str = None,
+            experiment_name: str = None, random_seed: int = 442,
+            extra_config: dict = None, save_path: str = None,
+            serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
+            serialize_gene_func: Callable[[Any], Any] = None):
         """
         Initialize the GeneticAlgorithm base class.
-        :param gene_space: GeneSpace object. Set of possible genes inside
-            a chromosome.
-        :param chromosome_length: a chromosome is a collection of genes that
-            encodes a determined problem state.
-        :param chromosome_as_set: whether to set the chromosome as a set or as
-            a list, depending on the chromosome nature.
-        :param decode_func: function that receives the genotype (chromosome)
-            and returns the phenotype (original problem representation).
-        :param fitness_func: function to value each chromosome (genotype)
-            returning a Score object.
-            Will be stored internally as `algo_fitness_func`.
-        :param opt_is_min: whether the optimum fitness value is the minimum
-            (True) or the maximum (False) of the `fitness_func`.
-        :param score_name: name of the score that the `fitness_func` will
-            optimize. Default to 'score'.
-        :param experiment_name: Genetic algorithm experiment name.
-            Default to the class name.
-        :param random_seed: random seed to handle internal methods.
-        :param extra_config: additional dictionary that will be returned
-            by the `fit` method, as a new key named `config`.
+        Args:
+            gene_space: GeneSpace object. Set of possible genes inside
+                a chromosome.
+            chromosome_length: A chromosome is a collection of genes that
+                encodes a determined problem state.
+            chromosome_as_set: Whether to set the chromosome as a set or as
+                a list, depending on the chromosome nature.
+            decode_func: Function that receives the genotype (chromosome)
+                and returns the phenotype (original problem representation).
+            fitness_func: Function to value each chromosome (genotype)
+                returning a Score object.
+                Will be stored internally as `algo_fitness_func`.
+            opt_is_min: whether the optimum fitness value is the minimum
+                (True) or the maximum (False) of the `fitness_func`.
+            score_name: name of the score that the `fitness_func` will
+                optimize. Default to 'score'.
+            experiment_name: Genetic algorithm experiment name.
+                Default to the class name.
+            random_seed: Random seed to handle internal methods.
+            extra_config: Additional dictionary that will be returned
+                by the `fit` method, as a new key named `config`.
+            save_path: Optional path to save the results of each run.
+            serialize_decoded_chromosome_func: If `save_path` is used, then
+                this function will be used to serialize decoded Chromosomes.
+            serialize_gene_func: function to get a serializable object from each
+                gene.
         """
         self.gene_space: GeneSpace = gene_space
         self.chromosome_length: int = chromosome_length
@@ -117,24 +128,33 @@ class GeneticAlgorithm(ABC):
         self.decode_func: Callable[[Chromosome], Any] = decode_func
         self.algo_fitness_func: Callable[[Chromosome], Score] = fitness_func
         self.opt_is_min: bool = opt_is_min
-        self.score_name: str = score_name or 'score'
-        self.experiment_name: str = \
-            (experiment_name or self.__class__.__name__) + \
-            f'-experiment_{random_string(10, seed=random_seed)}'
+        # TODO 2024.03.03 The `score_name` is not being used! (for now?)
+        self.score_name: str = score_name or ''
+        self.experiment_name: str = experiment_name or self.__class__.__name__
         # 2021.11.22 random seed results variations may indicate that
         #  optimization is not enough well done.
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
+        self.save_path: str = save_path
+        self.serialize_decoded_chromosome_func: Callable[[Any], Any] = \
+            serialize_decoded_chromosome_func
+        self.serialize_gene_func: Callable[[Any], Any] = serialize_gene_func
+
+        # Security checks
+        if save_path and not serialize_decoded_chromosome_func:
+            raise ValidationException(
+                'If `save_path` is used, `serialize_decoded_chromosome_func` '
+                'must be fulfilled')
 
         self.population: list[Chromosome] = []
-        # historial of the different generations of populations
+        # Historial of the different generations of populations
         self.historial: list[list[tuple[Score, Chromosome]]] = []
-        # historial of the metrics of each generation
+        # Historial of the metrics of each generation
         self.metrics: list[Metric] = []
-        # extra configuration of the experiment, that depends on the custom,
+        # Extra configuration of the experiment, that depends on the custom,
         # child classes.
         self.extra_config: dict = extra_config or {}
-        # inner mapping to keep track of the cached chromosome values
+        # Inner mapping to keep track of the cached chromosome values
         self._chromosome_cache: set[int] = set()
 
     @abstractmethod
@@ -202,7 +222,7 @@ class GeneticAlgorithm(ABC):
             each element of the population. Default to -2 (all cpus except one).
         :return: dictionary with keys:
             - result: dict:
-                - best_5_scores: list with the 5 best scores.
+                - best_5_scores: list with the 5 best Scores.
                 - bests_5: list with the 5 best chromosomes, decoded.
                 - best_5_encoded: list with the 5 bests chromosomes.
             - last_population: list of tuples
@@ -216,6 +236,7 @@ class GeneticAlgorithm(ABC):
                         total calls. From 0 to 100.
                      - cached: number of cached calls to the fit function.
                 - total_fit_time: dict:
+                    - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
                     - formatted: same, but formatted.
             - historial: list of the tuples (Chromosome Score, Chromosome)
@@ -231,13 +252,14 @@ class GeneticAlgorithm(ABC):
                     population.
                 - fitting_seconds: number of seconds that it took for the
                     population to get fitted.
-            - fit_parameters: fit parameters used un the experiment:
+            - fit_parameters: fit parameters used in the experiment:
                 - n_generations
                 - population_size
                 - crossovers_prop
                 - besties_prop
                 - mutate_prob
                 - random_seed
+            - config: optional, custom dictionary added by the child classes.
         """
         # Default parameters
         iter_func = iter_func or identity_func
@@ -285,8 +307,10 @@ class GeneticAlgorithm(ABC):
                 logger.info(f'exit condition reached!\n\t'
                             f'Training finished at iteration {n_generation}')
                 break
-        return self._get_fitted_data(fit_parameters=fit_parameters,
-                                     n_jobs=n_jobs)
+        fit_result = self._get_fitted_data(
+            fit_parameters=fit_parameters, n_jobs=n_jobs)
+        self._save_fit_result(fit_result)
+        return fit_result
 
     @lru_cache(maxsize=None)
     def get_chromosome_score(self, chromosome: Chromosome) -> Score:
@@ -347,15 +371,6 @@ class GeneticAlgorithm(ABC):
                 is_gene_set=self.chromosome_as_set,
                 random_seed=self.random_seed))
 
-        # def get_chromosome() -> Chromosome:
-        #     return Chromosome(
-        #         size=self.chromosome_length, gene_space=self.gene_space,
-        #         is_gene_set=self.chromosome_as_set,
-        #         random_seed=self.random_seed)
-        #
-        # population = Parallel(n_jobs=n_jobs)(
-        #     delayed(get_chromosome)()
-        #     for _ in iter_func(list(range(population_size))))
         self.population = population
         logger.info(f'measuring first population...')
         self._sort_population(iter_func=iter_func, n_jobs=n_jobs)
@@ -462,6 +477,7 @@ class GeneticAlgorithm(ABC):
                         total calls. From 0 to 100.
                      - cached: number of cached calls to the fit function.
                 - total_fit_time: dict:
+                    - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
                     - formatted: same, but formatted.
             - historial: list of the tuples (Chromosome Score, Chromosome)
@@ -559,6 +575,21 @@ class GeneticAlgorithm(ABC):
                 self.metrics[-2].__dict__.values()) if k in diff_keys}
         }
         return iteration_improvement
+
+    def _save_fit_result(self, fit_result: dict) -> None:
+        """
+        Save the result of the `fit` method into a folder.
+        :param fit_result: response of the method `_get_fitted_data`.
+        :return: None.
+        """
+        if not self.save_path:
+            return
+        save_path = f'{ensure_folder_format(self.save_path)}/' \
+                    f'{self.experiment_name}_{now_for_file_path()}'
+        serialized_data = serialize_fit_result(
+            fit_result, self.serialize_decoded_chromosome_func,
+            serialize_gene_func=self.serialize_gene_func)
+        save_json(serialized_data, save_path)
 
     def _sort_population(self, iter_func: Callable = None,
                          n_jobs: int = -2) -> None:
@@ -671,10 +702,6 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         cr1 = Chromosome(size=self.chromosome_length, genes=genes_1)
         cr2 = Chromosome(size=self.chromosome_length, genes=genes_2)
         return cr1, cr2
-
-
-def identity_func(x):
-    return x
 
 
 def no_exit_condition(improvement: dict) -> bool:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from hashlib import md5
 from time import time
-from typing import Callable, Collection
+from typing import Any, Callable, Collection
 
 from numpy import ndarray
 from numpy.random import RandomState
@@ -13,6 +13,7 @@ from genetic_opt.core import Score
 from genetic_opt.core.gene_collection import GeneList, GeneCollection, GeneSet
 from genetic_opt.core.gene_space import GeneSpace
 from genetic_opt.exceptions import GeneticOptException
+from genetic_opt.utils import identity_func
 
 
 class Chromosome:
@@ -108,13 +109,18 @@ class Chromosome:
         self.genes = self.gene_collection.genes
         return self
 
-    def to_dict(self) -> dict:
+    def to_dict(self, serialize_gene_func: Callable[[Any], Any] = None) -> dict:
         """
         Get a dictionary that describes the Chromosome.
         Keys: `genes`, `score`, `score_time`, `random_seed`.
+        Args:
+            serialize_gene_func: function to get a serializable object from each
+                gene. If None (default), the identity function will be used.
         """
+        serialize_gene_func = serialize_gene_func or identity_func
         return {
-            'genes': self.genes,
+            'is_gene_set': self.is_gene_set,
+            'genes': [serialize_gene_func(g) for g in self.genes],
             'score': self.score.to_dict() if self.score is not None else None,
             'score_time': self.score_time,
             'random_seed': self.random_seed

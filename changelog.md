@@ -2,9 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
-### 0.1.6 - 1st March 2024
+### 0.1.6 - 4th March 2024
 
 - Added the method `to_dict` to the classes `Chromosome`, `Score` and `Metrics`.  
+- Dependency on `cpinto` updated to `v0.3.0`.
+- Class `GeneticAlgorithm`: 
+  - Added the parameters `save_path` and `serialize_decoded_chromosome_func`.
+  - Added the method `_save_fit_result`.
+  - Some documentation updated.
+- Added the function `utils.serialize_fit_result`.
 
 
 ### 0.1.5 - 29th February 2024

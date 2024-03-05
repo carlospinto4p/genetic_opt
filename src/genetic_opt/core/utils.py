@@ -1,0 +1,167 @@
+
+from operator import itemgetter
+from typing import Any, Callable
+
+from cpinto.files import load_json
+
+
+# def load_fit_result(file_path: str) -> dict:
+#     """
+#     Transform the result of the function `serialize_fit_result` into the
+#         result of the function `GeneticAlgorithm.fit`.
+#     Args:
+#         file_path: Path of a JSON file, which contains the saved response
+#             of the function `GeneticAlgorithm.fit`.
+#     Returns:
+#         dictionary with keys:
+#             - result: dict:
+#                 - best_5_scores: list with the 5 best Scores.
+#                 - bests_5: list with the 5 best chromosomes, decoded.
+#                 - best_5_encoded: list with the 5 bests chromosomes.
+#             - last_population: list of tuples
+#                 (decoded Chromosome, Chromosome Score).
+#             - fit_metrics: dict:
+#                 - fitness_func_calls: dict:
+#                     - total: number of times `self.fit_func` has been invoked.
+#                     - processed: number of different calls to the fit function
+#                         that have been processed.
+#                     - percent_processed: percent of processed calls over the
+#                         total calls. From 0 to 100.
+#                      - cached: number of cached calls to the fit function.
+#                 - total_fit_time: dict:
+#                     - n_jobs: number of jobs used for processing.
+#                     - raw: total number of seconds of the training.
+#                     - formatted: same, but formatted.
+#             - historial: list of the tuples (Chromosome Score, Chromosome)
+#                 for each generation.
+#             - metrics: list of metrics of each generation. Keys:
+#                 - best: tuple (Score, Chromosome) with the best
+#                     Chromosome of the population.
+#                 - mean: mean of the population scores.
+#                 - median: median of the population scores.
+#                 - var: variance of the population scores.
+#                 - n_uniques: number of unique Chromosomes in the population.
+#                 - percent_uniques: percent of unique Chromosomes in the
+#                     population.
+#                 - fitting_seconds: number of seconds that it took for the
+#                     population to get fitted.
+#             - fit_parameters: fit parameters used in the experiment:
+#                 - n_generations
+#                 - population_size
+#                 - crossovers_prop
+#                 - besties_prop
+#                 - mutate_prob
+#                 - random_seed
+#             - config: optional, custom dictionary added by the child classes.
+#     """
+#     raw = load_json(file_path)
+#     result, last_population, fit_metrics, historial, metrics, fit_parameters = \
+#         itemgetter('result', 'last_population', 'fit_metrics', 'historial',
+#                    'metrics', 'fit_parameters')(raw)
+#     # TODO 2024.03.04 Doing!
+#     result = {'best_5_scores': [s.to_dict() for s in result['best_5_scores']],
+#               'bests_5': [serialize_decoded_chromosome_func(d) for d in
+#                           result['bests_5']],
+#               'best_5_encoded': [c.to_dict(serialize_gene_func) for c in
+#                                  result['best_5_encoded']]}
+#     last_population = [(serialize_decoded_chromosome_func(d), score.to_dict())
+#                        for d, score in last_population]
+#     historial = [(e[0].to_dict(), e[1].to_dict(serialize_gene_func)) for
+#                  population in historial for e in population]
+#     metrics = [m.to_dict(serialize_gene_func) for m in metrics]
+#     response = {
+#         'result': result,
+#         'last_population': last_population,
+#         'fit_metrics': fit_metrics,
+#         'historial': historial,
+#         'metrics': metrics,
+#         'fit_parameters': fit_parameters}
+#     if config := raw.get('config'):
+#         response['config'] = config
+#     return response
+
+
+# TODO 2024.03.03 Pending to test this serialization!
+def serialize_fit_result(
+        fit_result: dict,
+        serialize_decoded_chromosome_func: Callable[[Any], Any],
+        serialize_gene_func: Callable[[Any], Any] = None) -> dict:
+    """
+    Transform the result of the function `GeneticAlgorithm.fit` into a
+        serializable dictionary, i.e. a dictionary which doesn't contain
+        custom classes.
+    Args:
+        fit_result: dictionary with keys:
+            - result: dict:
+                - best_5_scores: list with the 5 best Scores.
+                - bests_5: list with the 5 best chromosomes, decoded.
+                - best_5_encoded: list with the 5 bests chromosomes.
+            - last_population: list of tuples
+                (decoded Chromosome, Chromosome Score).
+            - fit_metrics: dict:
+                - fitness_func_calls: dict:
+                    - total: number of times `self.fit_func` has been invoked.
+                    - processed: number of different calls to the fit function
+                        that have been processed.
+                    - percent_processed: percent of processed calls over the
+                        total calls. From 0 to 100.
+                     - cached: number of cached calls to the fit function.
+                - total_fit_time: dict:
+                    - n_jobs: number of jobs used for processing.
+                    - raw: total number of seconds of the training.
+                    - formatted: same, but formatted.
+            - historial: list of the tuples (Chromosome Score, Chromosome)
+                for each generation.
+            - metrics: list of metrics of each generation. Keys:
+                - best: tuple (Score, Chromosome) with the best
+                    Chromosome of the population.
+                - mean: mean of the population scores.
+                - median: median of the population scores.
+                - var: variance of the population scores.
+                - n_uniques: number of unique Chromosomes in the population.
+                - percent_uniques: percent of unique Chromosomes in the
+                    population.
+                - fitting_seconds: number of seconds that it took for the
+                    population to get fitted.
+            - fit_parameters: fit parameters used in the experiment:
+                - n_generations
+                - population_size
+                - crossovers_prop
+                - besties_prop
+                - mutate_prob
+                - random_seed
+            - config: optional, custom dictionary added by the child classes.
+        serialize_decoded_chromosome_func: function to get a serializable
+            object from each decoded chromosome.
+        serialize_gene_func: function to get a serializable object from each
+            gene.
+    Returns:
+        A dictionary with the same schema as the `fit_result`, but with
+        serializable elements.
+    """
+    result, last_population, fit_metrics, historial, metrics, fit_parameters = \
+        itemgetter('result', 'last_population', 'fit_metrics', 'historial',
+                   'metrics', 'fit_parameters')(fit_result.copy())
+    result = {
+        'best_5_scores': [s.to_dict() for s in result['best_5_scores']],
+        'bests_5': [serialize_decoded_chromosome_func(d)
+                    for d in result['bests_5']],
+        'best_5_encoded': [c.to_dict(serialize_gene_func)
+                           for c in result['best_5_encoded']]
+    }
+    last_population = [(serialize_decoded_chromosome_func(d), score.to_dict())
+                       for d, score in last_population]
+    historial = [(e[0].to_dict(), e[1].to_dict(serialize_gene_func))
+                 for population in historial for e in population]
+    metrics = [m.to_dict(serialize_gene_func) for m in metrics]
+    response = {
+        'result': result,
+        'last_population': last_population,
+        'fit_metrics': fit_metrics,
+        'historial': historial,
+        'metrics': metrics,
+        'fit_parameters': fit_parameters
+    }
+    if config := fit_result.get('config'):
+        response['config'] = config
+    return response

@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Any, Callable
 
 from numpy import mean, median, var
 
 from genetic_opt.core import Score
 from genetic_opt.core.chromosome import Chromosome
+from genetic_opt.utils import identity_func
 
 
 @dataclass
@@ -31,7 +33,7 @@ class Metric:
     percent_uniques: float
     fitting_seconds: float
 
-    def to_dict(self) -> dict:
+    def to_dict(self, serialize_gene_func: Callable[[Any], Any] = None) -> dict:
         """
         Get a dictionary that describes the Metrics.
         Keys:
@@ -42,9 +44,14 @@ class Metric:
             - n_uniques
             - percent_uniques
             - fitting_seconds
+        Args:
+            serialize_gene_func: function to get a serializable object from each
+                gene. If None (default), the identity function will be used.
         """
+        serialize_gene_func = serialize_gene_func or identity_func
         return {
-            'best': self.best[1].to_dict(),
+            'best': (self.best[0].to_dict(),
+                     self.best[1].to_dict(serialize_gene_func)),
             'mean': self.mean,
             'median': self.median,
             'var': self.var,
