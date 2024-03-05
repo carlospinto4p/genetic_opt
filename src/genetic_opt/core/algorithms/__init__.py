@@ -30,6 +30,9 @@ from genetic_opt.utils import identity_func
 
 # TODO 2024.02.13 Add pickle checkpoints?
 #  I could use joblib for this one as well
+# TODO 2024.03.05 Add an extra parameter to create plots about the training
+#  stats. I want a folder with the experiment name in the `save_path`, with
+#  a folder for the graphics and the raw json data inside it.
 class GeneticAlgorithm(ABC):
     """
     Genetic algorithm base class.

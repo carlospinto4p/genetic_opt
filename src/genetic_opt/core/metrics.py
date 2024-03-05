@@ -33,6 +33,26 @@ class Metric:
     percent_uniques: float
     fitting_seconds: float
 
+    @classmethod
+    def from_dict(cls, d: dict,
+                  load_gene_func: Callable[[Any], Any] = None) -> Metric:
+        """
+        Get a Metric object from a serialized object, created by the method
+            `from_dict` of this class.
+        Args:
+            d: Metric dictionary, as returned by the method
+                `from_dict` of this class.
+            load_gene_func: Function to load each Gene.
+                It is the identity function by default.
+        Returns:
+            a Metric object.
+        """
+        d = d.copy()
+        best_score, best_chromosome = d.pop('best')
+        d['best'] = (Score(**best_score), Chromosome.from_dict(
+            best_chromosome, load_genes_func=load_gene_func))
+        return Metric(**d)
+
     def to_dict(self, serialize_gene_func: Callable[[Any], Any] = None) -> dict:
         """
         Get a dictionary that describes the Metrics.

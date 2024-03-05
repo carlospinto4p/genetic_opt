@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "genetic-opt"
-version = "0.1.6"
+version = "0.1.7"
 description = "Genetic algorithm optimizers package."
 authors = ["Carlos Pinto <carlospinto4p@gmail.com>"]
 readme = "README.md"

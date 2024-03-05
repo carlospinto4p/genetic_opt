@@ -56,6 +56,32 @@ class Chromosome:
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
 
+    @classmethod
+    def from_dict(cls, d: dict, load_genes_func: Callable[
+            [Any], Any] = None) -> Chromosome:
+        """
+        Create a Chromosome from a serialized dictionary, created with the
+        method `to_dict`.
+        Args:
+            d: serialized Chromosome, as a dictionary.
+            load_genes_func: Function to load each Gene.
+                It is the identity function by default.
+        Returns:
+            A Chromosome.
+        """
+        load_genes_func = load_genes_func or identity_func
+        is_gene_set, genes = d['is_gene_set'], d['genes']
+        if is_gene_set:
+            genes = {load_genes_func(g) for g in genes}
+        else:
+            genes = [load_genes_func(g) for g in genes]
+        chromosome = Chromosome(size=len(genes), genes=genes,
+                                random_seed=d['random_seed'])
+        if raw_score := d.get('score'):
+            chromosome.score = Score(**raw_score)
+            chromosome.score_time = d.get('score_time', 0)
+        return chromosome
+
     def __eq__(self, other):
         if self.id == other.id:
             return self.genes == other.genes

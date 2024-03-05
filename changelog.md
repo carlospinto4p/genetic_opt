@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.7 - 5th March 2024
+
+- Added the method `from_dict` to the classes `Chromosome` and `Metrics`.
+- Added the function `utils.load_fit_result`.
+- Fix saving the `historial` key in the function `utils.serialize_fit_result`.
+
+
 ### 0.1.6 - 4th March 2024
 
 - Added the method `to_dict` to the classes `Chromosome`, `Score` and `Metrics`.  
