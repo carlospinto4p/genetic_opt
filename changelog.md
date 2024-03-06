@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.8 - 6th March 2024
+
+- Change in the `Score` object: added the key `name`.
+- Removed the parameter `score_name` from `GeneticAlgorithm`.
+- Added a dependency on `matplotlib`, but it is not used for now.
+
+
 ### 0.1.7 - 5th March 2024
 
 - Added the method `from_dict` to the classes `Chromosome` and `Metrics`.

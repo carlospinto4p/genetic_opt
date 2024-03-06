@@ -46,8 +46,6 @@ class GeneticAlgorithm(ABC):
     :param algo_fitness_func: method to value each chromosome (genotype).
     :param opt_is_min: whether the optimum fitness value is the minimum (True)
         or the maximum (False) of the `fitness_func`.
-    :param score_name: name of the score that the `fitness_func` will optimize.
-        Default to 'score'.
     :param experiment_name: Genetic algorithm experiment name.
         Default to the class name.
 
@@ -91,9 +89,9 @@ class GeneticAlgorithm(ABC):
             chromosome_as_set: bool,
             decode_func: Callable[[Chromosome], Any],
             fitness_func: Callable[[Chromosome], Score],
-            opt_is_min: bool, score_name: str = None,
-            experiment_name: str = None, random_seed: int = 442,
-            extra_config: dict = None, save_path: str = None,
+            opt_is_min: bool, experiment_name: str = None,
+            random_seed: int = 442, extra_config: dict = None,
+            save_path: str = None,
             serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
             serialize_gene_func: Callable[[Any], Any] = None):
         """
@@ -112,8 +110,6 @@ class GeneticAlgorithm(ABC):
                 Will be stored internally as `algo_fitness_func`.
             opt_is_min: whether the optimum fitness value is the minimum
                 (True) or the maximum (False) of the `fitness_func`.
-            score_name: name of the score that the `fitness_func` will
-                optimize. Default to 'score'.
             experiment_name: Genetic algorithm experiment name.
                 Default to the class name.
             random_seed: Random seed to handle internal methods.
@@ -131,8 +127,6 @@ class GeneticAlgorithm(ABC):
         self.decode_func: Callable[[Chromosome], Any] = decode_func
         self.algo_fitness_func: Callable[[Chromosome], Score] = fitness_func
         self.opt_is_min: bool = opt_is_min
-        # TODO 2024.03.03 The `score_name` is not being used! (for now?)
-        self.score_name: str = score_name or ''
         self.experiment_name: str = experiment_name or self.__class__.__name__
         # 2021.11.22 random seed results variations may indicate that
         #  optimization is not enough well done.
@@ -660,9 +654,8 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
     def __init__(self, chromosome_length: int, chromosome_as_set: bool,
                  decode_func: Callable[[Chromosome], Any],
                  fitness_func: Callable[[Chromosome], Score],
-                 opt_is_min: bool, score_name: str = None,
-                 experiment_name: str = None, random_seed: int = 442,
-                 gene_space_random_seed: int = 2):
+                 opt_is_min: bool, experiment_name: str = None,
+                 random_seed: int = 442, gene_space_random_seed: int = 2):
         """
         :param chromosome_length: length of the collection of genes that
             encodes a determined problem state.
@@ -674,8 +667,6 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
             returning a Score object.
         :param opt_is_min: whether the optimum fitness value is the minimum
             (True) or the maximum (False) of the `fitness_func`.
-        :param score_name: name of the score that the `fitness_func` will
-            optimize. Default to 'score'.
         :param experiment_name: Genetic algorithm experiment name.
             Default to the class name.
         :param random_seed: random seed to handle the internal methods.
@@ -687,8 +678,7 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
                          chromosome_length=chromosome_length,
                          chromosome_as_set=chromosome_as_set,
                          decode_func=decode_func, fitness_func=fitness_func,
-                         opt_is_min=opt_is_min, score_name=score_name,
-                         experiment_name=experiment_name,
+                         opt_is_min=opt_is_min, experiment_name=experiment_name,
                          random_seed=random_seed)
 
     def crossover_func(self, c1: Chromosome,
