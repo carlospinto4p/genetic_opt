@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.9 - 8th March 2024 
+
+- Changes in `core.algorithms`:
+  - Added the function `plots.plot_genetic_algo_metrics`.
+  - Added the parameters `plot_metrics` and `other_metrics_to_plot` to the 
+    function `GeneticAlgorithm.fit`.
+- Dependency on `cpinto` updated to `v0.3.2`.
+
+
 ### 0.1.8 - 6th March 2024
 
 - Change in the `Score` object: added the key `name`.

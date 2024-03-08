@@ -15,10 +15,12 @@ from cpinto.exceptions import ValidationException
 from cpinto.files import ensure_folder_format, save_json
 from cpinto.formatters import format_seconds
 from cpinto.logs import log_format
+from cpinto.plot.files import save_current_figure
 from cpinto.time import now_for_file_path, time_it_with_logger
 
 from genetic_opt import __version__
 from genetic_opt.core import Score
+from genetic_opt.core.algorithms.plots import plot_genetic_algo_metrics
 from genetic_opt.core.chromosome import Chromosome
 from genetic_opt.core.gene_space import GeneSpace
 from genetic_opt.core.metrics import Metric, get_population_metrics
@@ -181,49 +183,70 @@ class GeneticAlgorithm(ABC):
             crossovers_prop: float = 0.7, besties_prop: float = 0.6,
             mutate_prob: float = 0.05,
             exit_condition: Callable[[dict], bool] = None,
+            plot_metrics: bool = True,
+            other_metrics_to_plot: list[str, Callable[
+                [Chromosome], float]] = None,
             callback_func: Callable[[GeneticAlgorithm], None] = None,
             iter_func: Callable = None, n_jobs: int = -2) -> dict:
         """
         Fit the Genetic Algorithm.
-        :param n_generations: number of iterations to run.
-        :param population_size: number of Chromosomes that make up each
-            population.
-        :param crossovers_prop: proportion of chromosomes to crossover in
-            each step.
-        :param besties_prop: proportion of bests chromosomes to maintain for
-            each generation.
-        :param mutate_prob: probability of a chromosome mutation.
-        :param exit_condition: function which takes the improvement dictionary
-            as argument, which has the keys:
-                - best_score: difference of the values of the best scores
-                    of the last two populations.
-                - mean: difference of the means of the scores.
-                - median: difference of the medians of the scores.
-                - var: difference of the variances of the scores.
-                - n_uniques: difference of the number of unique
-                    Chromosomes in the populations.
-                - percent_uniques: difference of the percent of unique
-                    Chromosomes in the populations.
-                - fitting_seconds: difference of the number of seconds
-                    that it took for the populations to get fitted.
-            and return True if the exist condition is met. If so, the
-            training will end before reaching all `n_generations`.
-        :param callback_func: function that receives the `GeneticAlgorithm`
-            instance as input and is called after measuring each generation
-            and before checking the exit conditions.
-            This can be used to create graphics about the training or
-            even saving checkpoints for the training.
-        :param iter_func: function to keep track of the iterations.
-            For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
-        :param n_jobs: number of jobs to use to parallelize the evaluation of
-            each element of the population. Default to -2 (all cpus except one).
-        :return: dictionary with keys:
+        Args:
+            n_generations: number of iterations to run.
+            population_size: number of Chromosomes that make up each
+                population.
+            crossovers_prop: proportion of chromosomes to crossover in
+                each step.
+            besties_prop: proportion of bests chromosomes to maintain for
+                each generation.
+            mutate_prob: probability of a chromosome mutation.
+            exit_condition: function which takes the improvement dictionary
+                as argument, which has the keys:
+                    - best_score: difference of the values of the best scores
+                        of the last two populations.
+                    - mean: difference of the means of the scores.
+                    - median: difference of the medians of the scores.
+                    - var: difference of the variances of the scores.
+                    - n_uniques: difference of the number of unique
+                        Chromosomes in the populations.
+                    - percent_uniques: difference of the percent of unique
+                        Chromosomes in the populations.
+                    - fitting_seconds: difference of the number of seconds
+                        that it took for the populations to get fitted.
+                and return True if the exist condition is met. If so, the
+                training will end before reaching all `n_generations`.
+            plot_metrics: whether to save a metrics plot after finishing the
+                training.
+            other_metrics_to_plot: list of tuples [str (metric name), function]
+                where the functions are applied to the best Chromosome of each
+                population.
+                This parameter only applies if `plot_metrics` is True.
+            callback_func: function that receives the `GeneticAlgorithm`
+                instance as input and is called after measuring each generation
+                and before checking the exit conditions.
+                This can be used to create graphics about the training or
+                even saving checkpoints for the training.
+            iter_func: function to keep track of the iterations.
+                For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
+            n_jobs: number of jobs to use to parallelize the evaluation of
+                each element of the population.
+                Default to -2 (all cpus except one).
+
+        Returns: dictionary with keys:
             - result: dict:
                 - best_5_scores: list with the 5 best Scores.
                 - bests_5: list with the 5 best chromosomes, decoded.
                 - best_5_encoded: list with the 5 bests chromosomes.
-            - last_population: list of tuples
-                (decoded Chromosome, Chromosome Score).
+            - metrics: list of metrics of each generation. Keys:
+                - best: tuple (Score, Chromosome) with the best
+                    Chromosome of the population.
+                - mean: mean of the population scores.
+                - median: median of the population scores.
+                - var: variance of the population scores.
+                - n_uniques: number of unique Chromosomes in the population.
+                - percent_uniques: percent of unique Chromosomes in the
+                    population.
+                - fitting_seconds: number of seconds that it took for the
+                    population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
                     - total: number of times `self.fit_func` has been invoked.
@@ -236,19 +259,10 @@ class GeneticAlgorithm(ABC):
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
                     - formatted: same, but formatted.
+            - last_population: list of tuples
+                (decoded Chromosome, Chromosome Score).
             - historial: list of the tuples (Chromosome Score, Chromosome)
                 for each generation.
-            - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
-                - mean: mean of the population scores.
-                - median: median of the population scores.
-                - var: variance of the population scores.
-                - n_uniques: number of unique Chromosomes in the population.
-                - percent_uniques: percent of unique Chromosomes in the
-                    population.
-                - fitting_seconds: number of seconds that it took for the
-                    population to get fitted.
             - fit_parameters: fit parameters used in the experiment:
                 - n_generations
                 - population_size
@@ -306,7 +320,8 @@ class GeneticAlgorithm(ABC):
                 break
         fit_result = self._get_fitted_data(
             fit_parameters=fit_parameters, n_jobs=n_jobs)
-        self._save_fit_result(fit_result)
+        self._save_fit_result(fit_result, plot_metrics=plot_metrics,
+                              other_metrics_to_plot=other_metrics_to_plot)
         return fit_result
 
     @lru_cache(maxsize=None)
@@ -463,8 +478,17 @@ class GeneticAlgorithm(ABC):
                 - best_5_scores: list with the 5 best Scores.
                 - bests_5: list with the 5 best chromosomes, decoded.
                 - best_5_encoded: list with the 5 bests chromosomes.
-            - last_population: list of tuples
-                (decoded Chromosome, Chromosome Score).
+            - metrics: list of metrics of each generation. Keys:
+                - best: tuple (Score, Chromosome) with the best
+                    Chromosome of the population.
+                - mean: mean of the population scores.
+                - median: median of the population scores.
+                - var: variance of the population scores.
+                - n_uniques: number of unique Chromosomes in the population.
+                - percent_uniques: percent of unique Chromosomes in the
+                    population.
+                - fitting_seconds: number of seconds that it took for the
+                    population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
                     - total: number of times `self.fit_func` has been invoked.
@@ -477,19 +501,10 @@ class GeneticAlgorithm(ABC):
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
                     - formatted: same, but formatted.
+            - last_population: list of tuples
+                (decoded Chromosome, Chromosome Score).
             - historial: list of the tuples (Chromosome Score, Chromosome)
                 for each generation.
-            - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
-                - mean: mean of the population scores.
-                - median: median of the population scores.
-                - var: variance of the population scores.
-                - n_uniques: number of unique Chromosomes in the population.
-                - percent_uniques: percent of unique Chromosomes in the
-                    population.
-                - fitting_seconds: number of seconds that it took for the
-                    population to get fitted.
             - fit_parameters: fit parameters used in the experiment:
                 - n_generations
                 - population_size
@@ -513,9 +528,7 @@ class GeneticAlgorithm(ABC):
                             for chromosome in bests],
                 'best_5_encoded': [chromosome for chromosome in bests]
             },
-            'last_population': [(self.decode_func(chromosome),
-                                 self.get_chromosome_score(chromosome))
-                                for chromosome in self.population],
+            'metrics': self.metrics,
             'fit_metrics': {
                 'fitness_func_calls': {
                     'total': cached_info.hits,
@@ -530,8 +543,10 @@ class GeneticAlgorithm(ABC):
                 },
                 'genetic_opt_version': __version__
             },
+            'last_population': [(self.decode_func(chromosome),
+                                self.get_chromosome_score(chromosome))
+                                for chromosome in self.population],
             'historial': self.historial,
-            'metrics': self.metrics,
             'fit_parameters': fit_parameters}
         if self.extra_config:
             summary['config'] = self.extra_config
@@ -573,20 +588,37 @@ class GeneticAlgorithm(ABC):
         }
         return iteration_improvement
 
-    def _save_fit_result(self, fit_result: dict) -> None:
+    def _save_fit_result(self, fit_result: dict, plot_metrics: bool = True,
+                         other_metrics_to_plot: list[tuple[str, Callable[
+                             [Chromosome], float]]] = None) -> None:
         """
         Save the result of the `fit` method into a folder.
-        :param fit_result: response of the method `_get_fitted_data`.
-        :return: None.
+        Args:
+            fit_result: response of the method `_get_fitted_data`.
+            plot_metrics: whether to save a metrics plot after finishing the
+                training.
+            other_metrics_to_plot: list of tuples [str (metric name), function]
+                where the functions are applied to the best Chromosome of each
+                population.
+                This parameter only applies if `plot_metrics` is True.
+        Returns:
+            None.
         """
         if not self.save_path:
             return
-        save_path = f'{ensure_folder_format(self.save_path)}/' \
-                    f'{self.experiment_name}_{now_for_file_path()}'
+        save_folder = f'{ensure_folder_format(self.save_path)}/' \
+                      f'{self.experiment_name}/{now_for_file_path()}'
         serialized_data = serialize_fit_result(
             fit_result, self.serialize_decoded_chromosome_func,
             serialize_gene_func=self.serialize_gene_func)
-        save_json(serialized_data, save_path)
+
+        save_json(serialized_data, f'{save_folder}/fit_data')
+
+        if plot_metrics:
+            plot_genetic_algo_metrics(metrics=fit_result['metrics'],
+                                      fit_metrics=fit_result['fit_metrics'],
+                                      other_keys=other_metrics_to_plot)
+            save_current_figure(f'{save_folder}/fit_plots')
 
     def _sort_population(self, iter_func: Callable = None,
                          n_jobs: int = -2) -> None:

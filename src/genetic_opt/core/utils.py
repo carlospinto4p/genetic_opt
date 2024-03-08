@@ -30,8 +30,17 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
                 - best_5_scores: list with the 5 best Scores.
                 - bests_5: list with the 5 best chromosomes, decoded.
                 - best_5_encoded: list with the 5 bests chromosomes.
-            - last_population: list of tuples
-                (decoded Chromosome, Chromosome Score).
+            - metrics: list of metrics of each generation. Keys:
+                - best: tuple (Score, Chromosome) with the best
+                    Chromosome of the population.
+                - mean: mean of the population scores.
+                - median: median of the population scores.
+                - var: variance of the population scores.
+                - n_uniques: number of unique Chromosomes in the population.
+                - percent_uniques: percent of unique Chromosomes in the
+                    population.
+                - fitting_seconds: number of seconds that it took for the
+                    population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
                     - total: number of times `self.fit_func` has been invoked.
@@ -44,19 +53,10 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
                     - formatted: same, but formatted.
+            - last_population: list of tuples
+                (decoded Chromosome, Chromosome Score).
             - historial: list of the tuples (Chromosome Score, Chromosome)
                 for each generation.
-            - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
-                - mean: mean of the population scores.
-                - median: median of the population scores.
-                - var: variance of the population scores.
-                - n_uniques: number of unique Chromosomes in the population.
-                - percent_uniques: percent of unique Chromosomes in the
-                    population.
-                - fitting_seconds: number of seconds that it took for the
-                    population to get fitted.
             - fit_parameters: fit parameters used in the experiment:
                 - n_generations
                 - population_size
@@ -108,8 +108,17 @@ def serialize_fit_result(
                 - best_5_scores: list with the 5 best Scores.
                 - bests_5: list with the 5 best chromosomes, decoded.
                 - best_5_encoded: list with the 5 bests chromosomes.
-            - last_population: list of tuples
-                (decoded Chromosome, Chromosome Score).
+            - metrics: list of metrics of each generation. Keys:
+                - best: tuple (Score, Chromosome) with the best
+                    Chromosome of the population.
+                - mean: mean of the population scores.
+                - median: median of the population scores.
+                - var: variance of the population scores.
+                - n_uniques: number of unique Chromosomes in the population.
+                - percent_uniques: percent of unique Chromosomes in the
+                    population.
+                - fitting_seconds: number of seconds that it took for the
+                    population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
                     - total: number of times `self.fit_func` has been invoked.
@@ -122,19 +131,10 @@ def serialize_fit_result(
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
                     - formatted: same, but formatted.
+            - last_population: list of tuples
+                (decoded Chromosome, Chromosome Score).
             - historial: list of the tuples (Chromosome Score, Chromosome)
                 for each generation.
-            - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
-                - mean: mean of the population scores.
-                - median: median of the population scores.
-                - var: variance of the population scores.
-                - n_uniques: number of unique Chromosomes in the population.
-                - percent_uniques: percent of unique Chromosomes in the
-                    population.
-                - fitting_seconds: number of seconds that it took for the
-                    population to get fitted.
             - fit_parameters: fit parameters used in the experiment:
                 - n_generations
                 - population_size
