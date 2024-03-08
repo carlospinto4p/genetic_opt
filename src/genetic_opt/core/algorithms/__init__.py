@@ -184,7 +184,7 @@ class GeneticAlgorithm(ABC):
             mutate_prob: float = 0.05,
             exit_condition: Callable[[dict], bool] = None,
             plot_metrics: bool = True,
-            other_metrics_to_plot: list[str, Callable[
+            other_metrics_to_plot: dict[str, Callable[
                 [Chromosome], float]] = None,
             callback_func: Callable[[GeneticAlgorithm], None] = None,
             iter_func: Callable = None, n_jobs: int = -2) -> dict:
@@ -216,7 +216,8 @@ class GeneticAlgorithm(ABC):
                 training will end before reaching all `n_generations`.
             plot_metrics: whether to save a metrics plot after finishing the
                 training.
-            other_metrics_to_plot: list of tuples [str (metric name), function]
+            other_metrics_to_plot: dictionary with schema:
+                - <metric name>: function
                 where the functions are applied to the best Chromosome of each
                 population.
                 This parameter only applies if `plot_metrics` is True.
@@ -586,18 +587,21 @@ class GeneticAlgorithm(ABC):
                 self.metrics[-1].__dict__.items(),
                 self.metrics[-2].__dict__.values()) if k in diff_keys}
         }
+        iteration_improvement['fitting_seconds'] = round(
+            iteration_improvement['fitting_seconds'], 2)
         return iteration_improvement
 
     def _save_fit_result(self, fit_result: dict, plot_metrics: bool = True,
-                         other_metrics_to_plot: list[tuple[str, Callable[
-                             [Chromosome], float]]] = None) -> None:
+                         other_metrics_to_plot: dict[str, Callable[
+                             [Chromosome], float]] = None) -> None:
         """
         Save the result of the `fit` method into a folder.
         Args:
             fit_result: response of the method `_get_fitted_data`.
             plot_metrics: whether to save a metrics plot after finishing the
                 training.
-            other_metrics_to_plot: list of tuples [str (metric name), function]
+            other_metrics_to_plot: dictionary with schema:
+                - <metric name>: function
                 where the functions are applied to the best Chromosome of each
                 population.
                 This parameter only applies if `plot_metrics` is True.

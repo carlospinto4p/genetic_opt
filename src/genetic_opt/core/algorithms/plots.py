@@ -5,7 +5,6 @@ from typing import Callable
 
 import matplotlib.pyplot as plt
 
-from cpinto.formatters import format_seconds
 from cpinto.plot.settings import set_pyplot_config
 
 from genetic_opt.core.chromosome import Chromosome
@@ -14,8 +13,7 @@ from genetic_opt.core.metrics import Metric
 
 def plot_genetic_algo_metrics(
         metrics: list[Metric], fit_metrics: dict,
-        other_keys: list[tuple[str, Callable[
-            [Chromosome], float]]] = None) -> None:
+        other_keys: dict[str, Callable[[Chromosome], float]] = None) -> None:
     """
     Plot genetic algorithm training metrics summary.
     Args:
@@ -31,7 +29,8 @@ def plot_genetic_algo_metrics(
                 - formatted
                 - n_jobs
             - genetic_opt_version
-        other_keys: list of tuples [str (metric name), function]
+        other_keys: dictionary with schema:
+            - <metric name>: function
             where the functions are applied to the best Chromosome of each
             population.
     Returns:
@@ -54,9 +53,9 @@ def plot_genetic_algo_metrics(
 
     if other_keys:
         ax2.set_title('Other scores - Bests in each population')
-        for _, f in other_keys:
+        for f in other_keys.values():
             ax2.plot(population_idxs, [f(m.best[1]) for m in metrics], lw=1.6)
-        ax2.legend([name for name, _ in other_keys], frameon=1,
+        ax2.legend([name for name in other_keys.keys()], frameon=1,
                    facecolor='white', edgecolor='black', framealpha=.3)
 
     ax_u.set_title('Uniques in populations')
@@ -74,10 +73,11 @@ def plot_genetic_algo_metrics(
     version = fit_metrics['genetic_opt_version']
     ax_t.bar(population_idxs, fitting_seconds)
     # Create the legend
-    handles = [plt.Line2D([], [], alpha=0)] * 3
+    handles = [plt.Line2D([], [], alpha=0)] * 4
     legend_labels = [
         f'Total fit time with {n_jobs} jobs: {raw_time}',
         f'Fitness_func calls: {fit_calls}/{total_fits} ({percent_calls} %)',
+        f'Population size: {metrics[0].size}',
         f'`genetic_opt` version: {version}']
     ax_t.legend(handles, legend_labels, handlelength=0, frameon=1,
                 facecolor='white', edgecolor='black', framealpha=.5)

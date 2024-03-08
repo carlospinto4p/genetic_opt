@@ -26,6 +26,7 @@ class Metric:
         to get fitted.
     """
     best: tuple[Score, Chromosome]
+    size: int
     mean: float
     median: float
     var: float
@@ -58,6 +59,7 @@ class Metric:
         Get a dictionary that describes the Metrics.
         Keys:
             - best
+            - size
             - mean
             - median
             - var
@@ -72,6 +74,7 @@ class Metric:
         return {
             'best': (self.best[0].to_dict(),
                      self.best[1].to_dict(serialize_gene_func)),
+            'size': self.size,
             'mean': self.mean,
             'median': self.median,
             'var': self.var,
@@ -107,6 +110,7 @@ def get_population_metrics(
     n_uniques = len(set(chromosomes))
     genetic_algo_metrics = Metric(
         best=population_with_scores[0],
+        size=len(values),
         mean=float(mean(values)),
         median=float(median(values)),
         var=float(var(values)),

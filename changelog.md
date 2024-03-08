@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.10 - 9th March 2024 
+
+- Module `core`:
+  - Added the parameter `size` to `metrics.Metric`.
+  - Changes in `algorithms.plots.plot_genetic_algo_metrics`:
+    - Parameter `other_keys` type change: it is now a dictionary instead 
+      of a list of tuples.
+    - It shows the populations size.
+
+
 ### 0.1.9 - 8th March 2024 
 
 - Changes in `core.algorithms`:
