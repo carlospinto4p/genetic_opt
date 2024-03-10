@@ -76,6 +76,7 @@ class Chromosome:
         else:
             genes = [load_genes_func(g) for g in genes]
         chromosome = Chromosome(size=len(genes), genes=genes,
+                                is_gene_set=is_gene_set,
                                 random_seed=d['random_seed'])
         if raw_score := d.get('score'):
             chromosome.score = Score(**raw_score)

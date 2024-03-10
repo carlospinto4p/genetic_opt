@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.11 - 10th March 2024
+
+- Changes in `GeneticAlgorithm`:
+  - Method `fit` will save each iteration result after calculating it.
+  - Changed the response of this `fit`: key `result` changed to `bests`.
+  - Changes all functions in the `utils` module to save and load this 
+    dictionary.
+- Fix in `Chromosome.from_dict`: it wasn't using properly the 
+  argument `is_gene_set`.
+
+
 ### 0.1.10 - 9th March 2024 
 
 - Module `core`:

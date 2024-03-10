@@ -26,10 +26,10 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
             It is the identity function by default.
     Returns:
         dictionary with keys:
-            - result: dict:
-                - best_5_scores: list with the 5 best Scores.
-                - bests_5: list with the 5 best chromosomes, decoded.
-                - best_5_encoded: list with the 5 bests chromosomes.
+            - bests: dictionary:
+                - scores: list with the 5 best Scores.
+                - result: list with the 5 best chromosomes, decoded.
+                - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
                 - best: tuple (Score, Chromosome) with the best
                     Chromosome of the population.
@@ -68,14 +68,14 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
     """
     load_decoded_chromosome_func = load_decoded_chromosome_func or identity_func
     raw = load_json(file_path)
-    result, last_population, fit_metrics, historial, metrics, fit_parameters = \
-        itemgetter('result', 'last_population', 'fit_metrics', 'historial',
+    bests, last_population, fit_metrics, historial, metrics, fit_parameters = \
+        itemgetter('bests', 'last_population', 'fit_metrics', 'historial',
                    'metrics', 'fit_parameters')(raw)
-    result = {
-        'best_5_scores': [Score(**s) for s in result['best_5_scores']],
-        'bests_5': [load_decoded_chromosome_func(d) for d in result['bests_5']],
-        'best_5_encoded': [Chromosome.from_dict(c, load_gene_func)
-                           for c in result['best_5_encoded']]
+    bests = {
+        'scores': [Score(**s) for s in bests['scores']],
+        'result': [load_decoded_chromosome_func(d) for d in bests['result']],
+        'encoded': [Chromosome.from_dict(c, load_gene_func)
+                    for c in bests['encoded']]
     }
     last_population = [(load_decoded_chromosome_func(d), Score(**score))
                        for d, score in last_population]
@@ -83,7 +83,7 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
                  for e in population] for population in historial]
     metrics = [Metric.from_dict(m, load_gene_func) for m in metrics]
     response = {
-        'result': result,
+        'bests': bests,
         'last_population': last_population,
         'fit_metrics': fit_metrics,
         'historial': historial,
@@ -104,10 +104,10 @@ def serialize_fit_result(
         custom classes.
     Args:
         fit_result: dictionary with keys:
-            - result: dict:
-                - best_5_scores: list with the 5 best Scores.
-                - bests_5: list with the 5 best chromosomes, decoded.
-                - best_5_encoded: list with the 5 bests chromosomes.
+            - bests: dictionary:
+                - scores: list with the 5 best Scores.
+                - result: list with the 5 best chromosomes, decoded.
+                - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
                 - best: tuple (Score, Chromosome) with the best
                     Chromosome of the population.
@@ -151,15 +151,14 @@ def serialize_fit_result(
         A dictionary with the same schema as the `fit_result`, but with
         serializable elements.
     """
-    result, last_population, fit_metrics, historial, metrics, fit_parameters = \
-        itemgetter('result', 'last_population', 'fit_metrics', 'historial',
+    bests, last_population, fit_metrics, historial, metrics, fit_parameters = \
+        itemgetter('bests', 'last_population', 'fit_metrics', 'historial',
                    'metrics', 'fit_parameters')(fit_result.copy())
-    result = {
-        'best_5_scores': [s.to_dict() for s in result['best_5_scores']],
-        'bests_5': [serialize_decoded_chromosome_func(d)
-                    for d in result['bests_5']],
-        'best_5_encoded': [c.to_dict(serialize_gene_func)
-                           for c in result['best_5_encoded']]
+    bests = {
+        'scores': [s.to_dict() for s in bests['scores']],
+        'result': [serialize_decoded_chromosome_func(d)
+                   for d in bests['result']],
+        'encoded': [c.to_dict(serialize_gene_func) for c in bests['encoded']]
     }
     last_population = [(serialize_decoded_chromosome_func(d), score.to_dict())
                        for d, score in last_population]
@@ -167,7 +166,7 @@ def serialize_fit_result(
                   for e in population] for population in historial]
     metrics = [m.to_dict(serialize_gene_func) for m in metrics]
     response = {
-        'result': result,
+        'bests': bests,
         'last_population': last_population,
         'fit_metrics': fit_metrics,
         'historial': historial,

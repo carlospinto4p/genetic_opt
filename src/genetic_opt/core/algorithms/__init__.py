@@ -32,9 +32,6 @@ from genetic_opt.utils import identity_func
 
 # TODO 2024.02.13 Add pickle checkpoints?
 #  I could use joblib for this one as well
-# TODO 2024.03.05 Add an extra parameter to create plots about the training
-#  stats. I want a folder with the experiment name in the `save_path`, with
-#  a folder for the graphics and the raw json data inside it.
 class GeneticAlgorithm(ABC):
     """
     Genetic algorithm base class.
@@ -134,7 +131,8 @@ class GeneticAlgorithm(ABC):
         #  optimization is not enough well done.
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
-        self.save_path: str = save_path
+        self.save_path: str = f'{ensure_folder_format(save_path)}/' \
+            f'{self.experiment_name}/{now_for_file_path()}' if save_path else ''
         self.serialize_decoded_chromosome_func: Callable[[Any], Any] = \
             serialize_decoded_chromosome_func
         self.serialize_gene_func: Callable[[Any], Any] = serialize_gene_func
@@ -233,10 +231,10 @@ class GeneticAlgorithm(ABC):
                 Default to -2 (all cpus except one).
 
         Returns: dictionary with keys:
-            - result: dict:
-                - best_5_scores: list with the 5 best Scores.
-                - bests_5: list with the 5 best chromosomes, decoded.
-                - best_5_encoded: list with the 5 bests chromosomes.
+            - bests: dictionary:
+                - scores: list with the 5 best Scores.
+                - result: list with the 5 best chromosomes, decoded.
+                - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
                 - best: tuple (Score, Chromosome) with the best
                     Chromosome of the population.
@@ -292,6 +290,7 @@ class GeneticAlgorithm(ABC):
             'random_seed': self.random_seed,
             'n_jobs': n_jobs
         }
+        fit_result = {}
         logger.info(f'initializing population. '
                     f'Using:\n{log_format(fit_parameters)}')
         for n_generation in iter_func(list(range(0, n_generations + 1))):
@@ -306,10 +305,15 @@ class GeneticAlgorithm(ABC):
             logger.info(f'iteration {n_generation} - Metrics:'
                         f'\n\t{log_format(self.metrics[-1])}')
             iteration_improvement = self._get_iteration_improvement()
-            logger.info(f'improvement:\n\t{log_format(iteration_improvement)}')
+            logger.info(f'improvement:\n{log_format(iteration_improvement)}')
             logger.info(f'measuring this generation took '
                         f'{format_seconds(self.metrics[-1].fitting_seconds)}')
             callback_func(self)
+            # Save result for each iteration
+            fit_result = self._get_fitted_data(
+                fit_parameters=fit_parameters, n_jobs=n_jobs)
+            self._save_fit_result(fit_result, plot_metrics=plot_metrics,
+                                  other_metrics_to_plot=other_metrics_to_plot)
             # exit conditions
             if no_improvement_condition(iteration_improvement):
                 logger.info(f'no more improvement detected!\n\t'
@@ -319,10 +323,6 @@ class GeneticAlgorithm(ABC):
                 logger.info(f'exit condition reached!\n\t'
                             f'Training finished at iteration {n_generation}')
                 break
-        fit_result = self._get_fitted_data(
-            fit_parameters=fit_parameters, n_jobs=n_jobs)
-        self._save_fit_result(fit_result, plot_metrics=plot_metrics,
-                              other_metrics_to_plot=other_metrics_to_plot)
         return fit_result
 
     @lru_cache(maxsize=None)
@@ -475,10 +475,10 @@ class GeneticAlgorithm(ABC):
                 - random_seed
         :param n_jobs: number of jobs used for the ´fit´ function.
         :return dictionary with keys:
-            - result: dict:
-                - best_5_scores: list with the 5 best Scores.
-                - bests_5: list with the 5 best chromosomes, decoded.
-                - best_5_encoded: list with the 5 bests chromosomes.
+            - bests: dictionary:
+                - scores: list with the 5 best Scores.
+                - result: list with the 5 best chromosomes, decoded.
+                - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
                 - best: tuple (Score, Chromosome) with the best
                     Chromosome of the population.
@@ -490,7 +490,7 @@ class GeneticAlgorithm(ABC):
                     population.
                 - fitting_seconds: number of seconds that it took for the
                     population to get fitted.
-            - fit_metrics: dict:
+            - fit_metrics: dictionary:
                 - fitness_func_calls: dict:
                     - total: number of times `self.fit_func` has been invoked.
                     - processed: number of different calls to the fit function
@@ -522,12 +522,12 @@ class GeneticAlgorithm(ABC):
             if len(bests) < 5 and chromosome not in bests:
                 bests.append(chromosome)
         summary = {
-            'result': {
-                'best_5_scores': [self.get_chromosome_score(chromosome)
-                                  for chromosome in bests],
-                'bests_5': [self.decode_func(chromosome)
-                            for chromosome in bests],
-                'best_5_encoded': [chromosome for chromosome in bests]
+            'bests': {
+                'scores': [self.get_chromosome_score(chromosome)
+                           for chromosome in bests],
+                'result': [self.decode_func(chromosome)
+                           for chromosome in bests],
+                'encoded': [chromosome for chromosome in bests]
             },
             'metrics': self.metrics,
             'fit_metrics': {
@@ -610,19 +610,17 @@ class GeneticAlgorithm(ABC):
         """
         if not self.save_path:
             return
-        save_folder = f'{ensure_folder_format(self.save_path)}/' \
-                      f'{self.experiment_name}/{now_for_file_path()}'
         serialized_data = serialize_fit_result(
             fit_result, self.serialize_decoded_chromosome_func,
             serialize_gene_func=self.serialize_gene_func)
 
-        save_json(serialized_data, f'{save_folder}/fit_data')
+        save_json(serialized_data, f'{self.save_path}/fit_data')
 
         if plot_metrics:
             plot_genetic_algo_metrics(metrics=fit_result['metrics'],
                                       fit_metrics=fit_result['fit_metrics'],
                                       other_keys=other_metrics_to_plot)
-            save_current_figure(f'{save_folder}/fit_plots')
+            save_current_figure(f'{self.save_path}/fit_plots')
 
     def _sort_population(self, iter_func: Callable = None,
                          n_jobs: int = -2) -> None:
