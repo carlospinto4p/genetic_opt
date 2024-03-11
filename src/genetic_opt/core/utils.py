@@ -48,7 +48,9 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
                         that have been processed.
                     - percent_processed: percent of processed calls over the
                         total calls. From 0 to 100.
-                     - cached: number of cached calls to the fit function.
+                    - cached: number of cached calls to the fit function.
+                    - space_points: size of the gene_space of the experiment.
+                    - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
@@ -126,7 +128,9 @@ def serialize_fit_result(
                         that have been processed.
                     - percent_processed: percent of processed calls over the
                         total calls. From 0 to 100.
-                     - cached: number of cached calls to the fit function.
+                    - cached: number of cached calls to the fit function.
+                    - space_points: size of the gene_space of the experiment.
+                    - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.

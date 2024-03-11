@@ -24,6 +24,8 @@ def plot_genetic_algo_metrics(
                 - percent_processed
                 - processed
                 - total
+                - space_points
+                - exploration_percentage
             - total_fit_time:
                 - raw
                 - formatted
@@ -50,7 +52,6 @@ def plot_genetic_algo_metrics(
     ax1.plot(population_idxs, [m.mean for m in metrics], lw=1.4)
     ax1.legend(['Best', 'Median', 'Mean'], frameon=1, facecolor='white',
                edgecolor='black', framealpha=.3)
-
     if other_keys:
         ax2.set_title('Other scores - Bests in each population')
         for f in other_keys.values():
@@ -67,16 +68,18 @@ def plot_genetic_algo_metrics(
     fitting_seconds = [m.fitting_seconds for m in metrics]
     n_jobs, raw_time = itemgetter('n_jobs', 'formatted')(
         fit_metrics['total_fit_time'])
-    total_fits, fit_calls, percent_calls = itemgetter(
-        'total', 'processed', 'percent_processed')(
+    total_fits, fit_calls, percent_calls, space, exploration = itemgetter(
+        'total', 'processed', 'percent_processed',
+        'space_points', 'exploration_percentage')(
         fit_metrics['fitness_func_calls'])
     version = fit_metrics['genetic_opt_version']
     ax_t.bar(population_idxs, fitting_seconds)
     # Create the legend
-    handles = [plt.Line2D([], [], alpha=0)] * 4
+    handles = [plt.Line2D([], [], alpha=0)] * 5
     legend_labels = [
         f'Total fit time with {n_jobs} jobs: {raw_time}',
         f'Fitness_func calls: {fit_calls}/{total_fits} ({percent_calls} %)',
+        f'Space exploration: {fit_calls}/{space} ({exploration} %)',
         f'Population size: {metrics[0].size}',
         f'`genetic_opt` version: {version}']
     ax_t.legend(handles, legend_labels, handlelength=0, frameon=1,

@@ -253,7 +253,9 @@ class GeneticAlgorithm(ABC):
                         that have been processed.
                     - percent_processed: percent of processed calls over the
                         total calls. From 0 to 100.
-                     - cached: number of cached calls to the fit function.
+                    - cached: number of cached calls to the fit function.
+                    - space_points: size of the gene_space of the experiment.
+                    - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
@@ -497,7 +499,9 @@ class GeneticAlgorithm(ABC):
                         that have been processed.
                     - percent_processed: percent of processed calls over the
                         total calls. From 0 to 100.
-                     - cached: number of cached calls to the fit function.
+                    - cached: number of cached calls to the fit function.
+                    - space_points: size of the gene_space of the experiment.
+                    - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
                     - raw: total number of seconds of the training.
@@ -534,9 +538,12 @@ class GeneticAlgorithm(ABC):
                 'fitness_func_calls': {
                     'total': cached_info.hits,
                     'processed': cached_info.misses,
-                    'percent_processed': 100 * round(
-                        cached_info.misses / cached_info.hits, 2),
-                    'cached': cached_info.hits - cached_info.misses
+                    'percent_processed': round(
+                        100 * cached_info.misses / cached_info.hits, 2),
+                    'cached': cached_info.hits - cached_info.misses,
+                    'space_points': len(self.gene_space),
+                    'exploration_percentage': round(
+                        100 * cached_info.misses / len(self.gene_space), 2)
                 },
                 'total_fit_time': {
                     'n_jobs': n_jobs,

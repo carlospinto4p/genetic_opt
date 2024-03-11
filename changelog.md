@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.12 - 11th March 2024
+
+- Changes in `Geneticalgorithm._get_fitted_data`:
+  - Added the keys `space_points` and `exploration_percentage` in the
+    `fit_metrics` dictionary.
+  - Changes in the documentation and the `utils` functions due to this.
+  - Changes in `plots.plot_genetic_algo_metrics` to show these new keys.
+
+
 ### 0.1.11 - 10th March 2024
 
 - Changes in `GeneticAlgorithm`:
