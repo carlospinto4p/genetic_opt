@@ -236,8 +236,10 @@ class GeneticAlgorithm(ABC):
                 - result: list with the 5 best chromosomes, decoded.
                 - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
+                - best: dictionary with keys:
+                    - score: best Score of the population.
+                    - result: best Chromosome of the population, decoded.
+                    - encoded: best Chromosome of the population.
                 - mean: mean of the population scores.
                 - median: median of the population scores.
                 - var: variance of the population scores.
@@ -482,8 +484,10 @@ class GeneticAlgorithm(ABC):
                 - result: list with the 5 best chromosomes, decoded.
                 - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
+                - best: dictionary with keys:
+                    - score: best Score of the population.
+                    - result: best Chromosome of the population, decoded.
+                    - encoded: best Chromosome of the population.
                 - mean: mean of the population scores.
                 - median: median of the population scores.
                 - var: variance of the population scores.
@@ -662,8 +666,10 @@ class GeneticAlgorithm(ABC):
         - `self.historial`: list of the tuples (Chromosome Score, Chromosome)
             for each generation.
         - `self.metrics`: list of metrics of each generation. Keys:
-            - best: tuple (Score, Chromosome) with the best
-                Chromosome of the population.
+            - best: dictionary with keys:
+                - score: best Score of the population.
+                - result: best Chromosome of the population, decoded.
+                - encoded: best Chromosome of the population.
             - mean: mean of the population scores.
             - median: median of the population scores.
             - var: variance of the population scores.
@@ -681,6 +687,7 @@ class GeneticAlgorithm(ABC):
              for chromosome in self.population])
         population_metrics = get_population_metrics(
             population_with_scores=self.historial[-1],
+            decode_func=self.decode_func,
             fitting_seconds=generation_fitting_time)
         self.metrics.append(population_metrics)
 

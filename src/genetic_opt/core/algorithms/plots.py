@@ -47,7 +47,7 @@ def plot_genetic_algo_metrics(
         fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(13, 15))
         ax_u, ax_t = ax2, ax3
     ax1.set_title('Summary')
-    ax1.plot(population_idxs, [m.best[0].value for m in metrics], lw=2.5)
+    ax1.plot(population_idxs, [m.best['score'].value for m in metrics], lw=2.5)
     ax1.plot(population_idxs, [m.median for m in metrics], lw=1.4)
     ax1.plot(population_idxs, [m.mean for m in metrics], lw=1.4)
     ax1.legend(['Best', 'Median', 'Mean'], frameon=1, facecolor='white',
@@ -55,7 +55,8 @@ def plot_genetic_algo_metrics(
     if other_keys:
         ax2.set_title('Other scores - Bests in each population')
         for f in other_keys.values():
-            ax2.plot(population_idxs, [f(m.best[1]) for m in metrics], lw=1.6)
+            ax2.plot(population_idxs, [f(m.best['encoded']) for m in metrics],
+                     lw=1.6)
         ax2.legend([name for name in other_keys.keys()], frameon=1,
                    facecolor='white', edgecolor='black', framealpha=.3)
 
@@ -83,10 +84,10 @@ def plot_genetic_algo_metrics(
         f'Population size: {metrics[0].size}',
         f'`genetic_opt` version: {version}']
     ax_t.legend(handles, legend_labels, handlelength=0, frameon=1,
-                facecolor='white', edgecolor='black', framealpha=.5)
+                facecolor='white', edgecolor='black', framealpha=.4)
 
     score_name_str = ''
-    if score_name := getattr(metrics[0].best[0], 'name', ''):
+    if score_name := getattr(metrics[0].best['score'], 'name', ''):
         score_name_str = ' - ' + score_name.replace('_', ' ').title()
 
     fig.suptitle(f'Genetic Algorithm Metrics{score_name_str}')

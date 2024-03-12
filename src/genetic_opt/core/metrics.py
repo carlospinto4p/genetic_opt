@@ -1,7 +1,9 @@
 """ Genetic Opt metrics submodule. """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
+from operator import itemgetter
 from typing import Any, Callable
 
 from numpy import mean, median, var
@@ -15,8 +17,10 @@ from genetic_opt.utils import identity_func
 class Metric:
     """
     Metrics class for Genetic Algorithms. Keys:
-    - best: tuple[Score, Chromosome] with the best Chromosome of
-        the population.
+    - best: dictionary with keys:
+        - score: best Score of the population.
+        - result: best Chromosome of the population, decoded.
+        - encoded: best Chromosome of the population.
     - mean: mean of the population scores.
     - median: median of the population scores.
     - var: variance of the population scores.
@@ -25,7 +29,7 @@ class Metric:
     - fitting seconds: number of seconds that it took for the population
         to get fitted.
     """
-    best: tuple[Score, Chromosome]
+    best: dict
     size: int
     mean: float
     median: float
@@ -36,6 +40,7 @@ class Metric:
 
     @classmethod
     def from_dict(cls, d: dict,
+                  load_decoded_chromosome_func: Callable[[Any], Any] = None,
                   load_gene_func: Callable[[Any], Any] = None) -> Metric:
         """
         Get a Metric object from a serialized object, created by the method
@@ -43,22 +48,37 @@ class Metric:
         Args:
             d: Metric dictionary, as returned by the method
                 `from_dict` of this class.
+            load_decoded_chromosome_func: Function to load serialized
+                Chromosomes. It is the identity function by default.
             load_gene_func: Function to load each Gene.
                 It is the identity function by default.
         Returns:
             a Metric object.
         """
+        load_decoded_chromosome_func = (
+                load_decoded_chromosome_func or identity_func)
         d = d.copy()
-        best_score, best_chromosome = d.pop('best')
-        d['best'] = (Score(**best_score), Chromosome.from_dict(
-            best_chromosome, load_genes_func=load_gene_func))
+        score, chromosome, result = itemgetter('score', 'encoded', 'result')(
+            d.pop('best'))
+        chromosome = Chromosome.from_dict(
+            chromosome, load_genes_func=load_gene_func)
+        d['best'] = {
+            'score': Score(**score),
+            'result': load_decoded_chromosome_func(chromosome),
+            'encoded': chromosome
+        }
         return Metric(**d)
 
-    def to_dict(self, serialize_gene_func: Callable[[Any], Any] = None) -> dict:
+    def to_dict(self,
+                serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
+                serialize_gene_func: Callable[[Any], Any] = None) -> dict:
         """
         Get a dictionary that describes the Metrics.
         Keys:
-            - best
+            - best:
+                - score: score dictionary.
+                - encoded: encoded Chromosome.
+                - result: decoded Chromosome.
             - size
             - mean
             - median
@@ -67,13 +87,20 @@ class Metric:
             - percent_uniques
             - fitting_seconds
         Args:
+            serialize_decoded_chromosome_func: function to get a serializable
+                object from each decoded chromosome.
             serialize_gene_func: function to get a serializable object from each
                 gene. If None (default), the identity function will be used.
         """
+        serialize_decoded_chromosome_func = (
+                serialize_decoded_chromosome_func or identity_func)
         serialize_gene_func = serialize_gene_func or identity_func
         return {
-            'best': (self.best[0].to_dict(),
-                     self.best[1].to_dict(serialize_gene_func)),
+            'best': {
+                'score': self.best['score'].to_dict(),
+                'encoded': self.best['encoded'].to_dict(serialize_gene_func),
+                'result': serialize_decoded_chromosome_func(self.best['result'])
+            },
             'size': self.size,
             'mean': self.mean,
             'median': self.median,
@@ -86,16 +113,24 @@ class Metric:
 
 def get_population_metrics(
         population_with_scores: list[tuple[Score, Chromosome]],
+        decode_func: Callable[[Chromosome], Any],
         fitting_seconds: float) -> Metric:
     """
     Get a Genetic Algorithm population metrics.
-    :param population_with_scores: list of tuples (Score, Chromosome) that
-        make up the population.
-    :param fitting_seconds: number of seconds that it took for the population
-        to get fitted.
-    :return: a Metric dataclass object. Keys:
-        - best: tuple[Score, Chromosome] with the best Chromosome of
-            the population.
+
+    Args:
+        population_with_scores: list of tuples (Score, Chromosome) that
+            make up the population.
+        decode_func: function that receives the genotype (chromosome)
+            and returns the phenotype (original problem representation).
+        fitting_seconds: number of seconds that it took for the population
+            to get fitted.
+
+    Returns: a Metric dataclass object. Keys:
+        - best: dictionary with keys:
+            - score: best Score of the population.
+            - result: best Chromosome of the population, decoded.
+            - encoded: best Chromosome of the population.
         - mean: mean of the population scores.
         - median: median of the population scores.
         - var: variance of the population scores.
@@ -109,7 +144,9 @@ def get_population_metrics(
     values = [score.value for score in scores]
     n_uniques = len(set(chromosomes))
     genetic_algo_metrics = Metric(
-        best=population_with_scores[0],
+        best={'score': scores[0],
+              'result': decode_func(chromosomes[0]),
+              'encoded': chromosomes[0]},
         size=len(values),
         mean=float(mean(values)),
         median=float(median(values)),

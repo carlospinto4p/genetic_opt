@@ -31,8 +31,10 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
                 - result: list with the 5 best chromosomes, decoded.
                 - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
+                - best: dictionary with keys:
+                    - score: best Score of the population.
+                    - result: best Chromosome of the population, decoded.
+                    - encoded: best Chromosome of the population.
                 - mean: mean of the population scores.
                 - median: median of the population scores.
                 - var: variance of the population scores.
@@ -111,8 +113,10 @@ def serialize_fit_result(
                 - result: list with the 5 best chromosomes, decoded.
                 - encoded: list with the 5 bests chromosomes.
             - metrics: list of metrics of each generation. Keys:
-                - best: tuple (Score, Chromosome) with the best
-                    Chromosome of the population.
+                - best: dictionary with keys:
+                    - score: best Score of the population.
+                    - result: best Chromosome of the population, decoded.
+                    - encoded: best Chromosome of the population.
                 - mean: mean of the population scores.
                 - median: median of the population scores.
                 - var: variance of the population scores.

@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.13 - 12th March 2024
+
+- Changes in the `Metrics` object:
+  - Key `best` is not a tuple anymore. Now it is a dictionary with keys
+    `score`, `result`, `encoded`.
+- Changes in all the objects that use `Metrics` due to this change:
+  - Minor inner changes in `GeneticAlgorithm`.
+  - Changes in the functions of `core.algorithms.utils`.
+  - Changes in `core.algorithms.plots` when handling those `Metrics`.
+
+
 ### 0.1.12 - 11th March 2024
 
 - Changes in `Geneticalgorithm._get_fitted_data`:
