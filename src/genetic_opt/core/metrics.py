@@ -60,12 +60,11 @@ class Metric:
         d = d.copy()
         score, chromosome, result = itemgetter('score', 'encoded', 'result')(
             d.pop('best'))
-        chromosome = Chromosome.from_dict(
-            chromosome, load_genes_func=load_gene_func)
         d['best'] = {
             'score': Score(**score),
-            'result': load_decoded_chromosome_func(chromosome),
-            'encoded': chromosome
+            'result': load_decoded_chromosome_func(result),
+            'encoded': Chromosome.from_dict(
+                chromosome, load_genes_func=load_gene_func)
         }
         return Metric(**d)
 
