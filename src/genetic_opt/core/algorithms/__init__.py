@@ -588,12 +588,13 @@ class GeneticAlgorithm(ABC):
         diff_keys = ['mean', 'median', 'var', 'n_uniques',
                      'percent_uniques', 'fitting_seconds']
         if len(self.metrics) < 2:
-            return {'best_score': self.metrics[-1].best[0].value,
+            return {'best_score': self.metrics[-1].best['score'].value,
                     **{k: v for k, v in self.metrics[-1].__dict__.items()
                        if k in diff_keys}}
         iteration_improvement = {
             'best_score':
-                self.metrics[-1].best[0].value - self.metrics[-2].best[0].value,
+                self.metrics[-1].best['score'].value -
+                self.metrics[-2].best['score'].value,
             **{k: new_v - prev_v for (k, new_v), prev_v in zip(
                 self.metrics[-1].__dict__.items(),
                 self.metrics[-2].__dict__.values()) if k in diff_keys}

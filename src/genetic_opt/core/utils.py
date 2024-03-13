@@ -172,7 +172,9 @@ def serialize_fit_result(
                        for d, score in last_population]
     historial = [[(e[0].to_dict(), e[1].to_dict(serialize_gene_func))
                   for e in population] for population in historial]
-    metrics = [m.to_dict(serialize_gene_func) for m in metrics]
+    metrics = [m.to_dict(
+        serialize_decoded_chromosome_func=serialize_decoded_chromosome_func,
+        serialize_gene_func=serialize_gene_func) for m in metrics]
     response = {
         'bests': bests,
         'last_population': last_population,
