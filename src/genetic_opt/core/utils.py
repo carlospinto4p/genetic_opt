@@ -85,7 +85,9 @@ def load_fit_result(file_path: str, load_decoded_chromosome_func: Callable[
                        for d, score in last_population]
     historial = [[(Score(**e[0]), Chromosome.from_dict(e[1], load_gene_func))
                  for e in population] for population in historial]
-    metrics = [Metric.from_dict(m, load_gene_func) for m in metrics]
+    metrics = [Metric.from_dict(
+        m, load_decoded_chromosome_func=load_decoded_chromosome_func,
+        load_gene_func=load_gene_func) for m in metrics]
     response = {
         'bests': bests,
         'last_population': last_population,
