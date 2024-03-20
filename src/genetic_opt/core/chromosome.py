@@ -9,11 +9,12 @@ from typing import Any, Callable, Collection
 from numpy import ndarray
 from numpy.random import RandomState
 
+from cpinto.functions import identity_func
+
 from genetic_opt.core import Score
 from genetic_opt.core.gene_collection import GeneList, GeneCollection, GeneSet
 from genetic_opt.core.gene_space import GeneSpace
 from genetic_opt.exceptions import GeneticOptException
-from genetic_opt.utils import identity_func
 
 
 class Chromosome:

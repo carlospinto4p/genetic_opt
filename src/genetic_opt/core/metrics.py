@@ -8,9 +8,10 @@ from typing import Any, Callable
 
 from numpy import mean, median, var
 
+from cpinto.functions import identity_func
+
 from genetic_opt.core import Score
 from genetic_opt.core.chromosome import Chromosome
-from genetic_opt.utils import identity_func
 
 
 @dataclass

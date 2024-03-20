@@ -2,6 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.14 - 20th March 2024
+
+- Dependency on `cpinto` updated to `0.3.4`.
+- Removed the module `utils`.
+
+
 ### 0.1.13 - 12th March 2024
 
 - Changes in the `Metrics` object:

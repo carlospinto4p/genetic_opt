@@ -14,6 +14,7 @@ from numpy.random import RandomState
 from cpinto.exceptions import ValidationException
 from cpinto.files import ensure_folder_format, save_json
 from cpinto.formatters import format_seconds
+from cpinto.functions import identity_func
 from cpinto.logs import log_format
 from cpinto.plot.files import save_current_figure
 from cpinto.time import now_for_file_path, time_it_with_logger
@@ -27,7 +28,6 @@ from genetic_opt.core.metrics import Metric, get_population_metrics
 from genetic_opt.core.utils import serialize_fit_result
 from genetic_opt.exceptions import GeneticOptException
 from genetic_opt.logs import logger
-from genetic_opt.utils import identity_func
 
 
 # TODO 2024.02.13 Add pickle checkpoints?
