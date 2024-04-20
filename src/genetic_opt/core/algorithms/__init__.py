@@ -329,7 +329,13 @@ class GeneticAlgorithm(ABC):
             logger.info(f'improvement:\n{log_format(iteration_improvement)}')
             logger.info(f'measuring this generation took '
                         f'{format_seconds(self.metrics[-1].fitting_seconds)}')
-            callback_func(self)
+            # Callback function. Split the cases when it is a method of this
+            # class and when not
+            if (hasattr(callback_func,
+                        '__self__') and callback_func.__self__ == self):
+                callback_func()
+            else:
+                callback_func(self)
             # Save result for each iteration
             fit_result = self._get_fitted_data(
                 fit_parameters=fit_parameters, n_jobs=n_jobs)
