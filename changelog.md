@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.15 - 20th April 2024
+
+- Changes in `GeneticAlgorithm`:
+  - Added the method `default_fit_callback`.
+  - Added the static methods `no_exit_condition` and `no_improvement_condition`.
+
+
 ### 0.1.14 - 20th March 2024
 
 - Dependency on `cpinto` updated to `0.3.4`.

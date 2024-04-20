@@ -176,6 +176,22 @@ class GeneticAlgorithm(ABC):
                           for (a, b) in zip(parents[::2], parents[1::2])]
         return [child for pair in children_pairs for child in pair]
 
+    # Fit functions
+    def default_fit_callback(self) -> None:
+        """ Default callback function applied in the `fit` method. """
+        return None
+
+    @staticmethod
+    def no_exit_condition(improvement: dict) -> bool:
+        return False
+
+    @staticmethod
+    def no_improvement_condition(improvement: dict) -> bool:
+        if 'mean' not in improvement:
+            logger.error('looking for the key `mean` in the improvement '
+                         'dict, but not found')
+        return improvement.get('mean', -1) == 0
+
     @time_it_with_logger(logger)
     def fit(self, n_generations: int, population_size: int,
             crossovers_prop: float = 0.7, besties_prop: float = 0.6,
@@ -224,6 +240,7 @@ class GeneticAlgorithm(ABC):
                 and before checking the exit conditions.
                 This can be used to create graphics about the training or
                 even saving checkpoints for the training.
+                Default to the method `default_fit_callback`.
             iter_func: function to keep track of the iterations.
                 For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
             n_jobs: number of jobs to use to parallelize the evaluation of
@@ -277,8 +294,8 @@ class GeneticAlgorithm(ABC):
         """
         # Default parameters
         iter_func = iter_func or identity_func
-        exit_condition = exit_condition or no_exit_condition
-        callback_func = callback_func or identity_func
+        exit_condition = exit_condition or self.no_exit_condition
+        callback_func = callback_func or self.default_fit_callback
         # Validate n_jobs
         if n_jobs < 0:
             n_jobs = cpu_count() + n_jobs + 1
@@ -319,7 +336,7 @@ class GeneticAlgorithm(ABC):
             self._save_fit_result(fit_result, plot_metrics=plot_metrics,
                                   other_metrics_to_plot=other_metrics_to_plot)
             # exit conditions
-            if no_improvement_condition(iteration_improvement):
+            if self.no_improvement_condition(iteration_improvement):
                 logger.info(f'no more improvement detected!\n\t'
                             f'Training finished at iteration {n_generation}')
                 break
@@ -744,14 +761,3 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         cr1 = Chromosome(size=self.chromosome_length, genes=genes_1)
         cr2 = Chromosome(size=self.chromosome_length, genes=genes_2)
         return cr1, cr2
-
-
-def no_exit_condition(improvement: dict) -> bool:
-    return False
-
-
-def no_improvement_condition(improvement: dict) -> bool:
-    if 'mean' not in improvement:
-        logger.error('looking for the key `mean` in the improvement '
-                     'dict, but not found')
-    return improvement.get('mean', 0) == 0
