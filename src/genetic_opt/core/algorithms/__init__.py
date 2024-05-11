@@ -187,6 +187,14 @@ class GeneticAlgorithm(ABC):
 
     @staticmethod
     def no_improvement_condition(improvement: dict) -> bool:
+        """
+        Method applied to the improvement dict after each fit step.
+        If this condition is met, the fit process will stop.
+        By default, will get the mean key of the improvements
+        and check if it is 0.
+        Replace this method with `GeneticAlgorithm.no_exit_condition`
+        to avoid this default behavior.
+        """
         if 'mean' not in improvement:
             logger.error('looking for the key `mean` in the improvement '
                          'dict, but not found')
@@ -331,8 +339,8 @@ class GeneticAlgorithm(ABC):
                         f'{format_seconds(self.metrics[-1].fitting_seconds)}')
             # Callback function. Split the cases when it is a method of this
             # class and when not
-            if (hasattr(callback_func,
-                        '__self__') and callback_func.__self__ == self):
+            if (hasattr(callback_func, '__self__') and
+                    callback_func.__self__ == self):
                 callback_func()
             else:
                 callback_func(self)

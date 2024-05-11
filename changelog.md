@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.16 - 11th May 2024
+
+- Python version updated to `^3.11`
+- `Score` key `extra_metrics` also allow `list` as type.
+- Added documentation for `GeneticAlgorithm.no_improvement_condition`.
+
+
 ### 0.1.15 - 20th April 2024
 
 - Changes in `GeneticAlgorithm`:

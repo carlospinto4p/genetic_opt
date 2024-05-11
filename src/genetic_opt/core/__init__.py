@@ -8,11 +8,11 @@ class Score:
     """
     :param value: Score value.
     :param name: Optional score name.
-    :param extra_metrics: optional dictionary.
+    :param extra_metrics: optional dictionary or list.
     """
     value: float
     name: str = None
-    extra_metrics: dict = None
+    extra_metrics: dict | list = None
 
     def to_dict(self) -> dict:
         """
