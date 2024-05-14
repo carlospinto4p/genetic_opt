@@ -1,4 +1,4 @@
 """ Genetic algorithm optimizers package. """
 
 
-__version__ = '0.1.16'
+__version__ = '0.1.17'

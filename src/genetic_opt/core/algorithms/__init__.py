@@ -12,7 +12,7 @@ from joblib import Parallel, delayed
 from numpy.random import RandomState
 
 from cpinto.exceptions import ValidationException
-from cpinto.files import ensure_folder_format, save_json
+from cpinto.files import ensure_folder_format, save_json, save_yaml
 from cpinto.formatters import format_seconds
 from cpinto.functions import identity_func
 from cpinto.logs import log_format
@@ -90,7 +90,7 @@ class GeneticAlgorithm(ABC):
             fitness_func: Callable[[Chromosome], Score],
             opt_is_min: bool, experiment_name: str = None,
             random_seed: int = 442, extra_config: dict = None,
-            save_path: str = None,
+            save_path: str = None, fitness_timeout: int = 3_600_000,
             serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
             serialize_gene_func: Callable[[Any], Any] = None):
         """
@@ -115,6 +115,8 @@ class GeneticAlgorithm(ABC):
             extra_config: Additional dictionary that will be returned
                 by the `fit` method, as a new key named `config`.
             save_path: Optional path to save the results of each run.
+            fitness_timeout: Timeout for the `fitness_func` when parallelizing
+                jobs. Default to 1000 hours, i.e. 41 days.
             serialize_decoded_chromosome_func: If `save_path` is used, then
                 this function will be used to serialize decoded Chromosomes.
             serialize_gene_func: function to get a serializable object from each
@@ -127,6 +129,7 @@ class GeneticAlgorithm(ABC):
         self.algo_fitness_func: Callable[[Chromosome], Score] = fitness_func
         self.opt_is_min: bool = opt_is_min
         self.experiment_name: str = experiment_name or self.__class__.__name__
+        self.fitness_timeout: int = fitness_timeout
         # 2021.11.22 random seed results variations may indicate that
         #  optimization is not enough well done.
         self.random_seed: int = random_seed
@@ -175,6 +178,13 @@ class GeneticAlgorithm(ABC):
         children_pairs = [self.crossover_func(a, b)
                           for (a, b) in zip(parents[::2], parents[1::2])]
         return [child for pair in children_pairs for child in pair]
+
+    def experiment_config(self) -> dict:
+        """
+        Define extra config that will be saved in the file
+        `experiment_config.yml` when calling the `fit` method.
+        """
+        return {}
 
     # Fit functions
     def default_fit_callback(self) -> None:
@@ -319,6 +329,13 @@ class GeneticAlgorithm(ABC):
             'random_seed': self.random_seed,
             'n_jobs': n_jobs
         }
+        # Save fit parameters with extra config
+        if self.save_path:
+            config = {'fit_parameters': fit_parameters}
+            if ec := self.experiment_config():
+                config['experiment_config'] = ec
+            save_yaml(config, file_path=f'{self.save_path}/experiment_config')
+
         fit_result = {}
         logger.info(f'initializing population. '
                     f'Using:\n{log_format(fit_parameters)}')
@@ -686,7 +703,7 @@ class GeneticAlgorithm(ABC):
         new_population = [c for c in self.population
                           if c not in cached_population]
         # Iterate only over the non-cached population
-        Parallel(n_jobs=n_jobs)(
+        Parallel(n_jobs=n_jobs, timeout=self.fitness_timeout)(
             delayed(self.get_chromosome_score)(chromosome)
             for chromosome in iter_func(new_population))
         self.population.sort(key=lambda x: self.get_chromosome_score(x).value,

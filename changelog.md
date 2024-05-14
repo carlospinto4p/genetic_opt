@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.1.17 - 14th May 2024
+
+- Class `GeneticAlgorithm`:
+  - Added the parameter `fitness_timeout`.
+  - Added the method `experiment_config`.
+  - Method `fit` will save a `experiment_config.yml` file with the fit 
+    configuration.
+
+
 ### 0.1.16 - 11th May 2024
 
 - Python version updated to `^3.11`
