@@ -20,12 +20,12 @@ from cpinto.plot.files import save_current_figure
 from cpinto.time import now_for_file_path, time_it_with_logger
 
 from genetic_opt import __version__
-from genetic_opt.core import Score
-from genetic_opt.core.algorithms.plots import plot_genetic_algo_metrics
-from genetic_opt.core.chromosome import Chromosome
-from genetic_opt.core.gene_space import GeneSpace
-from genetic_opt.core.metrics import Metric, get_population_metrics
-from genetic_opt.core.utils import serialize_fit_result
+from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
+from genetic_opt.chromosome import Chromosome
+from genetic_opt.gene_space import GeneSpace
+from genetic_opt.metrics import Metric, get_population_metrics
+from genetic_opt.score import Score
+from genetic_opt.utils import serialize_fit_result
 from genetic_opt.exceptions import GeneticOptException
 from genetic_opt.logs import logger
 
@@ -357,7 +357,7 @@ class GeneticAlgorithm(ABC):
             # Callback function. Split the cases when it is a method of this
             # class and when not
             if (hasattr(callback_func, '__self__') and
-                    callback_func.__self__ == self):
+                    getattr(callback_func, '__self__') == self):
                 callback_func()
             else:
                 callback_func(self)
@@ -739,56 +739,3 @@ class GeneticAlgorithm(ABC):
             decode_func=self.decode_func,
             fitting_seconds=generation_fitting_time)
         self.metrics.append(population_metrics)
-
-
-class BinaryGeneticAlgorithm(GeneticAlgorithm):
-    """
-    Genetic algorithm class to manage binary Gene Spaces,
-    the simplest ones.
-
-    See the doc of the superclass, GeneticAlgorithm.
-    """
-    def __init__(self, chromosome_length: int, chromosome_as_set: bool,
-                 decode_func: Callable[[Chromosome], Any],
-                 fitness_func: Callable[[Chromosome], Score],
-                 opt_is_min: bool, experiment_name: str = None,
-                 random_seed: int = 442, gene_space_random_seed: int = 2):
-        """
-        :param chromosome_length: length of the collection of genes that
-            encodes a determined problem state.
-        :param chromosome_as_set: whether to set the collection of genes as
-            a set or as a list, depending on the nature of the problem.
-        :param decode_func: function that receives the genotype (chromosome)
-            and returns the phenotype (original problem representation).
-        :param fitness_func: function to value each chromosome (genotype)
-            returning a Score object.
-        :param opt_is_min: whether the optimum fitness value is the minimum
-            (True) or the maximum (False) of the `fitness_func`.
-        :param experiment_name: Genetic algorithm experiment name.
-            Default to the class name.
-        :param random_seed: random seed to handle the internal methods.
-        :param gene_space_random_seed: random seed for the Gene Space.
-        """
-        gene_space: GeneSpace = GeneSpace(
-            {0, 1}, random_seed=gene_space_random_seed)
-        super().__init__(gene_space=gene_space,
-                         chromosome_length=chromosome_length,
-                         chromosome_as_set=chromosome_as_set,
-                         decode_func=decode_func, fitness_func=fitness_func,
-                         opt_is_min=opt_is_min, experiment_name=experiment_name,
-                         random_seed=random_seed)
-
-    def crossover_func(self, c1: Chromosome,
-                       c2: Chromosome) -> tuple[Chromosome, Chromosome]:
-        """
-        Realizes a cross between two chromosomes. Also called `recombination`.
-        :param c1: first chromosome.
-        :param c2: second chromosome.
-        :return: a tuple of chromosomes.
-        """
-        cut_position = self.random_state.randint(1, self.chromosome_length - 1)
-        genes_1 = c1.genes[:cut_position] + c2.genes[cut_position:]
-        genes_2 = c2.genes[:cut_position] + c1.genes[cut_position:]
-        cr1 = Chromosome(size=self.chromosome_length, genes=genes_1)
-        cr2 = Chromosome(size=self.chromosome_length, genes=genes_2)
-        return cr1, cr2

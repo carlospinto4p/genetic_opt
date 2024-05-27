@@ -8,7 +8,7 @@ from typing import Collection
 from numpy import ndarray
 from numpy.random import RandomState
 
-from genetic_opt.core.gene_space import GeneSpace
+from genetic_opt.gene_space import GeneSpace
 from genetic_opt.exceptions import GeneticOptException
 
 
@@ -70,9 +70,9 @@ class GeneList(GeneCollection):
                  gene_space: GeneSpace = None):
         """
         Initialize the gene list.
-        If `genes` is received, and it has a length lesser to the size
-        received, they will be completed until reach the desired size
-        using the `gene_space` received.
+        If `genes` is received, and it has a length less than the received
+        size, they will be filled until the desired size is reached
+        using the received `gene_space`.
         No `gene_space` can be received as long os the length of the received
         genes match the size required.
         :param size: total size of the list.

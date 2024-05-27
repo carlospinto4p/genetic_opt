@@ -5,9 +5,9 @@ from typing import Any, Callable
 from cpinto.files import load_json
 from cpinto.functions import identity_func
 
-from genetic_opt.core import Score
-from genetic_opt.core.chromosome import Chromosome
-from genetic_opt.core.metrics import Metric
+from genetic_opt.chromosome import Chromosome
+from genetic_opt.metrics import Metric
+from genetic_opt.score import Score
 
 
 # TODO 2024.03.03 Pending to test the functions of this class!

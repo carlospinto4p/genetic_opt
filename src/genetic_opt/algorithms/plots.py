@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 from cpinto.plot.settings import set_pyplot_config
 
-from genetic_opt.core.chromosome import Chromosome
-from genetic_opt.core.metrics import Metric
+from genetic_opt.chromosome import Chromosome
+from genetic_opt.metrics import Metric
 
 
 def plot_genetic_algo_metrics(

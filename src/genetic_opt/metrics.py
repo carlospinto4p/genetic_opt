@@ -10,8 +10,8 @@ from numpy import mean, median, var
 
 from cpinto.functions import identity_func
 
-from genetic_opt.core import Score
-from genetic_opt.core.chromosome import Chromosome
+from genetic_opt.chromosome import Chromosome
+from genetic_opt.score import Score
 
 
 @dataclass

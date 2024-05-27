@@ -2,37 +2,53 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from abc import ABC, abstractmethod
+from typing import Any, TypeVar
 
 from numpy.random import RandomState
 
 
-# TODO 2021.06.06 I'd like to set this as an iterator (a sized iterator?)
-#  because this could be arbitrarily big.
-class GeneSpace(set):
+GeneSpace = TypeVar('GeneSpace', bound='AbstractGeneSpace')
+
+
+class AbstractGeneSpace(ABC):
     """
     Genetic material class to apply Genetic Algorithms.
     A simple Gene (an element of this set) is a symbol that encodes some
     genotype, which represents a real problem phenotype.
     """
 
-    def __init__(self, *args, random_seed: int = 442, **kwargs):
+    def __init__(self, random_seed: int = 442):
         """
         Initialize the Gene Space.
         Elements inside are genes, which form chromosomes.
         A chromosome is a collection of genes that encodes a determined
         problem state.
-        :param args: arguments for the superclass (set).
         :param random_seed: random seed to use internally.
-        :param kwargs: kwargs for the superclass (set).
         """
-        super().__init__(*args, **kwargs)
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
 
-    def select_random(self, n: int | Iterable | tuple[int] = None) -> Any:
+    @abstractmethod
+    def __len__(self) -> int:
+        pass
+
+    @abstractmethod
+    def select_random(self, n: int | tuple[int, ...] = None) -> Any:
         """
         Get a random element of the Gene Space.
         :param n: dimensions of the output. Default to 1.
         """
-        return self.random_state.choice(list(self), size=n)
+        pass
+
+
+class BinaryGeneSpace(AbstractGeneSpace):
+    """
+    GeneSpace which uses the symbols {0, 1}.
+    """
+
+    def __len__(self) -> int:
+        return 2
+
+    def select_random(self, n: int | tuple[int] = None) -> Any:
+        return self.random_state.choice([0, 1], size=n)

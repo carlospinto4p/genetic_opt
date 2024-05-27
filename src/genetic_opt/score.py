@@ -1,4 +1,3 @@
-""" Genetic algorithm optimizers core module. """
 
 from dataclasses import dataclass
 

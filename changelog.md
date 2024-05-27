@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.0 - 27th May 2024
+
+- Removed the `core` module. Scripts inside it moved outside.
+- Class `core.gene_space.GeneSpace` doesn't inherit from `set` anymore.
+  It isn't a generator either. It is an ABC now, and the methods 
+  `select_random` and `__len__` have to be overwritten.
+  - Original class renamed to `AbstractGeneSpace`.
+  - Added class `BinaryGeneSpace`.
+- Class `BinaryGeneticAlgorithm` moved from `algorithms.core` to 
+  `algorithms.binary`.
+- Tests updated. No test was added.
+
+
 ### 0.1.17 - 14th May 2024
 
 - Class `GeneticAlgorithm`:

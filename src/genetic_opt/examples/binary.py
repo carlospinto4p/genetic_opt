@@ -1,9 +1,9 @@
 
 from cpinto.exceptions import ValidationException
 
-from genetic_opt.core import Score
-from genetic_opt.core.algorithms import BinaryGeneticAlgorithm
-from genetic_opt.core.chromosome import Chromosome
+from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
+from genetic_opt.chromosome import Chromosome
+from genetic_opt.score import Score
 
 
 class GeneticBag(BinaryGeneticAlgorithm):
