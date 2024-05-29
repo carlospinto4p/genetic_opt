@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.1 - 29th May 2024
+
+- Added logs when initializing `GeneticAlgorithm`. It will log the size
+  of the `GeneSpace` used.
+- Fix in the output type of `BinaryGeneSpace.select_random`.
+
+
 ### 0.2.0 - 27th May 2024
 
 - Removed the `core` module. Scripts inside it moved outside.

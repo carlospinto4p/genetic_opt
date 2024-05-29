@@ -50,5 +50,5 @@ class BinaryGeneSpace(AbstractGeneSpace):
     def __len__(self) -> int:
         return 2
 
-    def select_random(self, n: int | tuple[int] = None) -> Any:
+    def select_random(self, n: int | tuple[int] = None) -> int:
         return self.random_state.choice([0, 1], size=n)

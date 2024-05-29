@@ -157,6 +157,10 @@ class GeneticAlgorithm(ABC):
         # Inner mapping to keep track of the cached chromosome values
         self._chromosome_cache: set[int] = set()
 
+        # Some logging
+        logger.info(f'Genetic Opt. Algorithm initialized. '
+                    f'Gene Space length: {len(gene_space)}')
+
     @abstractmethod
     def crossover_func(self, c1: Chromosome,
                        c2: Chromosome) -> tuple[Chromosome, Chromosome]:
