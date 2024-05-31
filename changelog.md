@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.2 - 31st May 2024
+
+- Changes in `GeneticAlgorithm`:
+  - Added the method `get_init_population`, allowing manipulating the
+    functions used to get this population from the `GeneSpace`.
+  - Inner method `_get_fitted_data` returns the key 
+    `fit_metrics.total_fit_time.raw` rounded to two decimals.
+
+
 ### 0.2.1 - 29th May 2024
 
 - Added logs when initializing `GeneticAlgorithm`. It will log the size

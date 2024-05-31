@@ -414,6 +414,15 @@ class GeneticAlgorithm(ABC):
         return [(score, self.decode_func(chromosome))
                 for score, chromosome in bests]
 
+    def get_init_population(self, population_size: int) -> list[list[Any]]:
+        """
+        Initializes the first population of the algorithm.
+        :param population_size: number of Chromosomes of each population.
+        :return: a list of Gene Collections to use later to create Chromosomes.
+        """
+        return self.gene_space.select_random(
+            n=(population_size, self.chromosome_length))
+
     def init_population(self, population_size: int,
                         iter_func: Callable = None, n_jobs: int = -2) -> None:
         """
@@ -432,8 +441,8 @@ class GeneticAlgorithm(ABC):
         init_time = time()
 
         population = []
-        init_population = self.gene_space.select_random(
-            n=(population_size, self.chromosome_length))
+        init_population = self.get_init_population(
+            population_size=population_size)
         for gene_collection in init_population:
             population.append(Chromosome(
                 size=self.chromosome_length, genes=gene_collection,
@@ -603,7 +612,8 @@ class GeneticAlgorithm(ABC):
                 },
                 'total_fit_time': {
                     'n_jobs': n_jobs,
-                    'raw': sum(m.fitting_seconds for m in self.metrics)
+                    'raw': round(sum(m.fitting_seconds
+                                     for m in self.metrics), 2)
                 },
                 'genetic_opt_version': __version__
             },
