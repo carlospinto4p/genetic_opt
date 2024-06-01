@@ -509,6 +509,7 @@ class GeneticAlgorithm(ABC):
         n_besties = int(n_crossovers * besties_prop)
         # Get the crossover candidates, choosing the besties and a random
         # sample of the rest
+        # TODO 2024.05.31 random choice with the indexes to avoid this warning
         parents = self.population[:n_besties] + self.random_state.choice(
             self.population[n_besties:], size=n_crossovers - n_besties,
             replace=True).tolist()

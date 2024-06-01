@@ -2,6 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.3 - 1st June 2024
+
+- Fixes in `gene_collection`: `GeneList` and `GeneSet` were randomly setting
+  the `genes` ignoring the values received.
+
+
 ### 0.2.2 - 31st May 2024
 
 - Changes in `GeneticAlgorithm`:

@@ -86,7 +86,7 @@ class GeneList(GeneCollection):
                 'Chromosome must be initialized with the `genes` '
                 'parameter or using a `gene_space`')
         self.size = size
-        if gene_space:
+        if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)
         if (size_dif := size - len(genes)) > 0:
             genes = genes + self.select_random(gene_space, n=size_dif)
@@ -150,12 +150,14 @@ class GeneSet(GeneCollection):
         """
         if isinstance(genes, ndarray):
             genes = set(genes.flatten())
+        if isinstance(genes, list):
+            genes = set(genes)
         if not (genes or gene_space):
             raise GeneticOptException(
                 'Chromosome must be initialized with the `genes` '
                 'parameter or using a `gene_space`')
         self.size = size
-        if gene_space:
+        if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)
         if size > len(genes):
             genes = self._complete_genes(
