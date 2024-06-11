@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.4 - 6th June 2024
+
+- Fixes in `GeneticAlgorithm`: 
+  - Fix in the way `self._chromosome_cache` is handled.
+  - Method `_sort_population` will prevent having non-calculated scores.
+  - Removed the parameter `fitness_timeout`.
+- `README.md` updated.
+
+
 ### 0.2.3 - 1st June 2024
 
 - Fixes in `gene_collection`: `GeneList` and `GeneSet` were randomly setting

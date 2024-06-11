@@ -90,7 +90,7 @@ class GeneticAlgorithm(ABC):
             fitness_func: Callable[[Chromosome], Score],
             opt_is_min: bool, experiment_name: str = None,
             random_seed: int = 442, extra_config: dict = None,
-            save_path: str = None, fitness_timeout: int = 3_600_000,
+            save_path: str = None,
             serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
             serialize_gene_func: Callable[[Any], Any] = None):
         """
@@ -115,8 +115,6 @@ class GeneticAlgorithm(ABC):
             extra_config: Additional dictionary that will be returned
                 by the `fit` method, as a new key named `config`.
             save_path: Optional path to save the results of each run.
-            fitness_timeout: Timeout for the `fitness_func` when parallelizing
-                jobs. Default to 1000 hours, i.e. 41 days.
             serialize_decoded_chromosome_func: If `save_path` is used, then
                 this function will be used to serialize decoded Chromosomes.
             serialize_gene_func: function to get a serializable object from each
@@ -129,7 +127,6 @@ class GeneticAlgorithm(ABC):
         self.algo_fitness_func: Callable[[Chromosome], Score] = fitness_func
         self.opt_is_min: bool = opt_is_min
         self.experiment_name: str = experiment_name or self.__class__.__name__
-        self.fitness_timeout: int = fitness_timeout
         # 2021.11.22 random seed results variations may indicate that
         #  optimization is not enough well done.
         self.random_seed: int = random_seed
@@ -155,7 +152,7 @@ class GeneticAlgorithm(ABC):
         # child classes.
         self.extra_config: dict = extra_config or {}
         # Inner mapping to keep track of the cached chromosome values
-        self._chromosome_cache: set[int] = set()
+        self._chromosome_cache: dict[int, tuple[Any, float]] = {}
 
         # Some logging
         logger.info(f'Genetic Opt. Algorithm initialized. '
@@ -388,8 +385,10 @@ class GeneticAlgorithm(ABC):
         :param chromosome: Chromosome to get the Score from.
         :return: the Chromosome Score.
         """
-        self._chromosome_cache.add(chromosome.__hash__())
-        return chromosome.get_score(self.algo_fitness_func)
+        score = chromosome.get_score(self.algo_fitness_func)
+        self._chromosome_cache[chromosome.__hash__()] = \
+            score, chromosome.score_time
+        return score
 
     def get_best(self, population_idx: int = -1) -> tuple[Score, Any]:
         """
@@ -509,7 +508,6 @@ class GeneticAlgorithm(ABC):
         n_besties = int(n_crossovers * besties_prop)
         # Get the crossover candidates, choosing the besties and a random
         # sample of the rest
-        # TODO 2024.05.31 random choice with the indexes to avoid this warning
         parents = self.population[:n_besties] + self.random_state.choice(
             self.population[n_besties:], size=n_crossovers - n_besties,
             replace=True).tolist()
@@ -712,15 +710,33 @@ class GeneticAlgorithm(ABC):
             raise GeneticOptException('Tried to sort an empty population')
 
         iter_func = iter_func or identity_func
-        # Split the population between the cached one and the new one
+        # Split the population between the cached ones and the new ones
+        # Note that len(self.population) > self.population size at this step.
         cached_population = [c for c in self.population
                              if c.__hash__() in self._chromosome_cache]
         new_population = [c for c in self.population
                           if c not in cached_population]
         # Iterate only over the non-cached population
-        Parallel(n_jobs=n_jobs, timeout=self.fitness_timeout)(
-            delayed(self.get_chromosome_score)(chromosome)
-            for chromosome in iter_func(new_population))
+        Parallel(n_jobs=n_jobs)(delayed(self.get_chromosome_score)(
+            chromosome) for chromosome in iter_func(new_population))
+        # Add the saved scores to the cached population
+        for chromosome in cached_population:
+            if chromosome.score is None:
+                chromosome.score, chromosome.score_time = \
+                    self._chromosome_cache[chromosome.__hash__()]
+
+        # TODO 2024.06.06
+        # It could happen that some Chromosomes ended up with no scores.
+        # Not sure why this happens; I guess they got the same hash.
+        # Next lines just ensure that everything is fine:
+        # TODO 2024.06.10 Testing this. I shouldn't get any message like this
+        if bad_cs := [c for c in cached_population if c.score is None]:
+            logger.error(f'Found {len(bad_cs)} chromosomes with '
+                         f'no scores. Recalculating it...')
+            # Iterate over the problematic chromosomes
+            Parallel(n_jobs=n_jobs)(delayed(self.get_chromosome_score)(
+                chromosome)for chromosome in iter_func(bad_cs))
+
         self.population.sort(key=lambda x: self.get_chromosome_score(x).value,
                              reverse=not self.opt_is_min)
 
