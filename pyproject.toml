@@ -12,6 +12,7 @@ numpy = "^1.25.1"
 joblib = "^1.3.2"
 cpinto = {version = "^0.3.4", source = "gitlab_cpinto"}
 matplotlib = "^3.8.3"
+bson = "^0.5.10"
 
 
 [[tool.poetry.source]]

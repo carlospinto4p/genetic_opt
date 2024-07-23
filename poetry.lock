@@ -1,4 +1,21 @@
 [[package]]
+name = "bson"
+version = "0.5.10"
+description = "BSON codec for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+python-dateutil = ">=2.4.0"
+six = ">=1.9.0"
+
+[package.source]
+type = "legacy"
+url = "https://gitlab.com/api/v4/projects/42232103/packages/pypi/simple"
+reference = "gitlab_cpinto"
+
+[[package]]
 name = "contourpy"
 version = "1.2.1"
 description = "Python library for calculating contours of 2D quadrilateral grids"
@@ -223,9 +240,12 @@ reference = "gitlab_cpinto"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "bcaec181e3e13b26f1700e9c2a931174209041cf59b7e2ce0ec3d33a0efe33c8"
+content-hash = "0ff0678d1bef1a0a7c5732ece8242cbfd746db472e5f688747f1ff0da483ea7e"
 
 [metadata.files]
+bson = [
+    {file = "bson-0.5.10.tar.gz", hash = "sha256:d6511b2ab051139a9123c184de1a04227262173ad593429d21e443d6462d6590"},
+]
 contourpy = [
     {file = "contourpy-1.2.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:bd7c23df857d488f418439686d3b10ae2fbf9bc256cd045b37a8c16575ea1040"},
     {file = "contourpy-1.2.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:5b9eb0ca724a241683c9685a484da9d35c872fd42756574a7cfbf58af26677fd"},

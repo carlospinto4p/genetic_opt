@@ -22,6 +22,7 @@ from cpinto.time import now_for_file_path, time_it_with_logger
 from genetic_opt import __version__
 from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
 from genetic_opt.chromosome import Chromosome
+from genetic_opt.files import save_bson
 from genetic_opt.gene_space import GeneSpace
 from genetic_opt.metrics import Metric, get_population_metrics
 from genetic_opt.score import Score
@@ -90,7 +91,7 @@ class GeneticAlgorithm(ABC):
             fitness_func: Callable[[Chromosome], Score],
             opt_is_min: bool, experiment_name: str = None,
             random_seed: int = 442, extra_config: dict = None,
-            save_path: str = None,
+            save_path: str = None, save_as_bson: bool = True,
             serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
             serialize_gene_func: Callable[[Any], Any] = None):
         """
@@ -115,6 +116,8 @@ class GeneticAlgorithm(ABC):
             extra_config: Additional dictionary that will be returned
                 by the `fit` method, as a new key named `config`.
             save_path: Optional path to save the results of each run.
+            save_as_bson: Whether to save the fit result as a bson instead of
+                a json file. Default to True.
             serialize_decoded_chromosome_func: If `save_path` is used, then
                 this function will be used to serialize decoded Chromosomes.
             serialize_gene_func: function to get a serializable object from each
@@ -133,6 +136,7 @@ class GeneticAlgorithm(ABC):
         self.random_state: RandomState = RandomState(seed=random_seed)
         self.save_path: str = f'{ensure_folder_format(save_path)}/' \
             f'{self.experiment_name}/{now_for_file_path()}' if save_path else ''
+        self.save_as_bson: bool = save_as_bson
         self.serialize_decoded_chromosome_func: Callable[[Any], Any] = \
             serialize_decoded_chromosome_func
         self.serialize_gene_func: Callable[[Any], Any] = serialize_gene_func
@@ -188,6 +192,7 @@ class GeneticAlgorithm(ABC):
         return {}
 
     # Fit functions
+    # This one has to be a method and can not be static. Be careful.
     def default_fit_callback(self) -> None:
         """ Default callback function applied in the `fit` method. """
         return None
@@ -687,7 +692,17 @@ class GeneticAlgorithm(ABC):
             fit_result, self.serialize_decoded_chromosome_func,
             serialize_gene_func=self.serialize_gene_func)
 
-        save_json(serialized_data, f'{self.save_path}/fit_data')
+        # TODO 2024.07.23 Testing this
+        historial_length = len(serialized_data.pop('historical'))
+        # file_path = f'{self.save_path}/fit_data'
+        file_path = f'{self.save_path}/fit_data_{historial_length}'
+
+        # TODO 2024.07.23 Save a binary json instead.
+        # TODO 2024.07.23 Save a different file for each population.
+        if self.save_as_bson:
+            save_bson(serialized_data, file_path)
+        else:
+            save_json(serialized_data, file_path)
 
         if plot_metrics:
             plot_genetic_algo_metrics(metrics=fit_result['metrics'],

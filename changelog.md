@@ -11,6 +11,16 @@
 - `README.md` updated.
 
 
+### 0.2.4 - 23rd July 2024 - Not yet released!
+
+- Changes in `algorithms.GeneticAlgorithm`:
+  - Added the parameter `save_as_bson`, default to True.
+  - Method `_save_fit_result` will save a file for each population instead of
+    one big, single file.
+- Added the script `files` with functions `load_bson` and `save_bson`.
+- Added a dependency on `bson`.
+
+
 ### 0.2.3 - 1st June 2024
 
 - Fixes in `gene_collection`: `GeneList` and `GeneSet` were randomly setting
