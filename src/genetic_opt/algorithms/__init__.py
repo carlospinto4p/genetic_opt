@@ -12,7 +12,7 @@ from joblib import Parallel, delayed
 from numpy.random import RandomState
 
 from cpinto.exceptions import ValidationException
-from cpinto.files import ensure_folder_format, save_json, save_yaml
+from cpinto.files import ensure_folder_format, save_bson, save_json, save_yaml
 from cpinto.formatters import format_seconds
 from cpinto.functions import identity_func
 from cpinto.logs import log_format
@@ -22,7 +22,6 @@ from cpinto.time import now_for_file_path, time_it_with_logger
 from genetic_opt import __version__
 from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.files import save_bson
 from genetic_opt.gene_space import GeneSpace
 from genetic_opt.metrics import Metric, get_population_metrics
 from genetic_opt.score import Score
@@ -692,13 +691,12 @@ class GeneticAlgorithm(ABC):
             fit_result, self.serialize_decoded_chromosome_func,
             serialize_gene_func=self.serialize_gene_func)
 
-        # TODO 2024.07.23 Testing this
-        historial_length = len(serialized_data.pop('historical'))
-        # file_path = f'{self.save_path}/fit_data'
-        file_path = f'{self.save_path}/fit_data_{historial_length}'
+        historial = serialized_data.pop('historial')
+        n_population = len(historial)
+        serialized_data['population_idx'] = n_population
+        serialized_data['population'] = historial[-1]
+        file_path = f'{self.save_path}/fit_data/fit_data_{n_population}'
 
-        # TODO 2024.07.23 Save a binary json instead.
-        # TODO 2024.07.23 Save a different file for each population.
         if self.save_as_bson:
             save_bson(serialized_data, file_path)
         else:
@@ -740,10 +738,6 @@ class GeneticAlgorithm(ABC):
                 chromosome.score, chromosome.score_time = \
                     self._chromosome_cache[chromosome.__hash__()]
 
-        # TODO 2024.06.06
-        # It could happen that some Chromosomes ended up with no scores.
-        # Not sure why this happens; I guess they got the same hash.
-        # Next lines just ensure that everything is fine:
         # TODO 2024.06.10 Testing this. I shouldn't get any message like this
         if bad_cs := [c for c in cached_population if c.score is None]:
             logger.error(f'Found {len(bad_cs)} chromosomes with '
