@@ -2,7 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
-### 0.2.5 - 23rd July 2024 - Not yet released!
+### 0.2.6 - 26th July 2024 - Not yet released!
+
+- Changes in `algorithms.GeneticAlgorithm`:
+  - Added the parameters `mutation_invariant` and `crossover_invariant`.
+  - Added the inner functions `_crossover` and `_mutate`.
+- Added the exception `InvariantException`.
+
+
+### 0.2.5 - 25th July 2024
 
 - Changes in `algorithms.GeneticAlgorithm`:
   - Added the parameter `save_as_bson`, default to `True`.
@@ -17,7 +25,6 @@
   - `cpinto ^0.3.9`.
   - `bson ^0.5.10`.
   - `pymongo ^4.8.0`.
-
 
 
 ### 0.2.4 - 6th June 2024

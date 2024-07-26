@@ -22,12 +22,13 @@ from cpinto.time import now_for_file_path, time_it_with_logger
 from genetic_opt import __version__
 from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
 from genetic_opt.chromosome import Chromosome
+from genetic_opt.exceptions import GeneticOptException, InvariantException
 from genetic_opt.gene_space import GeneSpace
+from genetic_opt.logs import logger
 from genetic_opt.metrics import Metric, get_population_metrics
 from genetic_opt.score import Score
 from genetic_opt.utils import serialize_fit_result
-from genetic_opt.exceptions import GeneticOptException
-from genetic_opt.logs import logger
+
 
 
 # TODO 2024.02.13 Add pickle checkpoints?
@@ -84,15 +85,18 @@ class GeneticAlgorithm(ABC):
     """
 
     def __init__(
-            self, gene_space: GeneSpace, chromosome_length: int,
-            chromosome_as_set: bool,
-            decode_func: Callable[[Chromosome], Any],
-            fitness_func: Callable[[Chromosome], Score],
-            opt_is_min: bool, experiment_name: str = None,
-            random_seed: int = 442, extra_config: dict = None,
-            save_path: str = None, save_as_bson: bool = True,
-            serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
-            serialize_gene_func: Callable[[Any], Any] = None):
+        self, gene_space: GeneSpace, chromosome_length: int,
+        chromosome_as_set: bool, decode_func: Callable[[Chromosome], Any],
+        fitness_func: Callable[[Chromosome], Score],
+        opt_is_min: bool, experiment_name: str = None,
+        random_seed: int = 442, extra_config: dict = None,
+        save_path: str = None, save_as_bson: bool = True,
+        serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
+        serialize_gene_func: Callable[[Any], Any] = None,
+        mutation_invariant: Callable[[Chromosome, Chromosome], bool] = None,
+        crossover_invariant: Callable[[
+            tuple[Chromosome, Chromosome], tuple[Chromosome, Chromosome]],
+            bool] = None):
         """
         Initialize the GeneticAlgorithm base class.
         Args:
@@ -119,8 +123,14 @@ class GeneticAlgorithm(ABC):
                 a json file. Default to True.
             serialize_decoded_chromosome_func: If `save_path` is used, then
                 this function will be used to serialize decoded Chromosomes.
-            serialize_gene_func: function to get a serializable object from each
+            serialize_gene_func: Function to get a serializable object from each
                 gene.
+            mutation_invariant: Optional function to check if the Chromosome
+                that will mutate and the mutation result share the same
+                invariant property.
+            crossover_invariant: Optional function to check if the Chromosomes
+                that will be crossed and their recombined result share the
+                same invariant property.
         """
         self.gene_space: GeneSpace = gene_space
         self.chromosome_length: int = chromosome_length
@@ -136,9 +146,11 @@ class GeneticAlgorithm(ABC):
         self.save_path: str = f'{ensure_folder_format(save_path)}/' \
             f'{self.experiment_name}/{now_for_file_path()}' if save_path else ''
         self.save_as_bson: bool = save_as_bson
-        self.serialize_decoded_chromosome_func: Callable[[Any], Any] = \
+        self.serialize_decoded_chromosome_func = \
             serialize_decoded_chromosome_func
-        self.serialize_gene_func: Callable[[Any], Any] = serialize_gene_func
+        self.serialize_gene_func = serialize_gene_func
+        self.mutation_invariant = mutation_invariant
+        self.crossover_invariant = crossover_invariant
 
         # Security checks
         if save_path and not serialize_decoded_chromosome_func:
@@ -166,11 +178,58 @@ class GeneticAlgorithm(ABC):
                        c2: Chromosome) -> tuple[Chromosome, Chromosome]:
         """
         Realizes a cross between two Chromosomes. Also called `recombination`.
-        :param c1: first Chromosome.
-        :param c2: second Chromosome.
-        :return: a tuple of Chromosomes.
+        Args:
+            c1: first Chromosome.
+            c2: second Chromosome.
+        Returns:
+            a tuple of Chromosomes.
         """
         pass
+
+    def mutate(self, chromosome: Chromosome, prob: float) -> Chromosome:
+        """
+        Mutate a chromosome.
+        Args:
+            chromosome: Chromosome to mutate.
+            prob: probability to gen mutation.
+        Returns:
+            a Chromosome that could have mutated or not.
+        """
+        return chromosome.random_mutate(
+            gene_space=self.gene_space, gene_mutate_prob=prob)
+
+    def _crossover(self, c1: Chromosome,
+                   c2: Chromosome) -> tuple[Chromosome, Chromosome]:
+        """
+        Inner function to recombine tuples of Chromosomes.
+        Args:
+            c1: first Chromosome.
+            c2: second Chromosome.
+        Returns:
+            a tuple of Chromosomes.
+        """
+        crossover = self.crossover_func(c1, c2)
+        if self.crossover_invariant:
+            if not self.crossover_invariant((c1, c2), crossover):
+                raise InvariantException(f'Chromosomes {c1}, {c2} mutated to '
+                                         f'{crossover}')
+        return crossover
+
+    def _mutate(self, chromosome: Chromosome, prob: float) -> Chromosome:
+        """
+        Inner function to manage mutated Chromosomes.
+        Args:
+            chromosome: Chromosome to mutate.
+            prob: probability to gen mutation.
+        Returns:
+            a Chromosome that could have mutated or not. Inner managed.
+        """
+        mutation = self.mutate(chromosome, prob)
+        if self.mutation_invariant:
+            if not self.mutation_invariant(chromosome, mutation):
+                raise InvariantException(f'Chromosome {chromosome} mutated to '
+                                         f'{mutation}')
+        return mutation
 
     def cross_parents(self, parents: list[Chromosome]) -> list[Chromosome]:
         """
@@ -179,7 +238,7 @@ class GeneticAlgorithm(ABC):
         :param parents: list of Chromosomes.
         :return: list of Chromosomes.
         """
-        children_pairs = [self.crossover_func(a, b)
+        children_pairs = [self._crossover(a, b)
                           for (a, b) in zip(parents[::2], parents[1::2])]
         return [child for pair in children_pairs for child in pair]
 
@@ -458,17 +517,6 @@ class GeneticAlgorithm(ABC):
         init_population_time = round(time() - init_time, 2)
         self._update_metrics(generation_fitting_time=init_population_time)
 
-    def mutate(self, chromosome: Chromosome, prob: float) -> Chromosome:
-        """
-        Mutate a chromosome.
-        :param chromosome: Chromosome to mutate.
-            A Chromosome is a list of genes.
-        :param prob: probability to gen mutation.
-        :return: a Chromosome that could have mutated or not.
-        """
-        return chromosome.random_mutate(
-            gene_space=self.gene_space, gene_mutate_prob=prob)
-
     def mutate_chromosomes(self, chromosomes: list[Chromosome],
                            mutate_prob: float) -> list[Chromosome]:
         """
@@ -479,7 +527,7 @@ class GeneticAlgorithm(ABC):
         :return: a list of mutated Chromosomes.
             Some of them could have mutated and others not.
         """
-        return [self.mutate(chromosome, mutate_prob)
+        return [self._mutate(chromosome, mutate_prob)
                 for chromosome in chromosomes]
 
     def next_generation_selection(
