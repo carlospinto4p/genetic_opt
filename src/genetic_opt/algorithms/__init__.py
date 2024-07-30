@@ -30,7 +30,6 @@ from genetic_opt.score import Score
 from genetic_opt.utils import serialize_fit_result
 
 
-
 # TODO 2024.02.13 Add pickle checkpoints?
 #  I could use joblib for this one as well
 class GeneticAlgorithm(ABC):
@@ -149,6 +148,8 @@ class GeneticAlgorithm(ABC):
         self.serialize_decoded_chromosome_func = \
             serialize_decoded_chromosome_func
         self.serialize_gene_func = serialize_gene_func
+        # TODO 2024.07.30 I could get the times of these checks and add them
+        #   in the fit time metrics. This is not important at all at this point.
         self.mutation_invariant = mutation_invariant
         self.crossover_invariant = crossover_invariant
 
@@ -268,6 +269,17 @@ class GeneticAlgorithm(ABC):
         and check if it is 0.
         Replace this method with `GeneticAlgorithm.no_exit_condition`
         to avoid this default behavior.
+        :param improvement: dictionary returned by the inner method
+            `_get_iteration_improvement`. These are the differences for
+            each metrics key between the latest two metrics:
+                - best_score.
+                - mean.
+                - median.
+                - var.
+                - n_uniques.
+                - percent_uniques.
+                - fitting_seconds.
+
         """
         if 'mean' not in improvement:
             logger.error('looking for the key `mean` in the improvement '

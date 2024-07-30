@@ -160,6 +160,7 @@ class GeneSet(GeneCollection):
         if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)
         if size > len(genes):
+            # GeneSpace required
             genes = self._complete_genes(
                 genes, gene_space=gene_space, n=size)
         super().__init__(size=size, genes=genes)

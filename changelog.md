@@ -2,11 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
-### 0.2.6 - 26th July 2024 - Not yet released!
+### 0.2.6 - 30th July 2024
 
 - Changes in `algorithms.GeneticAlgorithm`:
   - Added the parameters `mutation_invariant` and `crossover_invariant`.
   - Added the inner functions `_crossover` and `_mutate`.
+  - Added Some documentation for the method `no_improvement_condition`.
 - Added the exception `InvariantException`.
 
 
