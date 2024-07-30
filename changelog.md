@@ -7,6 +7,9 @@
 - Changes in `algorithms.GeneticAlgorithm`:
   - Added the parameters `mutation_invariant` and `crossover_invariant`.
   - Added the inner functions `_crossover` and `_mutate`.
+  - Methods `no_improvement_condition` and `no_exit_condition` are not
+    static anymore. They take the self instance as a parameter, not the
+    improvement dict.
   - Added Some documentation for the method `no_improvement_condition`.
 - Added the exception `InvariantException`.
 

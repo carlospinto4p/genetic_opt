@@ -256,12 +256,10 @@ class GeneticAlgorithm(ABC):
         """ Default callback function applied in the `fit` method. """
         return None
 
-    @staticmethod
-    def no_exit_condition(improvement: dict) -> bool:
+    def no_exit_condition(self) -> bool:
         return False
 
-    @staticmethod
-    def no_improvement_condition(improvement: dict) -> bool:
+    def no_improvement_condition(self) -> bool:
         """
         Method applied to the improvement dict after each fit step.
         If this condition is met, the fit process will stop.
@@ -269,28 +267,14 @@ class GeneticAlgorithm(ABC):
         and check if it is 0.
         Replace this method with `GeneticAlgorithm.no_exit_condition`
         to avoid this default behavior.
-        :param improvement: dictionary returned by the inner method
-            `_get_iteration_improvement`. These are the differences for
-            each metrics key between the latest two metrics:
-                - best_score.
-                - mean.
-                - median.
-                - var.
-                - n_uniques.
-                - percent_uniques.
-                - fitting_seconds.
-
         """
-        if 'mean' not in improvement:
-            logger.error('looking for the key `mean` in the improvement '
-                         'dict, but not found')
-        return improvement.get('mean', -1) == 0
+        return self._get_iteration_improvement().get('mean', -1) == 0
 
     @time_it_with_logger(logger)
     def fit(self, n_generations: int, population_size: int,
             crossovers_prop: float = 0.7, besties_prop: float = 0.6,
             mutate_prob: float = 0.05,
-            exit_condition: Callable[[dict], bool] = None,
+            exit_condition: Callable[[GeneticAlgorithm], bool] = None,
             plot_metrics: bool = True,
             other_metrics_to_plot: dict[str, Callable[
                 [Chromosome], float]] = None,
@@ -307,21 +291,10 @@ class GeneticAlgorithm(ABC):
             besties_prop: proportion of bests chromosomes to maintain for
                 each generation.
             mutate_prob: probability of a chromosome mutation.
-            exit_condition: function which takes the improvement dictionary
-                as argument, which has the keys:
-                    - best_score: difference of the values of the best scores
-                        of the last two populations.
-                    - mean: difference of the means of the scores.
-                    - median: difference of the medians of the scores.
-                    - var: difference of the variances of the scores.
-                    - n_uniques: difference of the number of unique
-                        Chromosomes in the populations.
-                    - percent_uniques: difference of the percent of unique
-                        Chromosomes in the populations.
-                    - fitting_seconds: difference of the number of seconds
-                        that it took for the populations to get fitted.
-                and return True if the exist condition is met. If so, the
-                training will end before reaching all `n_generations`.
+            exit_condition: function which takes the self GeneticAlgorithm
+                instance and return True if the exit condition is met.
+                If so, the training will end before reaching
+                all `n_generations`.
             plot_metrics: whether to save a metrics plot after finishing the
                 training.
             other_metrics_to_plot: dictionary with schema:
@@ -443,11 +416,11 @@ class GeneticAlgorithm(ABC):
             self._save_fit_result(fit_result, plot_metrics=plot_metrics,
                                   other_metrics_to_plot=other_metrics_to_plot)
             # exit conditions
-            if self.no_improvement_condition(iteration_improvement):
+            if self.no_improvement_condition():
                 logger.info(f'no more improvement detected!\n\t'
                             f'Training finished at iteration {n_generation}')
                 break
-            if exit_condition(iteration_improvement):
+            if exit_condition(self):
                 logger.info(f'exit condition reached!\n\t'
                             f'Training finished at iteration {n_generation}')
                 break
