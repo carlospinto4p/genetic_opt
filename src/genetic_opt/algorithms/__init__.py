@@ -361,7 +361,7 @@ class GeneticAlgorithm(ABC):
         """
         # Default parameters
         iter_func = iter_func or identity_func
-        exit_condition = exit_condition or self.no_exit_condition
+        exit_func = exit_condition or self.no_exit_condition
         callback_func = callback_func or self.default_fit_callback
         # Validate n_jobs
         if n_jobs < 0:
@@ -415,15 +415,23 @@ class GeneticAlgorithm(ABC):
                 fit_parameters=fit_parameters, n_jobs=n_jobs)
             self._save_fit_result(fit_result, plot_metrics=plot_metrics,
                                   other_metrics_to_plot=other_metrics_to_plot)
-            # exit conditions
+            # Exit conditions
             if self.no_improvement_condition():
                 logger.info(f'no more improvement detected!\n\t'
                             f'Training finished at iteration {n_generation}')
                 break
-            if exit_condition(self):
-                logger.info(f'exit condition reached!\n\t'
-                            f'Training finished at iteration {n_generation}')
-                break
+            # Apply exit function
+            if (hasattr(exit_func, '__self__') and
+                    getattr(exit_func, '__self__') == self):
+                if exit_func():
+                    logger.info(f'exit condition reached!\n\tTraining '
+                                f'finished at iteration {n_generation}')
+                    break
+            else:
+                if exit_func(self):
+                    logger.info(f'exit condition reached!\n\tTraining '
+                                f'finished at iteration {n_generation}')
+                    break
         return fit_result
 
     @lru_cache(maxsize=None)
