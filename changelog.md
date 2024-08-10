@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.7 - 10th August 2024
+
+- Changes in `algorithms.GeneticAlgorithm.fit`:
+  - Added the parameter `min_population_size`. 
+  - Removed an unreachable check about Chromosomes with no scores. 
+
+
 ### 0.2.6 - 30th July 2024
 
 - Changes in `algorithms.GeneticAlgorithm`:

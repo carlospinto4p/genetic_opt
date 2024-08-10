@@ -82,7 +82,6 @@ class GeneticAlgorithm(ABC):
     be overridden to constraint the whole algorithm by keeping certain
     families of Chromosomes.
     """
-
     def __init__(
         self, gene_space: GeneSpace, chromosome_length: int,
         chromosome_as_set: bool, decode_func: Callable[[Chromosome], Any],
@@ -273,7 +272,7 @@ class GeneticAlgorithm(ABC):
     @time_it_with_logger(logger)
     def fit(self, n_generations: int, population_size: int,
             crossovers_prop: float = 0.7, besties_prop: float = 0.6,
-            mutate_prob: float = 0.05,
+            mutate_prob: float = 0.05, min_population_size: int = 10,
             exit_condition: Callable[[GeneticAlgorithm], bool] = None,
             plot_metrics: bool = True,
             other_metrics_to_plot: dict[str, Callable[
@@ -291,6 +290,8 @@ class GeneticAlgorithm(ABC):
             besties_prop: proportion of bests chromosomes to maintain for
                 each generation.
             mutate_prob: probability of a chromosome mutation.
+            min_population_size: minimum size a population can have before
+                stopping the training.
             exit_condition: function which takes the self GeneticAlgorithm
                 instance and return True if the exit condition is met.
                 If so, the training will end before reaching
@@ -363,6 +364,10 @@ class GeneticAlgorithm(ABC):
         iter_func = iter_func or identity_func
         exit_func = exit_condition or self.no_exit_condition
         callback_func = callback_func or self.default_fit_callback
+        # Validate parameters
+        if min_population_size > population_size:
+            raise ValidationException(f'{min_population_size} is greater '
+                                      f'than {population_size = }')
         # Validate n_jobs
         if n_jobs < 0:
             n_jobs = cpu_count() + n_jobs + 1
@@ -375,6 +380,7 @@ class GeneticAlgorithm(ABC):
             'crossovers_prop': crossovers_prop,
             'besties_prop': besties_prop,
             'mutate_prob': mutate_prob,
+            'min_population_size': min_population_size,
             'random_seed': self.random_seed,
             'n_jobs': n_jobs
         }
@@ -416,6 +422,11 @@ class GeneticAlgorithm(ABC):
             self._save_fit_result(fit_result, plot_metrics=plot_metrics,
                                   other_metrics_to_plot=other_metrics_to_plot)
             # Exit conditions
+            if self.metrics[-1].n_uniques < min_population_size:
+                logger.info(f'Minimum population size reached: '
+                            f'{min_population_size}\n\t'
+                            f'Training finished at iteration {n_generation}')
+                break
             if self.no_improvement_condition():
                 logger.info(f'no more improvement detected!\n\t'
                             f'Training finished at iteration {n_generation}')
@@ -779,13 +790,13 @@ class GeneticAlgorithm(ABC):
                 chromosome.score, chromosome.score_time = \
                     self._chromosome_cache[chromosome.__hash__()]
 
-        # TODO 2024.06.10 Testing this. I shouldn't get any message like this
-        if bad_cs := [c for c in cached_population if c.score is None]:
-            logger.error(f'Found {len(bad_cs)} chromosomes with '
-                         f'no scores. Recalculating it...')
-            # Iterate over the problematic chromosomes
-            Parallel(n_jobs=n_jobs)(delayed(self.get_chromosome_score)(
-                chromosome)for chromosome in iter_func(bad_cs))
+        # TODO 2024.06.10 Testing this. This code is not reachable.
+        # if bad_cs := [c for c in cached_population if c.score is None]:
+        #     logger.error(f'Found {len(bad_cs)} chromosomes with '
+        #                  f'no scores. Recalculating it...')
+        #     # Iterate over the problematic chromosomes
+        #     Parallel(n_jobs=n_jobs)(delayed(self.get_chromosome_score)(
+        #         chromosome)for chromosome in iter_func(bad_cs))
 
         self.population.sort(key=lambda x: self.get_chromosome_score(x).value,
                              reverse=not self.opt_is_min)
