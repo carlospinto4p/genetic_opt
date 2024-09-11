@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.8 - 11th September 2024
+
+- Changes in `utils`:
+  - Added the parameter `remove_duplicates` in the functions 
+  `load_fit_result` and `load_fit_result_file`.
+
+
 ### 0.2.7 - 10th August 2024
 
 - Changes in `algorithms.GeneticAlgorithm.fit`:
