@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.9 - 14th September 2024
+
+- Fix in `chromosome.Chromosome.__repr__` when `self.is_gene_set`: previous
+  representation of the object was not unique, and thus, all Chromosome 
+  comparisons broken, even the `Chromosome.id` method.
+
+
 ### 0.2.8 - 11th September 2024
 
 - Changes in `utils`:

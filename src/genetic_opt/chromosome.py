@@ -93,6 +93,9 @@ class Chromosome:
         return self.id
 
     def __repr__(self) -> str:
+        if self.is_gene_set:
+            # Sort the set representation to make it unique
+            return f'{{{list(sorted(self.genes)).__repr__()[1:-1]}}}'
         return self.genes.__repr__()
 
     @property
