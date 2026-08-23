@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.10 - 23rd August 2026
+
+- `.gitlab-ci.yml`: publish job now uploads to `${CI_PROJECT_ID}`
+  instead of the hardcoded shared `cpinto` registry project
+  (42232103) — own-registry publish direction, programme
+  backlog 2026-08-22.
+- Copied all 14 previously published releases (0.1.0 through
+  0.2.9) from the shared registry to `genetic-opt`'s own GitLab
+  package registry (project 48069240), sha256-verified against
+  the source before and after.
+
+
 ### 0.2.9 - 14th September 2024
 
 - Fix in `chromosome.Chromosome.__repr__` when `self.is_gene_set`: previous
