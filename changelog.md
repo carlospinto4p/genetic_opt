@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.11 - 25th August 2026
+
+- Migrated `pyproject.toml` from Poetry to uv (PEP 621 `[project]` +
+  `[dependency-groups]`, `hatchling` build backend). The old Poetry
+  setup had no dev dependencies and no pinned formatter, so every
+  file was reformatted by whichever `ruff` was newest on the day it
+  was last touched.
+- Added `ruff>=0.16.4` to `dev` so the per-edit formatter is pinned.
+- Removed `poetry.lock` (superseded by `uv.lock`).
+
+
 ### 0.2.10 - 23rd August 2026
 
 - `.gitlab-ci.yml`: publish job now uploads to `${CI_PROJECT_ID}`
