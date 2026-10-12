@@ -42,6 +42,10 @@
   possible chromosomes, so `exploration_percentage` is not a
   percentage: a knapsack run of 10 objects reports 7500. Both
   implementations do it.
-- [ ] Move `downstream`'s backtest, the fitness function of
-  `RuleOptimizer`, to Rust. Third step of the same plan, and the one
-  that makes the rewrite faster.
+- [ ] Nothing uses the Rust crate `crates/genetic_opt` yet. The third
+  step of the plan was done on 12th October 2026 in `downstream` 0.6.0
+  as a Rust backtest that the Python engine of this package calls: the
+  backtest was the slow part (seconds a run, now milliseconds), not
+  the engine. Moving `downstream`'s `RuleOptimizer` onto the Rust engine
+  is only worth it if the Python engine shows up as the slow part of a
+  real run. Until then, decide whether to keep the crate.
