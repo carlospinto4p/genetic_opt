@@ -60,7 +60,20 @@ class Chromosome:
         self.score: Score | None = None
         self.score_time: int = 0
         self.random_seed: int = random_seed
-        self.random_state: RandomState = RandomState(seed=random_seed)
+        # Built on first use: `GeneticAlgorithm` passes its own state to
+        # `random_mutate`, so most Chromosomes never need one.
+        self._random_state: RandomState | None = None
+
+    @property
+    def random_state(self) -> RandomState:
+        """RandomState of this Chromosome, built from `random_seed`."""
+        if self._random_state is None:
+            self._random_state = RandomState(seed=self.random_seed)
+        return self._random_state
+
+    @random_state.setter
+    def random_state(self, random_state: RandomState) -> None:
+        self._random_state = random_state
 
     @classmethod
     def from_dict(

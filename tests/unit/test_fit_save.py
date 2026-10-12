@@ -1,3 +1,5 @@
+from os.path import exists
+
 import pytest
 
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
@@ -64,6 +66,23 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["fit_parameters"] == fit_result["fit_parameters"]
     assert len(loaded["historial"]) == saved_generations
+    assert loaded["historial"] == fit_result["historial"]
+
+
+def test_fit_saves_the_plot_when_the_run_ends(tmp_path):
+    algorithm = ones_algorithm(tmp_path)
+    plot_path = f"{algorithm.save_path}/fit_plots.jpg"
+    # The callback runs in each generation, before it is saved.
+    plot_seen: list[bool] = []
+    algorithm.fit(
+        n_generations=3,
+        population_size=20,
+        n_jobs=1,
+        callback_func=lambda _: plot_seen.append(exists(plot_path)),
+    )
+    assert len(plot_seen) > 1
+    assert not any(plot_seen)
+    assert exists(plot_path)
 
 
 def test_runs_started_in_the_same_second_get_a_folder_each(

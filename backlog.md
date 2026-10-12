@@ -21,33 +21,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `src/genetic_opt/algorithms/__init__.py:881-890` with
-  `utils.py:309-315`: with a `save_path`, every generation
-  serializes the whole history of populations and
-  `_save_fit_result` then keeps only the last one. The work grows
-  with the square of the generations. Serialize `historial[-1]`
-  only. (HIGH, S)
-- [ ] `src/genetic_opt/algorithms/__init__.py:898-904`: with a
-  `save_path` and `plot_metrics=True` (the default) a 13x15 inch
-  matplotlib figure is built and written to `fit_plots.jpg` after
-  every generation; the `fit` docstring (line 354) says "after
-  finishing the training". `plots.py:88-93` re-applies every
-  `other_metrics_to_plot` function to every generation each time.
-  Plot once at the end or every N generations. (HIGH, S)
-- [ ] `src/genetic_opt/chromosome.py:63-64`: every Chromosome builds
-  its own `RandomState`, about 217 microseconds of the 214-220 a
-  10-gene Chromosome takes to build, and about 3 KB in each pickled
-  Chromosome. Since 0.2.13 `fit` passes the algorithm's own state
-  (`algorithms/__init__.py:237-241`), so it is only a fallback
-  (`chromosome.py:159`). Build it on first use. (HIGH, S)
-- [ ] `src/genetic_opt/examples/binary.py:43-82`: `decode_bag` and
-  `fit_bag` close over `self`, so sending the fitness function to a
-  worker pickles the whole `GeneticBag` with its population,
-  history and caches: 8,857 bytes before a `fit`, 634,581 after 9
-  generations of 50. Close over `weights`, `values` and `capacity`.
-  `changelog.md:94-96` says only the fitness function travels,
-  which does not hold for a bound method or such a closure; say so
-  in the `fit` docstring. (HIGH, S)
 - [ ] `src/genetic_opt/algorithms/__init__.py:488-490` and `:787-793`:
   `_get_fitted_data` runs after every generation and decodes the
   whole population each time, also with no `save_path`, where every
@@ -285,9 +258,9 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `len(calls) == len(set(calls))` holds for an empty file, so the
   test passes if the logging wrapper is never called. Add
   `assert calls`. (MED, S)
-- [ ] `tests/unit/test_fit_save.py:49` checks the loaded history by length
-  only, not its content, its order or `fit_metrics`. The run has at
-  most 4 files, so the ordering of `fit_data_10` after `fit_data_2`
+- [ ] `tests/unit/test_fit_save.py`: since 0.6.3 the loaded history is
+  compared with the one `fit` returns, but `fit_metrics` is not
+  checked. The run has at most 4 files, so the ordering of `fit_data_10` after `fit_data_2`
   that `utils.py:89` handles never runs. (MED, S)
 - [ ] Python error paths with no test: the three
   `ValidationException` cases (`algorithms/__init__.py:423-433`,

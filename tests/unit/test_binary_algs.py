@@ -1,7 +1,9 @@
 import gc
+import pickle
 import weakref
 
 import pytest
+from joblib.externals import cloudpickle
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
@@ -78,6 +80,36 @@ def test_mutation_differs_between_chromosomes():
         chromosomes, mutate_prob=0.5
     )
     assert first.genes != second.genes
+
+
+def test_a_chromosome_builds_its_random_state_on_first_use():
+    size = 40
+    unused = Chromosome(size=size, genes=[0] * size)
+    unused_bytes = len(pickle.dumps(unused))
+    # Two Chromosomes with one seed and no state given mutate alike.
+    first, second = (
+        Chromosome(size=size, genes=[0] * size).random_mutate(
+            gene_space=OnesGeneSpace(), gene_mutate_prob=0.5
+        )
+        for _ in range(2)
+    )
+    assert 0 < sum(first.genes) < size
+    assert first.genes == second.genes
+    # The state is some 3 KB of a pickled Chromosome.
+    assert unused_bytes < 1000 < len(pickle.dumps(first))
+
+
+def test_the_fitness_function_of_the_bag_travels_without_the_bag():
+    genetic_bag = GeneticBag(
+        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+        capacity=165,
+    )
+    sent_bytes = len(cloudpickle.dumps(genetic_bag.algo_fitness_func))
+    genetic_bag.fit(
+        n_generations=5, population_size=50, n_jobs=1, plot_metrics=False
+    )
+    assert len(cloudpickle.dumps(genetic_bag.algo_fitness_func)) == sent_bytes
 
 
 def _counting_bag() -> tuple[GeneticBag, list[str]]:

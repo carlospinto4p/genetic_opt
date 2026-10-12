@@ -395,6 +395,10 @@ class GeneticAlgorithm(ABC):
             n_jobs: number of jobs to use to parallelize the evaluation of
                 each element of the population.
                 Default to -2 (all cpus except one).
+                With more than one job the fitness function is sent to
+                the worker processes. A bound method, or a function that
+                uses `self`, takes the whole algorithm with it: its
+                population, its history and its scores.
 
         Returns: dictionary with keys:
             - bests: dictionary:
@@ -527,11 +531,7 @@ class GeneticAlgorithm(ABC):
             fit_result = self._get_fitted_data(
                 fit_parameters=fit_parameters, n_jobs=n_jobs
             )
-            self._save_fit_result(
-                fit_result,
-                plot_metrics=plot_metrics,
-                other_metrics_to_plot=other_metrics_to_plot,
-            )
+            self._save_fit_result(fit_result)
             # Exit conditions
             if self.metrics[-1].n_uniques < min_population_size:
                 logger.info(
@@ -561,6 +561,13 @@ class GeneticAlgorithm(ABC):
                         f"finished at iteration {n_generation}"
                     )
                     break
+        if self.save_path and plot_metrics and fit_result:
+            plot_genetic_algo_metrics(
+                metrics=fit_result["metrics"],
+                fit_metrics=fit_result["fit_metrics"],
+                other_keys=other_metrics_to_plot,
+            )
+            save_current_figure(f"{self.save_path}/fit_plots")
         return fit_result
 
     def get_chromosome_score(self, chromosome: Chromosome) -> Score:
@@ -900,53 +907,32 @@ class GeneticAlgorithm(ABC):
         )
         return iteration_improvement
 
-    def _save_fit_result(
-        self,
-        fit_result: dict,
-        plot_metrics: bool = True,
-        other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
-        | None = None,
-    ) -> None:
+    def _save_fit_result(self, fit_result: dict) -> None:
         """
-        Save the result of the `fit` method into a folder.
+        Save the last population of the `fit` method into a folder.
         Args:
             fit_result: response of the method `_get_fitted_data`.
-            plot_metrics: whether to save a metrics plot after finishing the
-                training.
-            other_metrics_to_plot: dictionary with schema:
-                - <metric name>: function
-                where the functions are applied to the best Chromosome of each
-                population.
-                This parameter only applies if `plot_metrics` is True.
         Returns:
             None.
         """
         if not self.save_path:
             return
+        # The file holds the last population only, so the earlier ones
+        # are not serialized.
+        n_population = len(fit_result["historial"])
         serialized_data = serialize_fit_result(
-            fit_result,
+            fit_result | {"historial": fit_result["historial"][-1:]},
             self.serialize_decoded_chromosome_func,
             serialize_gene_func=self.serialize_gene_func,
         )
-
-        historial = serialized_data.pop("historial")
-        n_population = len(historial)
         serialized_data["population_idx"] = n_population
-        serialized_data["population"] = historial[-1]
+        serialized_data["population"] = serialized_data.pop("historial")[-1]
         file_path = f"{self.save_path}/fit_data/fit_data_{n_population}"
 
         if self.save_as_bson:
             save_bson(serialized_data, file_path)
         else:
             save_json(serialized_data, file_path)
-
-        if plot_metrics:
-            plot_genetic_algo_metrics(
-                metrics=fit_result["metrics"],
-                fit_metrics=fit_result["fit_metrics"],
-                other_keys=other_metrics_to_plot,
-            )
-            save_current_figure(f"{self.save_path}/fit_plots")
 
     def _sort_population(
         self, iter_func: Callable | None = None, n_jobs: int = -2

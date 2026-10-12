@@ -2,6 +2,32 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.3 - 12th October 2026
+
+- `algorithms/__init__.py`:
+  - With a `save_path`, `fit` serializes only the last population
+    after each generation. It serialized every earlier population
+    again and wrote the last one, so the work grew with the square of
+    the generations. The saved files are unchanged.
+  - With a `save_path` and `plot_metrics`, `fit` writes
+    `fit_plots.jpg` once, when the run ends, as its docstring says.
+    It built and wrote the figure after every generation. A run that
+    is interrupted now leaves no plot.
+  - The `fit` docstring says that a fitness function which is a bound
+    method, or uses `self`, takes the whole algorithm to each worker
+    process.
+- `Chromosome.random_state` is built on first use. `fit` passes the
+  algorithm's own state, so a Chromosome of a run no longer builds
+  one or carries it when pickled.
+- `examples/binary.py`: the decode and fitness functions of
+  `GeneticBag` use `weights`, `values` and `capacity` and not `self`,
+  so the bag with its population and history is no longer sent to the
+  worker processes.
+- Added tests: 1 in `tests/unit/test_fit_save.py`, which also compares
+  the loaded history with the one `fit` returns, and 2 in
+  `tests/unit/test_binary_algs.py`.
+- `backlog.md`: removed the four items above.
+
 ### v0.6.2 - 12th October 2026
 
 - `GeneticOptException` and its subclasses no longer log their

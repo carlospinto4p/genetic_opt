@@ -40,6 +40,9 @@ class GeneticBag(BinaryGeneticAlgorithm):
                 f"{len(weights) = } must be the same as {len(values) = }"
             )
 
+        # The two functions below use these arguments and not `self`: a
+        # function that uses `self` takes the whole algorithm with it to
+        # each worker process.
         def decode_bag(chromosome: Chromosome) -> list[int]:
             """
             Transform the Chromosome representation, where 1 means that the
@@ -57,11 +60,11 @@ class GeneticBag(BinaryGeneticAlgorithm):
             total_weight, decoded_bag = 0, []
             for i, val in enumerate(chromosome.genes):
                 if val:
-                    if total_weight + self.weights[i] > self.capacity:
-                        total_weight = self.capacity + 1
+                    if total_weight + weights[i] > capacity:
+                        total_weight = capacity + 1
                         decoded_bag.append(0)
                     else:
-                        total_weight += self.weights[i]
+                        total_weight += weights[i]
                         decoded_bag.append(1)
                 else:
                     decoded_bag.append(0)
@@ -76,8 +79,7 @@ class GeneticBag(BinaryGeneticAlgorithm):
             """
             decoded_bag = decode_bag(chromosome)
             score = sum(
-                self.values[i] * decoded_bag[i]
-                for i in range(chromosome.size)
+                values[i] * decoded_bag[i] for i in range(chromosome.size)
             )
             return Score(value=score)
 
