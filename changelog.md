@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.4 - 12th October 2026
+
+- `.gitlab-ci.yml`: the publish job installs `build==1.6.1` and
+  `twine==7.0.0` instead of whatever version is newest that day. The
+  job holds `CI_JOB_TOKEN`. Versions are the latest on
+  https://pypi.org/pypi/build/json and
+  https://pypi.org/pypi/twine/json, read 12th October 2026. Same
+  line as the shared `python-base` copy in `market_wrapper` v7.25.2.
+
 ### v0.6.3 - 12th October 2026
 
 - `algorithms/__init__.py`:

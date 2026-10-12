@@ -29,7 +29,10 @@ publish-package:
       when: manual
       allow_failure: false
   script:
-    - pip install --no-cache-dir build twine
+    # This job holds `CI_JOB_TOKEN`, so both tools are named by version.
+    # Latest on https://pypi.org/pypi/build/json and
+    # https://pypi.org/pypi/twine/json, read 12th October 2026.
+    - pip install --no-cache-dir build==1.6.1 twine==7.0.0
     # Guard: the git tag must match the packaged version, so a mistagged
     # release never publishes under the wrong version.
     - VERSION=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/^version = "(.*)"/\1/')
