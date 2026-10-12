@@ -27,11 +27,21 @@
 - [ ] `fit_metrics.fitness_func_calls` in `_get_fitted_data` is
   mislabelled: `total` is the number of cache hits, not of calls, and
   `percent_processed` divides the misses by the hits.
-- [ ] Rewrite the library in Rust, as a Python package built with
-  PyO3 and maturin so `downstream` keeps importing it. Second step of
-  the plan agreed on 12th October 2026. On its own it gives little
-  speed: the time goes into the fitness function, which stays in
-  Python.
+- [ ] Decide how Python code uses the Rust crate added in 0.4.0
+  (`crates/genetic_opt`), then build it with PyO3 and maturin. Second
+  step of the plan agreed on 12th October 2026; the engine is done.
+  Two ways. Keep the Python engine for problems written in Python and
+  expose only problems written in Rust, which is where the speed is.
+  Or run Python problems through the Rust engine, which calls back
+  into Python for the fitness function, the crossover and the
+  mutation, and is not faster.
+- [ ] The Rust crate does not save the plot `fit_plots.jpg` that the
+  Python package saves with each generation.
+- [ ] `space_points` in the saved `fit_metrics` is the number of
+  different genes (2 for a binary problem), not the number of
+  possible chromosomes, so `exploration_percentage` is not a
+  percentage: a knapsack run of 10 objects reports 7500. Both
+  implementations do it.
 - [ ] Move `downstream`'s backtest, the fitness function of
   `RuleOptimizer`, to Rust. Third step of the same plan, and the one
   that makes the rewrite faster.

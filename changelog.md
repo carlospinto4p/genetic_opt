@@ -2,6 +2,33 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.4.0 - 12th October 2026
+
+- Added the Rust crate `crates/genetic_opt`: the algorithm of this
+  package written in Rust. The Python package does not use it yet.
+  - `Problem`: trait a problem implements. Its genes, fitness
+    function, crossover and decoding, with defaults for the first
+    population and for the mutation.
+  - `GeneticAlgorithm`: runs a `Problem` with the selection of
+    `algorithms.GeneticAlgorithm`. The fitness function runs on
+    several threads, once per different chromosome.
+  - `FitConfig`, `FitResult`, `Metric`, `FitMetrics`, `Score`,
+    `Chromosome`: the parameters and the results of a run.
+  - `SaveConfig`: saves a run as `experiment_config.yml` and one
+    `fit_data/fit_data_<n>` file per generation, BSON or JSON, in the
+    layout `utils.load_fit_result` reads. No plot is saved.
+  - `problems::Knapsack` and the example program `knapsack`: the
+    problem of `examples.binary.GeneticBag`.
+  - 12 tests.
+- The version of the crate is kept equal to this package's.
+- Added `tests/test_rust_layout.py`: the example program saves a run
+  as BSON and as JSON, and `utils.load_fit_result` loads it. Skipped
+  without `cargo`.
+- `README.md`: added the section "Rust crate", with the differences
+  between the two implementations.
+- `.gitignore`: added `target/`.
+
+
 ### 0.3.0 - 12th October 2026
 
 - Removed the dependency on `cpinto`, and the `gitlab_cpinto` index
