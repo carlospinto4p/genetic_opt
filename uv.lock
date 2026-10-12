@@ -89,7 +89,7 @@ wheels = [
 
 [[package]]
 name = "genetic-opt"
-version = "0.6.3"
+version = "0.6.5"
 source = { editable = "." }
 dependencies = [
     { name = "joblib" },

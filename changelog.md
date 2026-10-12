@@ -2,6 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.5 - 12th October 2026
+
+- Version lines brought back in step: v0.6.4 bumped `pyproject.toml`
+  alone, leaving `crates/genetic_opt/Cargo.toml`, its `Cargo.lock`
+  and `uv.lock` at 0.6.3. All four now read 0.6.5. No code change.
+
 ### v0.6.4 - 12th October 2026
 
 - `.gitlab-ci.yml`: the publish job installs `build==1.6.1` and
