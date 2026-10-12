@@ -2,7 +2,35 @@
 ## Changelog - Genetic-Opt
 
 
-### 0.4.0 - 12th October 2026
+### v0.4.1 - 12th October 2026
+
+- Registered the project in `programme` and added the files its
+  projects carry:
+  - `CLAUDE.md`, and `.claude/` with `settings.json` and the rules
+    `committing`, `testing` and `versioning`.
+  - `roadmap.md`, as a stub with no direction in it.
+  - `.pre-commit-config.yaml`, `.pre-commit-scripts/` and
+    `scripts/changelog-add.sh`. A commit now runs `ruff`, the
+    changelog and version guards, and `cargo fmt --check` and
+    `cargo clippy -D warnings` when a file of the crate changes.
+  - `.python-version`: 3.14.
+  - `.gitattributes`.
+- `.gitignore` and `.gitlab-ci.yml` replaced by the `python-base`
+  ones. `.gitignore` keeps `/.run/`, `*/data/` and `target/`, and now
+  covers `.venv/` and `.env*`. The package is published by the manual
+  job `publish-package`, offered only on a `vX.Y.Z` tag that matches
+  the version; `build-wheel` is gone.
+- Removed the dependency on `bson`. It does not build on Python 3.14,
+  and `files.py` already used the `bson` module that `pymongo`
+  installs in the same folder.
+- Tests moved to `tests/unit/` and `tests/integration/`.
+  `test_rust_layout.py` is the integration suite and carries the
+  `integration` marker, registered in `pyproject.toml` with
+  `testpaths`.
+- `changelog.md`: version headers now start with `v`, which the
+  changelog guards need.
+
+### v0.4.0 - 12th October 2026
 
 - Added the Rust crate `crates/genetic_opt`: the algorithm of this
   package written in Rust. The Python package does not use it yet.
@@ -29,7 +57,7 @@
 - `.gitignore`: added `target/`.
 
 
-### 0.3.0 - 12th October 2026
+### v0.3.0 - 12th October 2026
 
 - Removed the dependency on `cpinto`, and the `gitlab_cpinto` index
   with it. The functions used from it were copied from `cpinto`
@@ -68,7 +96,7 @@
     read back with `utils.load_fit_result`.
 
 
-### 0.2.13 - 12th October 2026
+### v0.2.13 - 12th October 2026
 
 - Fixed `algorithms.GeneticAlgorithm.mutate`: every Chromosome mutated
   in the same positions. Each one drew from its own `RandomState`, and
@@ -83,7 +111,7 @@
 - `chromosome.py` was reformatted by the pinned `ruff`.
 
 
-### 0.2.12 - 12th October 2026
+### v0.2.12 - 12th October 2026
 
 - Fixed `algorithms.GeneticAlgorithm._sort_population`: with `n_jobs`
   above 1, the scores computed by the worker processes were discarded
@@ -101,7 +129,7 @@
 - `algorithms/__init__.py` was reformatted by the pinned `ruff`.
 
 
-### 0.2.11 - 25th August 2026
+### v0.2.11 - 25th August 2026
 
 - Migrated `pyproject.toml` from Poetry to uv (PEP 621 `[project]` +
   `[dependency-groups]`, `hatchling` build backend). The old Poetry
@@ -112,7 +140,7 @@
 - Removed `poetry.lock` (superseded by `uv.lock`).
 
 
-### 0.2.10 - 23rd August 2026
+### v0.2.10 - 23rd August 2026
 
 - `.gitlab-ci.yml`: publish job now uploads to `${CI_PROJECT_ID}`
   instead of the hardcoded shared `cpinto` registry project
@@ -124,28 +152,28 @@
   the source before and after.
 
 
-### 0.2.9 - 14th September 2024
+### v0.2.9 - 14th September 2024
 
 - Fix in `chromosome.Chromosome.__repr__` when `self.is_gene_set`: previous
   representation of the object was not unique, and thus, all Chromosome 
   comparisons broken, even the `Chromosome.id` method.
 
 
-### 0.2.8 - 11th September 2024
+### v0.2.8 - 11th September 2024
 
 - Changes in `utils`:
   - Added the parameter `remove_duplicates` in the functions 
   `load_fit_result` and `load_fit_result_file`.
 
 
-### 0.2.7 - 10th August 2024
+### v0.2.7 - 10th August 2024
 
 - Changes in `algorithms.GeneticAlgorithm.fit`:
   - Added the parameter `min_population_size`. 
   - Removed an unreachable check about Chromosomes with no scores. 
 
 
-### 0.2.6 - 30th July 2024
+### v0.2.6 - 30th July 2024
 
 - Changes in `algorithms.GeneticAlgorithm`:
   - Added the parameters `mutation_invariant` and `crossover_invariant`.
@@ -157,7 +185,7 @@
 - Added the exception `InvariantException`.
 
 
-### 0.2.5 - 25th July 2024
+### v0.2.5 - 25th July 2024
 
 - Changes in `algorithms.GeneticAlgorithm`:
   - Added the parameter `save_as_bson`, default to `True`.
@@ -174,7 +202,7 @@
   - `pymongo ^4.8.0`.
 
 
-### 0.2.4 - 6th June 2024
+### v0.2.4 - 6th June 2024
 
 - Fixes in `GeneticAlgorithm`: 
   - Fix in the way `self._chromosome_cache` is handled.
@@ -183,13 +211,13 @@
 - `README.md` updated.
 
 
-### 0.2.3 - 1st June 2024
+### v0.2.3 - 1st June 2024
 
 - Fixes in `gene_collection`: `GeneList` and `GeneSet` were randomly setting
   the `genes` ignoring the values received.
 
 
-### 0.2.2 - 31st May 2024
+### v0.2.2 - 31st May 2024
 
 - Changes in `GeneticAlgorithm`:
   - Added the method `get_init_population`, allowing manipulating the
@@ -198,14 +226,14 @@
     `fit_metrics.total_fit_time.raw` rounded to two decimals.
 
 
-### 0.2.1 - 29th May 2024
+### v0.2.1 - 29th May 2024
 
 - Added logs when initializing `GeneticAlgorithm`. It will log the size
   of the `GeneSpace` used.
 - Fix in the output type of `BinaryGeneSpace.select_random`.
 
 
-### 0.2.0 - 27th May 2024
+### v0.2.0 - 27th May 2024
 
 - Removed the `core` module. Scripts inside it moved outside.
 - Class `core.gene_space.GeneSpace` doesn't inherit from `set` anymore.
@@ -218,7 +246,7 @@
 - Tests updated. No test was added.
 
 
-### 0.1.17 - 14th May 2024
+### v0.1.17 - 14th May 2024
 
 - Class `GeneticAlgorithm`:
   - Added the parameter `fitness_timeout`.
@@ -227,27 +255,27 @@
     configuration.
 
 
-### 0.1.16 - 11th May 2024
+### v0.1.16 - 11th May 2024
 
 - Python version updated to `^3.11`
 - `Score` key `extra_metrics` also allow `list` as type.
 - Added documentation for `GeneticAlgorithm.no_improvement_condition`.
 
 
-### 0.1.15 - 20th April 2024
+### v0.1.15 - 20th April 2024
 
 - Changes in `GeneticAlgorithm`:
   - Added the method `default_fit_callback`.
   - Added the static methods `no_exit_condition` and `no_improvement_condition`.
 
 
-### 0.1.14 - 20th March 2024
+### v0.1.14 - 20th March 2024
 
 - Dependency on `cpinto` updated to `0.3.4`.
 - Removed the module `utils`.
 
 
-### 0.1.13 - 12th March 2024
+### v0.1.13 - 12th March 2024
 
 - Changes in the `Metrics` object:
   - Key `best` is not a tuple anymore. Now it is a dictionary with keys
@@ -258,7 +286,7 @@
   - Changes in `core.algorithms.plots` when handling those `Metrics`.
 
 
-### 0.1.12 - 11th March 2024
+### v0.1.12 - 11th March 2024
 
 - Changes in `Geneticalgorithm._get_fitted_data`:
   - Added the keys `space_points` and `exploration_percentage` in the
@@ -267,7 +295,7 @@
   - Changes in `plots.plot_genetic_algo_metrics` to show these new keys.
 
 
-### 0.1.11 - 10th March 2024
+### v0.1.11 - 10th March 2024
 
 - Changes in `GeneticAlgorithm`:
   - Method `fit` will save each iteration result after calculating it.
@@ -278,7 +306,7 @@
   argument `is_gene_set`.
 
 
-### 0.1.10 - 9th March 2024 
+### v0.1.10 - 9th March 2024 
 
 - Module `core`:
   - Added the parameter `size` to `metrics.Metric`.
@@ -288,7 +316,7 @@
     - It shows the populations size.
 
 
-### 0.1.9 - 8th March 2024 
+### v0.1.9 - 8th March 2024 
 
 - Changes in `core.algorithms`:
   - Added the function `plots.plot_genetic_algo_metrics`.
@@ -297,21 +325,21 @@
 - Dependency on `cpinto` updated to `v0.3.2`.
 
 
-### 0.1.8 - 6th March 2024
+### v0.1.8 - 6th March 2024
 
 - Change in the `Score` object: added the key `name`.
 - Removed the parameter `score_name` from `GeneticAlgorithm`.
 - Added a dependency on `matplotlib`, but it is not used for now.
 
 
-### 0.1.7 - 5th March 2024
+### v0.1.7 - 5th March 2024
 
 - Added the method `from_dict` to the classes `Chromosome` and `Metrics`.
 - Added the function `utils.load_fit_result`.
 - Fix saving the `historial` key in the function `utils.serialize_fit_result`.
 
 
-### 0.1.6 - 4th March 2024
+### v0.1.6 - 4th March 2024
 
 - Added the method `to_dict` to the classes `Chromosome`, `Score` and `Metrics`.  
 - Dependency on `cpinto` updated to `v0.3.0`.
@@ -322,7 +350,7 @@
 - Added the function `utils.serialize_fit_result`.
 
 
-### 0.1.5 - 29th February 2024
+### v0.1.5 - 29th February 2024
 
 - Class `GeneticAlgorithm`: 
   - Method `init_population`:
@@ -336,7 +364,7 @@
   when receiving the `genes` parameter.
 
 
-### 0.1.4 - 21st February 2024
+### v0.1.4 - 21st February 2024
 
 - Class `GeneticAlgorithm`: 
   - Changes in the method `_get_fitted_data`:
@@ -347,7 +375,7 @@
   `fitting_seconds` to 2 decimals.
 
 
-### 0.1.3 - 14th February 2024
+### v0.1.3 - 14th February 2024
 
 - Added `joblib` dependency.
 - Class `GeneticAlgorithm`: 
@@ -359,7 +387,7 @@
 - `Chromosome.__hash__` maximum length reduced to 30. 
 
 
-### 0.1.2 - 13th February 2024
+### v0.1.2 - 13th February 2024
 
 - Class `GeneticAlgorithm`: 
   - Included the parameter `iter_func` inside the main iterations:
@@ -372,7 +400,7 @@
 - `Chromosome.__hash__` has a maximum length of 100 instead of 15. 
 
 
-### 0.1.1 - 12th February 2024
+### v0.1.1 - 12th February 2024
 
 - Class `GeneticAlgorithm`: 
   - Added the parameter `extra_config`.
@@ -382,6 +410,6 @@
 - Improved the documentation of `core.gene_space.GeneSpace`.
 
 
-### 0.1.0 - 27th July 2023
+### v0.1.0 - 27th July 2023
 
 - First release.

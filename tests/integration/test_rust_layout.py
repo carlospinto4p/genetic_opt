@@ -9,12 +9,15 @@ from genetic_opt.score import Score
 from genetic_opt.utils import load_fit_result
 
 CRATE_MANIFEST = (
-    Path(__file__).parent.parent / "crates" / "genetic_opt" / "Cargo.toml"
+    Path(__file__).parents[2] / "crates" / "genetic_opt" / "Cargo.toml"
 )
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("cargo") is None, reason="needs the Rust toolchain"
-)
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        shutil.which("cargo") is None, reason="needs the Rust toolchain"
+    ),
+]
 
 
 @pytest.mark.parametrize("extension", ["bson", "json"])

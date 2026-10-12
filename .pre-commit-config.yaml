@@ -1,0 +1,87 @@
+# See https://pre-commit.com for more information:
+# How to use:
+#   - install pre-commit: pip install pre-commit
+#   - install hooks: pre-commit install
+#   - run hooks: pre-commit run --all-files (this is what CI does)
+repos:
+  - repo: local
+    hooks:
+      # `uv run`, not `uvx`: uvx resolves whatever ruff PyPI serves today,
+      # which drifts from the lock-pinned ruff used in development and
+      # silently changes the default rule set between releases. `uv run`
+      # uses this project's own ruff, so commit-time and local linting
+      # always agree. No path argument — pre-commit passes the staged
+      # files; a literal `.` would override that and format the whole tree.
+      #
+      # `--no-sync` is required, not an optimization. A bare `uv run`
+      # re-syncs first — and on a version-bump commit that sync rewrites
+      # `uv.lock` *mid-hook* (its self-referential version catching up
+      # to the bumped `pyproject.toml`; CLAUDE.md's uv.lock policy says
+      # to commit that as its own change, not have a hook rewrite it
+      # out from under a commit in progress), so pre-commit's
+      # stash/restore cycle then fights its own linter. Verified
+      # 2026-07-24: with a bumped `pyproject.toml`, `uv run ruff
+      # --version` rewrote `uv.lock`; `uv run --no-sync` left it
+      # byte-identical. A linter must never mutate the repo it is
+      # linting.
+      #
+      # Precondition: the project venv must already hold ruff (every
+      # repo declares it as a dev dependency, so `uv sync --all-extras`
+      # satisfies this). `--no-sync` will not install it on demand.
+      - id: ruff-fix
+        name: Ruff Lint Fix
+        entry: uv run --no-sync ruff check --fix
+        language: system
+        types: [ python ]
+      - id: ruff-format
+        name: Ruff Format
+        entry: uv run --no-sync ruff format
+        language: system
+        types: [python]
+      - id: warn-unstaged-claude
+        name: Unstaged .claude/ changes
+        entry: python .pre-commit-scripts/check_unstaged_claude.py
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: check-changelog-headers
+        name: Changelog header overwrite guard
+        entry: .pre-commit-scripts/check_changelog_headers.sh
+        language: script
+        pass_filenames: false
+        files: '(^|/)changelog\.md$|(^|/)changelog/.*\.md$'
+  - repo: local
+    hooks:
+      - id: check-version-changelog
+        name: Version bump needs a changelog entry
+        entry: .pre-commit-scripts/check_version_changelog.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+  - repo: local
+    hooks:
+      - id: check-no-nul-bytes
+        name: Reject NUL bytes in text files
+        entry: .pre-commit-scripts/check_no_nul_bytes.sh
+        language: script
+        # Only files pre-commit classifies as text — real binaries (images,
+        # fonts) legitimately contain NUL and must not be flagged.
+        types: [text]
+  # Local to this project: the Rust crate. Adapted from the `rust-base`
+  # skeleton, which points at `src-tauri/`.
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt --check (crates/genetic_opt)
+        entry: cargo fmt --manifest-path crates/genetic_opt/Cargo.toml --check
+        language: system
+        files: '^crates/genetic_opt/.*\.rs$'
+        pass_filenames: false
+  - repo: local
+    hooks:
+      - id: cargo-clippy
+        name: cargo clippy -D warnings (crates/genetic_opt)
+        entry: cargo clippy --manifest-path crates/genetic_opt/Cargo.toml --all-targets -- -D warnings
+        language: system
+        files: '^crates/genetic_opt/.*\.rs$'
+        pass_filenames: false

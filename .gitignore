@@ -1,15 +1,61 @@
+# Pycharm
 .idea/
-.pytest_cache/
+.project
+/.run/
+
+# Python
 __pycache__/
+.pytest_cache/
+*.egg-info/
+venv/
+.venv/
+
+# Environment Variables/Secrets
+.env
+.env.*
+!.env.example
+!.env.template
+credentials/
+*/credentials/
+
+# Jupyter Notebooks
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
-*/data/
-*/credentials/
+
+# Temp / local overrides
+*.local.*
+*.tmp.*
+*.bak.*
+
+# Sketches / local experiments
 sketches/
-build/
+
+# Environment tokens
+.gitlab_token
+
+# AWS / Cloud
+.aws-sam/
+
+# Logs / Output
 *.log
-*/*.egg-info/
-venv/
-/.project
-/.run/
+logs/
+
+# Build artifacts
+build/
+dist/
+
+# Ruff cache
+.ruff_cache/
+
+# Claude runtime artifacts (local/ephemeral — never commit)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/wip
+.claude/docs-ok
+
+# Local data
+*/data/
+
+# Rust crate (`crates/genetic_opt`)
 target/
+**/target/

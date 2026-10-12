@@ -2,21 +2,12 @@
 
 ### 2026.10.12 (found while fixing parallel scoring and removing `cpinto`)
 
-- [ ] **[manual]** Publish 0.3.0 to the package registry. The
-  `build-wheel` job in `.gitlab-ci.yml` is manual, so 0.2.12, 0.2.13
-  and 0.3.0 are in `master` only. `downstream` asks for
-  `genetic_opt>=0.2.9` and gets the parallel scoring fix only once a
-  newer version is published.
-- [ ] `pyproject.toml` depends on both `bson` and `pymongo`, and both
-  install a `bson` folder: 6 files of `bson` 0.5.10 against 35 of
-  `pymongo` 4.17.0 in the same place. Whichever is installed last
-  wins. `files.py` calls `bson.BSON.encode` and `bson.decode`, which
-  are `pymongo`'s. Drop the `bson` dependency, then reinstall
-  `pymongo`, since removing `bson` deletes the files they share.
-  `tests/test_files.py` and `tests/test_fit_save.py` cover the result.
-  - `/scan` of 12th October 2026: until `bson` is dropped, which of
-    the two decoders parses a file given to `load_bson` depends on
-    the install order.
+- [ ] **[manual]** Publish a version newer than 0.2.9 to the package
+  registry. Publishing is manual, so 0.2.12 to 0.4.1 are in `master`
+  only. `downstream` asks for `genetic_opt>=0.2.9` and gets the
+  parallel scoring fix only once a newer version is published. Since
+  0.4.1 the job is `publish-package` in `.gitlab-ci.yml`, offered
+  only on a `vX.Y.Z` tag that matches the version.
 - [ ] `ruff check src tests` reports 56 findings with the default
   rules of `ruff` 0.16.4: 45 `RUF013` (a parameter typed `str` with
   the default `None`), 3 `I001`, 3 `PIE790`, 2 `UP035`, 2 `SIM102`
@@ -74,13 +65,13 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `besties_prop` and `mutate_prob` are not range-checked in either
   implementation (Python checks only the two sizes and `n_jobs`,
   `algorithms/__init__.py:423-433`). (MED, S)
-- [ ] `.gitlab-ci.yml:14-17`: the `build-wheel` job that holds
-  `CI_JOB_TOKEN` uses `image: python:latest`, an unpinned
-  `pip install twine`, and `hatchling` with no version bound
-  (`pyproject.toml:24`). Pin all three. GitLab CI is disabled across
-  the fleet (`~/.claude/rules/publish-on-demand.md`), so the job
-  rarely runs. The header comments (lines 1-10) still describe
-  Poetry. (MED, S)
+- [ ] `.gitlab-ci.yml`: the `publish-package` job that holds
+  `CI_JOB_TOKEN` installs `build` and `twine` with no version, and
+  `hatchling` has no version bound (`pyproject.toml:23`). The file
+  is the `python-base` skeleton since 0.4.1, so the pin belongs in
+  `programme`. GitLab CI is disabled across the fleet
+  (`~/.claude/rules/publish-on-demand.md`), so the job rarely runs.
+  (LOW, S)
 - [ ] `src/genetic_opt/files.py:217-219`: `save_yaml` uses `yaml.dump`
   with the full `Dumper`, so an object that is not plain data in
   `experiment_config()` is written as a `!!python/object` tag that
@@ -127,10 +118,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 - [ ] `pyproject.toml:14` and `:19-20`: `pyyaml>=6.0.3`,
   `pytest>=9.1.1` and `ruff>=0.16.4` have no upper bound, unlike
   the other five runtime dependencies. (LOW, S)
-- [ ] `.gitignore:12` has `venv/`, which does not match `.venv/`
-  (ignored today only by the file uv writes inside it), and no
-  `.env*` pattern. Add `.venv/`, and `.env*` with `!.env.example`.
-  (LOW, S)
 - [ ] **[manual]** `pyproject.toml:5`: the `authors` field carries a
   personal name and a personal email address, published as package
   metadata with every wheel. Decide whether that is wanted.
@@ -192,18 +179,18 @@ micro-timing run on a loaded machine and are orders of magnitude.
   worker process. 0.3.0 moved these imports to the top
   (`changelog.md:55-56`). Import them inside the save and plot
   functions. (MED, S)
-- [ ] `tests/test_binary_algs.py:13-19`: `test_genetic_bag` uses the
+- [ ] `tests/unit/test_binary_algs.py:13-19`: `test_genetic_bag` uses the
   default `n_jobs=-2`, which starts 15 worker processes on a
   16-core machine for a 10-gene knapsack. The same `fit` with
   `n_jobs=1` took 0.12 seconds. Line 46-48 already covers two
   processes. Pass `n_jobs=1`. (MED, S)
-- [ ] `tests/test_rust_layout.py:15-36`: the Python suite runs
+- [ ] `tests/integration/test_rust_layout.py:15-36`: the Python suite runs
   `cargo run --example knapsack` twice. With no `target/` folder
   that compiles the crate and 102 dependencies inside pytest, needs
   the network, and writes to `crates/genetic_opt/target/`. The test
   is skipped without a word when `cargo` is missing, so a machine
-  without Rust reports green. Give it an `integration` marker,
-  register the marker, and build once in a session fixture. (MED, S)
+  without Rust reports green. It carries the `integration` marker
+  since 0.4.1. Build once in a session fixture. (MED, S)
 - [ ] `src/genetic_opt/utils.py:79-94` and `:200-207`:
   `load_fit_result` parses every generation file in full, and each
   file holds the metrics of all generations so far, so loading
@@ -242,9 +229,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
   its default features on, and `bson` and `serde_norway` are needed
   only when saving (`Cargo.toml:9-17`, 102 crates in the lock
   file). (LOW, S)
-- [ ] `pyproject.toml` has no `[tool.pytest.ini_options]`, so a bare
-  `pytest` also walks `crates/genetic_opt/target/` and `sketches/`.
-  Add `testpaths = ["tests"]`. (LOW, S)
 - [ ] The repo records no wall-clock time for the Python suite, the
   Rust suite or a cargo build. Run `pytest --durations=10` and
   `cargo test` once and write the date beside the result. (LOW, S)
@@ -275,7 +259,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   turns the default `n_jobs=-2` into `cpu_count() - 1`, which is 0
   on a one-core machine and raises `ValidationException`. The Rust
   crate guards it with `.max(1)` (`algorithm.rs:234`).
-  `tests/test_binary_algs.py:13`, `:47` and
+  `tests/unit/test_binary_algs.py:13`, `:47` and
   `crates/genetic_opt/tests/algorithm.rs:139`, `:161` ask for 2
   jobs and fail on one core too. (MED, S)
 - [ ] `src/genetic_opt/algorithms/__init__.py:308-317` with `:831-839`:
@@ -378,7 +362,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `examples/__init__.py:4` refers to a `core` module that does not
   exist; `metrics.py:50`, `:53` say `from_dict` where `to_dict`
   makes the dict; commented-out assertions on a key the code no
-  longer produces at `tests/test_binary_algs.py:24-26`. (LOW, S)
+  longer produces at `tests/unit/test_binary_algs.py:24-26`. (LOW, S)
 - [ ] Rust, small: a thread pool build failure is reported as
   `Error::Validation` (`algorithm.rs:172`); `save.rs:67`, `:82`,
   `:88` turn serializer errors into strings; `fit_parameters()`
@@ -390,10 +374,11 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Test coverage**
 
-- [ ] Nothing runs either suite on a push: `.gitlab-ci.yml:12` has
-  only the manual `build-wheel` job, and GitLab CI is disabled
-  across the fleet. A pre-push hook running `pytest` and
-  `cargo test` is the alternative. (HIGH, S)
+- [ ] Nothing runs either suite on a push: GitLab CI is disabled
+  across the fleet, and the commit hooks added in 0.4.1 run `ruff`,
+  `cargo fmt` and `cargo clippy` but no test. A pre-push hook
+  running `pytest tests/unit` and `cargo test` is the alternative.
+  (HIGH, S)
 - [ ] Python set chromosomes have no test: every test passes
   `chromosome_as_set=False`. `GeneSet`
   (`gene_collection.py:132-230`) and the set branches of
@@ -403,11 +388,11 @@ micro-timing run on a loaded machine and are orders of magnitude.
 - [ ] `opt_is_min=True` is used by no Python test, so the ascending
   sort at `algorithms/__init__.py:945-948` never runs. Rust has
   `minimize_keeps_the_lowest_scores`. (HIGH, S)
-- [ ] `tests/test_binary_algs.py:50`:
+- [ ] `tests/unit/test_binary_algs.py:50`:
   `len(calls) == len(set(calls))` holds for an empty file, so the
   test passes if the logging wrapper is never called. Add
   `assert calls`. (MED, S)
-- [ ] `tests/test_fit_save.py:49` checks the loaded history by length
+- [ ] `tests/unit/test_fit_save.py:49` checks the loaded history by length
   only, not its content, its order or `fit_metrics`. The run has at
   most 4 files, so the ordering of `fit_data_10` after `fit_data_2`
   that `utils.py:89` handles never runs. (MED, S)
@@ -462,13 +447,12 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `name` or `extra_metrics` is ever written by Rust and loaded by
   Python (`chromosome.rs:56-66`, `score.rs:7-10`); both layout
   tests use the list knapsack. (MED, M)
-- [ ] Python, small gaps: `tests/test_functions.py:66` asserts the
+- [ ] Python, small gaps: `tests/unit/test_functions.py:66` asserts the
   exact text "took 0.00 seconds" and fails after a 5 ms pause;
-  `tests/` is flat with no `conftest.py` and no `unit/` and
-  `integration/` split; `experiment_config.yml` and `fit_plots.jpg`
-  are checked for existence only (`tests/test_fit_save.py:35-38`);
+  `experiment_config.yml` and `fit_plots.jpg`
+  are checked for existence only (`tests/unit/test_fit_save.py:35-38`);
   the knapsack test does not assert the number of generations
-  (`tests/test_binary_algs.py:21`); `get_best` and `get_bests`;
+  (`tests/unit/test_binary_algs.py:21`); `get_best` and `get_bests`;
   `experiment_config()` and `extra_config`; the empty-population
   error (`algorithms/__init__.py:918-919`) and `n_generations=0`;
   the four-panel plot (`plots.py:67-69`, `:86-100`); a `Score` with
@@ -487,3 +471,15 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `FitResult.fit_parameters` and the `FitConfig::new` defaults; the
   default-to-BSON branch of `examples/knapsack.rs:20-23`; the
   `Display` text of the errors (`error.rs:6-14`). (LOW, S)
+
+### 2026.10.12 (found while registering the project in `programme`)
+
+- [ ] `numpy` is held below 2.0 (`pyproject.toml:9`) and 1.26.4 has
+  no built wheel for Python 3.14, the version `.python-version` now
+  asks for. `uv sync` compiled it from source: 3 minutes 25 seconds
+  on 12th October 2026, paid again on every new environment. Check
+  whether the package works with `numpy` 2 and raise the bound.
+- [ ] The project has no `AGENTS.md`, so Codex and OpenCode do not
+  get `CLAUDE.md` and `.claude/rules/`
+  (`~/.claude/rules/claude-opencode-sync.md`). `downstream` has none
+  either.
