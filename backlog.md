@@ -2,12 +2,6 @@
 
 ### 2026.10.12 (found while fixing parallel scoring and removing `cpinto`)
 
-- [ ] **[manual]** Publish a version newer than 0.2.9 to the package
-  registry. Publishing is manual, so 0.2.12 to 0.4.1 are in `master`
-  only. `downstream` asks for `genetic_opt>=0.2.9` and gets the
-  parallel scoring fix only once a newer version is published. Since
-  0.4.1 the job is `publish-package` in `.gitlab-ci.yml`, offered
-  only on a `vX.Y.Z` tag that matches the version.
 - [ ] The Rust crate does not save the plot `fit_plots.jpg` that the
   Python package saves with each generation.
 - [ ] `space_points` in the saved `fit_metrics` is the number of
