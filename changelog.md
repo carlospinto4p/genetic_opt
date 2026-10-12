@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.5.2 - 12th October 2026
+
+- `pyproject.toml`: the build backend is now `hatchling>=1.32.4,<2.0.0`.
+  It had no version bound. 1.32.4 was the newest release on PyPI on
+  12th October 2026.
+- `backlog.md`: removed the item about the `publish-package` job of
+  `.gitlab-ci.yml` installing `build` and `twine` with no version.
+  The file is the shared `python-base` one, so the item moved to the
+  backlog of `programme`.
+
 ### v0.5.1 - 12th October 2026
 
 - Fixed a panic in the Rust crate: `fit` with `population_size = 0`

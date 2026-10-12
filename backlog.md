@@ -19,13 +19,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Security**
 
-- [ ] `.gitlab-ci.yml`: the `publish-package` job that holds
-  `CI_JOB_TOKEN` installs `build` and `twine` with no version, and
-  `hatchling` has no version bound (`pyproject.toml:23`). The file
-  is the `python-base` skeleton since 0.4.1, so the pin belongs in
-  `programme`. GitLab CI is disabled across the fleet
-  (`~/.claude/rules/publish-on-demand.md`), so the job rarely runs.
-  (LOW, S)
 - [ ] `src/genetic_opt/files.py:217-219`: `save_yaml` uses `yaml.dump`
   with the full `Dumper`, so an object that is not plain data in
   `experiment_config()` is written as a `!!python/object` tag that
