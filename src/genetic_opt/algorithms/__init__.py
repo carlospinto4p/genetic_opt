@@ -224,8 +224,10 @@ class GeneticAlgorithm(ABC):
         # Extra configuration of the experiment, that depends on the custom,
         # child classes.
         self.extra_config: dict = extra_config or {}
-        # Inner mapping to keep track of the cached chromosome values
-        self._chromosome_cache: dict[int, tuple[Any, float]] = {}
+        # Scores already computed, by the `repr` of the Chromosome. The
+        # key is the whole text and not `Chromosome.id`, a shortened
+        # hash of it that two different Chromosomes could share.
+        self._chromosome_cache: dict[str, tuple[Score, float]] = {}
         # Number of Chromosomes that needed a score
         self._score_requests: int = 0
 
@@ -570,14 +572,14 @@ class GeneticAlgorithm(ABC):
         :return: the Chromosome Score.
         """
         if chromosome.score is None:
-            chromosome_hash = chromosome.__hash__()
-            if chromosome_hash in self._chromosome_cache:
+            chromosome_key = repr(chromosome)
+            if chromosome_key in self._chromosome_cache:
                 chromosome.score, chromosome.score_time = (
-                    self._chromosome_cache[chromosome_hash]
+                    self._chromosome_cache[chromosome_key]
                 )
             else:
                 chromosome.get_score(self.algo_fitness_func)
-                self._chromosome_cache[chromosome_hash] = (
+                self._chromosome_cache[chromosome_key] = (
                     chromosome.score,
                     chromosome.score_time,
                 )
@@ -964,14 +966,14 @@ class GeneticAlgorithm(ABC):
         iter_func = iter_func or identity_func
         # Get the Chromosomes never scored before, one of each.
         # Note that len(self.population) > self.population size at this step.
-        new_population: dict[int, Chromosome] = {}
+        new_population: dict[str, Chromosome] = {}
         for chromosome in self.population:
             if chromosome.score is not None:
                 continue
             self._score_requests += 1
-            chromosome_hash = chromosome.__hash__()
-            if chromosome_hash not in self._chromosome_cache:
-                new_population.setdefault(chromosome_hash, chromosome)
+            chromosome_key = repr(chromosome)
+            if chromosome_key not in self._chromosome_cache:
+                new_population.setdefault(chromosome_key, chromosome)
         # The workers are other processes and score copies of the
         # Chromosomes, so the scores must come back as results.
         scores = Parallel(n_jobs=n_jobs)(
@@ -982,7 +984,7 @@ class GeneticAlgorithm(ABC):
         for chromosome in self.population:
             if chromosome.score is None:
                 chromosome.score, chromosome.score_time = (
-                    self._chromosome_cache[chromosome.__hash__()]
+                    self._chromosome_cache[repr(chromosome)]
                 )
 
         self.population.sort(

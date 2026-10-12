@@ -300,6 +300,15 @@ fn bad_parameters_are_refused() {
 }
 
 #[test]
+fn knapsack_sums_do_not_overflow() {
+    let heavy = Knapsack::new(vec![u32::MAX, 2], vec![1, 1], u32::MAX).unwrap();
+    assert_eq!(heavy.decode(&[1, 1]), vec![1, 0]);
+
+    let valuable = Knapsack::new(vec![1, 1], vec![u32::MAX, u32::MAX], 2).unwrap();
+    assert_eq!(valuable.fitness(&[1, 1]).value, 2.0 * f64::from(u32::MAX));
+}
+
+#[test]
 fn a_run_is_saved_one_file_per_generation() {
     for (format, extension) in [(SaveFormat::Json, "json"), (SaveFormat::Bson, "bson")] {
         let folder = tempfile::tempdir().unwrap();

@@ -159,6 +159,30 @@ def test_get_chromosome_score_runs_the_fitness_function_once():
     assert len(calls) == 1
 
 
+def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
+    genetic_bag, _ = _counting_bag()
+    fit_parameters = {
+        "n_generations": 5,
+        "population_size": 30,
+        "n_jobs": 1,
+        "plot_metrics": False,
+    }
+    expected = genetic_bag.fit(**fit_parameters)["bests"]["scores"]
+
+    # Every Chromosome gets one id, as two would after a hash collision.
+    monkeypatch.setattr(Chromosome, "id", property(lambda self: 1))
+    genetic_bag, calls = _counting_bag()
+    in_bag = Chromosome(size=10, genes=[1, 1, 1, 1, 0, 1, 0, 0, 0, 0])
+    empty = Chromosome(size=10, genes=[0] * 10)
+    assert genetic_bag.get_chromosome_score(in_bag).value == 309
+    assert genetic_bag.get_chromosome_score(empty).value == 0
+    assert len(calls) == 2
+
+    genetic_bag, _ = _counting_bag()
+    scores = genetic_bag.fit(**fit_parameters)["bests"]["scores"]
+    assert [s.value for s in scores] == [s.value for s in expected]
+
+
 def test_scoring_does_not_keep_the_algorithm_alive():
     genetic_bag, _ = _counting_bag()
     genetic_bag.fit(

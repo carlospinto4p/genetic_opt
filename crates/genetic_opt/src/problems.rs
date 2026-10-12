@@ -54,28 +54,31 @@ impl Problem for Knapsack {
     }
 
     fn fitness(&self, genes: &[u8]) -> Score {
-        let value: u32 = self
+        // Added as `u64`: a sum of `u32` values can pass `u32::MAX`.
+        let value: u64 = self
             .decode(genes)
             .iter()
             .zip(&self.values)
-            .map(|(gene, value)| u32::from(*gene) * value)
+            .map(|(gene, value)| u64::from(*gene) * u64::from(*value))
             .sum();
-        Score::new(f64::from(value))
+        Score::new(value as f64)
     }
 
     /// The bag the genes stand for: the objects are put in from the first
     /// one, and from the one that does not fit, no other goes in.
     fn decode(&self, genes: &[u8]) -> Vec<u8> {
-        let mut weight = 0;
+        let capacity = u64::from(self.capacity);
+        let mut weight: u64 = 0;
         let mut full = false;
         genes
             .iter()
             .zip(&self.weights)
             .map(|(gene, object_weight)| {
+                let object_weight = u64::from(*object_weight);
                 if *gene == 0 || full {
                     return 0;
                 }
-                if weight + object_weight > self.capacity {
+                if weight + object_weight > capacity {
                     full = true;
                     return 0;
                 }

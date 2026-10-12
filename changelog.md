@@ -2,6 +2,30 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.2 - 12th October 2026
+
+- `GeneticOptException` and its subclasses no longer log their
+  message at ERROR level when they are created, so a caught exception
+  prints nothing. The message is unchanged for the code that catches
+  it.
+- The errors raised when a Chromosome is built no longer carry
+  `locals()` as `processing_object`, which put the genes and the gene
+  space in the message. The two size errors name both sizes instead.
+- `GeneticAlgorithm` keeps the scores already computed by the `repr`
+  of the Chromosome, not by `Chromosome.id`. Two different
+  Chromosomes with one id shared a score.
+- `Chromosome.id` calls `md5` with `usedforsecurity=False`.
+- `crates/genetic_opt/src/problems.rs`: `Knapsack` adds weights and
+  values as `u64`. A sum over `u32::MAX` panicked in a debug build
+  and wrapped in a release build, where a wrapped weight passed the
+  capacity check.
+- `pyproject.toml`: `pyyaml`, `pytest` and `ruff` are held below
+  their next major version, as the other dependencies are.
+- Added tests: 2 in `tests/unit/test_functions.py`, 1 in
+  `tests/unit/test_binary_algs.py` and 1 in
+  `crates/genetic_opt/tests/algorithm.rs`.
+- `backlog.md`: removed the four items above.
+
 ### v0.6.1 - 12th October 2026
 
 - `files.py`:

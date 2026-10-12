@@ -45,8 +45,7 @@ class Chromosome:
         elif not (genes or gene_space):
             raise GeneticOptException(
                 "Chromosome must be initialized with the `genes` "
-                "parameter or using a `gene_space`",
-                locals(),
+                "parameter or using a `gene_space`"
             )
 
         self.is_gene_set = is_gene_set
@@ -111,7 +110,7 @@ class Chromosome:
     @property
     def id(self) -> int:
         """Hash id limited to a length of 30."""
-        m = md5()
+        m = md5(usedforsecurity=False)
         m.update(self.__repr__().encode("utf-8"))
         return int(str(int(m.hexdigest(), 16))[:30])
 

@@ -25,7 +25,8 @@ class GeneCollection(ABC):
         """
         if len(genes) != size:
             raise GeneticOptException(
-                "Chromosome size must match the length of the genes", locals()
+                f"Chromosome size ({size}) must match the length of "
+                f"the genes ({len(genes)})"
             )
         self.size: int = size
         self.genes: Collection = genes
@@ -260,8 +261,8 @@ class GeneSet(GeneCollection):
         """
         if len(gene_space) < self.size:
             raise GeneticOptException(
-                "Chromosome received a `size` greater than its `gene_space`",
-                locals(),
+                f"Chromosome received a `size` ({self.size}) greater "
+                f"than its `gene_space` ({len(gene_space)})"
             )
         n = n or self.size
         while len(genes) < n:

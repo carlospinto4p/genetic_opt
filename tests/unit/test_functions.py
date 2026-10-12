@@ -3,6 +3,7 @@ import re
 
 import pytest
 
+from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import (
     GeneticOptException,
     InvariantException,
@@ -15,6 +16,7 @@ from genetic_opt.functions import (
     now_for_file_path,
     time_it_with_logger,
 )
+from genetic_opt.gene_space import BinaryGeneSpace
 
 
 def test_identity_func_returns_its_input():
@@ -73,6 +75,37 @@ def test_exception_message_includes_the_processing_object():
     assert exception.processing_object == {"size": 3}
     assert str(exception) == (
         "GeneticOptException: bad size\n\tAt object:\n{'size': 3}"
+    )
+
+
+def test_exception_is_not_logged(caplog):
+    # The package logger does not propagate, so caplog is attached to it.
+    logger = logging.getLogger("genetic_opt")
+    logger.addHandler(caplog.handler)
+    try:
+        GeneticOptException("bad size", {"size": 3})
+    finally:
+        logger.removeHandler(caplog.handler)
+    assert caplog.records == []
+
+
+def test_construction_errors_name_the_sizes_and_nothing_else():
+    with pytest.raises(GeneticOptException) as no_genes:
+        Chromosome(size=3)
+    assert no_genes.value.processing_object is None
+
+    with pytest.raises(GeneticOptException) as wrong_size:
+        Chromosome(size=2, genes=[1, 0, 1])
+    assert wrong_size.value.processing_object is None
+    assert wrong_size.value.message == (
+        "Chromosome size (2) must match the length of the genes (3)"
+    )
+
+    with pytest.raises(GeneticOptException) as small_space:
+        Chromosome(size=3, gene_space=BinaryGeneSpace(), is_gene_set=True)
+    assert small_space.value.processing_object is None
+    assert small_space.value.message == (
+        "Chromosome received a `size` (3) greater than its `gene_space` (2)"
     )
 
 

@@ -15,26 +15,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
   a saved Chromosome. Decide whether to refuse those too. Refusing
   them makes an older version of the package unable to read a file
   written by a newer one that adds a key.
-- [ ] `src/genetic_opt/exceptions.py:17-22`: every
-  `GeneticOptException` logs at ERROR level in its constructor, so
-  a caught exception still prints an error. Three raise sites pass
-  `locals()` (`chromosome.py:49`, `gene_collection.py:29`, `:226`),
-  which prints every local, including the genes and the gene space.
-  `algorithms/__init__.py:257-259` and `:274-276` print whole
-  chromosomes. (LOW, S)
-- [ ] `src/genetic_opt/chromosome.py:112-116` with
-  `algorithms/__init__.py:926-943`: `_chromosome_cache` is keyed by
-  `Chromosome.id` alone, an md5 of the `repr` cut to 30 digits. Two
-  different chromosomes with one id would share a score. Written
-  from recall, unchecked: `md5()` without `usedforsecurity=False`
-  raises on a FIPS build of Python. (LOW, S)
-- [ ] `crates/genetic_opt/src/problems.rs:58-62` and `:78`: `Knapsack`
-  adds weights and sums values as `u32`. Large inputs panic in a
-  debug build and wrap in a release build, where a wrapped weight
-  passes the capacity check. Use `checked_add` or `u64`. (LOW, S)
-- [ ] `pyproject.toml:14` and `:19-20`: `pyyaml>=6.0.3`,
-  `pytest>=9.1.1` and `ruff>=0.16.4` have no upper bound, unlike
-  the other five runtime dependencies. (LOW, S)
 - [ ] **[manual]** `pyproject.toml:5`: the `authors` field carries a
   personal name and a personal email address, published as package
   metadata with every wheel. Decide whether that is wanted.
