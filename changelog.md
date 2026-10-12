@@ -2,6 +2,45 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.3.0 - 12th October 2026
+
+- Removed the dependency on `cpinto`, and the `gitlab_cpinto` index
+  with it. The functions used from it were copied from `cpinto`
+  0.3.11 into this package:
+  - Added `files.py`: `ensure_folder_format`, `get_file_extension`,
+    `get_files_inside_folder`, `load_bson`, `load_json`, `save_bson`,
+    `save_json`, `save_yaml`, `save_current_figure`, and the helpers
+    they call.
+  - Added `functions.py`: `identity_func`, `format_bytes`,
+    `format_seconds`, `now_for_file_path`, `time_it_with_logger`.
+  - `logs.py`: added `get_app_logger` and `log_format`.
+  - `algorithms/plots.py`: added `set_pyplot_config`.
+- `exceptions.py`:
+  - `GeneticOptException` is a direct subclass of `Exception`, no
+    longer of `CPintoException`. It keeps the message format and the
+    error log, and loses the parameters `logger` and `logger_level`.
+  - Added `ValidationException`, raised where `cpinto`'s was.
+- Differences with the `cpinto` functions:
+  - `get_app_logger` configures its own logger only, not the root
+    logger.
+  - `now_for_file_path` is always UTC. The `TIMEZONE` environment
+    variable is no longer read.
+  - `bson`, `matplotlib` and `yaml` are imported at the top of
+    `files.py`, not inside each function.
+- Added `pyyaml` as a dependency. `fit` with a `save_path` needed it
+  and failed without it, since `cpinto` did not install it.
+- Added `[tool.ruff]` to `pyproject.toml`. Without it, `ruff` run from
+  another folder took that folder's settings and removed the quotes
+  from type hints, which Python 3.11 to 3.13 cannot import.
+- Removed `from __future__ import annotations` from
+  `algorithms/__init__.py`, `chromosome.py` and `metrics.py`.
+- Added unit tests:
+  - `tests/test_files.py`: 12 tests.
+  - `tests/test_functions.py`: 15 tests.
+  - `tests/test_fit_save.py`: a `fit` saved as BSON and as JSON, then
+    read back with `utils.load_fit_result`.
+
+
 ### 0.2.13 - 12th October 2026
 
 - Fixed `algorithms.GeneticAlgorithm.mutate`: every Chromosome mutated

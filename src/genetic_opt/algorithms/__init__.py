@@ -1,30 +1,38 @@
 """Genetic Opt algorithms submodule."""
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from functools import cache, lru_cache
+from functools import cache
 from os import cpu_count
 from time import time
 from typing import Any
 
-from cpinto.exceptions import ValidationException
-from cpinto.files import ensure_folder_format, save_bson, save_json, save_yaml
-from cpinto.formatters import format_seconds
-from cpinto.functions import identity_func
-from cpinto.logs import log_format
-from cpinto.plot.files import save_current_figure
-from cpinto.time import now_for_file_path, time_it_with_logger
 from joblib import Parallel, delayed
 from numpy.random import RandomState
 
 from genetic_opt import __version__
 from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.exceptions import GeneticOptException, InvariantException
+from genetic_opt.exceptions import (
+    GeneticOptException,
+    InvariantException,
+    ValidationException,
+)
+from genetic_opt.files import (
+    ensure_folder_format,
+    save_bson,
+    save_current_figure,
+    save_json,
+    save_yaml,
+)
+from genetic_opt.functions import (
+    format_seconds,
+    identity_func,
+    now_for_file_path,
+    time_it_with_logger,
+)
 from genetic_opt.gene_space import GeneSpace
-from genetic_opt.logs import logger
+from genetic_opt.logs import log_format, logger
 from genetic_opt.metrics import Metric, get_population_metrics
 from genetic_opt.score import Score
 from genetic_opt.utils import serialize_fit_result
@@ -317,12 +325,12 @@ class GeneticAlgorithm(ABC):
         besties_prop: float = 0.6,
         mutate_prob: float = 0.05,
         min_population_size: int = 10,
-        exit_condition: Callable[[GeneticAlgorithm], bool] = None,
+        exit_condition: Callable[["GeneticAlgorithm"], bool] = None,
         plot_metrics: bool = True,
         other_metrics_to_plot: dict[
             str, Callable[[Chromosome], float]
         ] = None,
-        callback_func: Callable[[GeneticAlgorithm], None] = None,
+        callback_func: Callable[["GeneticAlgorithm"], None] = None,
         iter_func: Callable = None,
         n_jobs: int = -2,
     ) -> dict:

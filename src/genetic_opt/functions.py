@@ -1,0 +1,79 @@
+"""Genetic Opt general functions submodule."""
+
+import datetime as dt
+from collections.abc import Callable
+from functools import wraps
+from logging import Logger
+from time import time
+
+
+def identity_func(x):
+    """Return the input received."""
+    return x
+
+
+def format_bytes(num_bytes: float, suffix: str = "B") -> str:
+    """
+    Format a raw number of bytes into a readable string.
+    :param num_bytes: raw number of bytes.
+    :param suffix: Suffix to use. Default: 'B'.
+    """
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+        if abs(num_bytes) < 1024:
+            return f"{num_bytes:.1f} {unit}{suffix}"
+        num_bytes /= 1024.0
+    return f"{num_bytes:.1f} Yi{suffix}"
+
+
+def format_seconds(seconds: float, only_hours: bool = False) -> str:
+    """
+    Format a raw number of seconds into a readable string, i.e.
+    format_seconds(200_000) return `2 days, 7:33:20 hours`.
+    :param seconds: raw number of seconds.
+    :param only_hours: default to False. If True, return a string
+        accumulating the hours in the format, without the `days`
+        string, i.e. format_seconds(200_000, only_hours=True)
+        return `55:33:20`.
+    """
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    f_seconds = str(int(seconds)).rjust(2, "0")
+    f_minutes = str(int(minutes)).rjust(2, "0")
+    if only_hours:
+        if hours < 100:
+            hours = str(int(hours)).rjust(2, "0")
+        return f"{int(hours)}:{f_minutes}:{f_seconds}"
+    days, hours = divmod(hours, 24)
+    time_ = f"{seconds:.2f} seconds"
+    if minutes:
+        time_ = f"{int(minutes)}:{f_seconds} minutes"
+    if hours:
+        time_ = f"{int(hours)}:{f_minutes}:{f_seconds} hours"
+    if days := int(days):
+        days_str = f"{days} days" if days > 1 else f"{days} day"
+        return f"{days_str}, {time_}"
+    return time_
+
+
+def now_for_file_path() -> str:
+    """Generates a UTC datetime string with the format `%Y%m%d_%H%M%S`."""
+    return dt.datetime.now(tz=dt.UTC).strftime("%Y%m%d_%H%M%S")
+
+
+def time_it_with_logger(logger: Logger) -> Callable:
+    """Log the time it takes to a function to be executed."""
+
+    def time_it_(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            logger.info(f"`{func.__name__}` started...")
+            start_time = time()
+            result = func(*args, **kwargs)
+            logger.info(
+                f"`{func.__name__}` took {format_seconds(time() - start_time)}"
+            )
+            return result
+
+        return wrapper
+
+    return time_it_

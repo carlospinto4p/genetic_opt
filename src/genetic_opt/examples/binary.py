@@ -1,8 +1,6 @@
-
-from cpinto.exceptions import ValidationException
-
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
+from genetic_opt.exceptions import ValidationException
 from genetic_opt.score import Score
 
 
@@ -18,8 +16,14 @@ class GeneticBag(BinaryGeneticAlgorithm):
     0 means that the object is out of the bag.
     """
 
-    def __init__(self, weights: list[int], values: list[int], capacity: int,
-                 random_seed: int = 666, gene_space_random_seed: int = 52):
+    def __init__(
+        self,
+        weights: list[int],
+        values: list[int],
+        capacity: int,
+        random_seed: int = 666,
+        gene_space_random_seed: int = 52,
+    ):
         """
         :param weights: list of objects weights.
         :param values: list of objects values.
@@ -33,7 +37,8 @@ class GeneticBag(BinaryGeneticAlgorithm):
 
         if len(weights) != len(values):
             raise ValidationException(
-                f'{len(weights) = } must be the same as {len(values) = }')
+                f"{len(weights) = } must be the same as {len(values) = }"
+            )
 
         def decode_bag(chromosome: Chromosome) -> list[int]:
             """
@@ -70,12 +75,18 @@ class GeneticBag(BinaryGeneticAlgorithm):
             :return: this problem Score.
             """
             decoded_bag = decode_bag(chromosome)
-            score = sum(self.values[i] * decoded_bag[i]
-                        for i in range(chromosome.size))
+            score = sum(
+                self.values[i] * decoded_bag[i]
+                for i in range(chromosome.size)
+            )
             return Score(value=score)
 
-        super().__init__(chromosome_length=len(weights),
-                         chromosome_as_set=False, decode_func=decode_bag,
-                         fitness_func=fit_bag, opt_is_min=False,
-                         random_seed=random_seed,
-                         gene_space_random_seed=gene_space_random_seed)
+        super().__init__(
+            chromosome_length=len(weights),
+            chromosome_as_set=False,
+            decode_func=decode_bag,
+            fitness_func=fit_bag,
+            opt_is_min=False,
+            random_seed=random_seed,
+            gene_space_random_seed=gene_space_random_seed,
+        )

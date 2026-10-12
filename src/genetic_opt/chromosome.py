@@ -1,17 +1,15 @@
 """Genetic Opt Chromosome submodule."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Collection
 from hashlib import md5
 from time import time
 from typing import Any
 
-from cpinto.functions import identity_func
 from numpy import ndarray
 from numpy.random import RandomState
 
 from genetic_opt.exceptions import GeneticOptException
+from genetic_opt.functions import identity_func
 from genetic_opt.gene_collection import GeneCollection, GeneList, GeneSet
 from genetic_opt.gene_space import GeneSpace
 from genetic_opt.score import Score
@@ -68,7 +66,7 @@ class Chromosome:
     @classmethod
     def from_dict(
         cls, d: dict, load_genes_func: Callable[[Any], Any] = None
-    ) -> Chromosome:
+    ) -> "Chromosome":
         """
         Create a Chromosome from a serialized dictionary, created with the
         method `to_dict`.
@@ -117,7 +115,9 @@ class Chromosome:
         m.update(self.__repr__().encode("utf-8"))
         return int(str(int(m.hexdigest(), 16))[:30])
 
-    def get_score(self, fitness_func: Callable[[Chromosome], Score]) -> Score:
+    def get_score(
+        self, fitness_func: Callable[["Chromosome"], Score]
+    ) -> Score:
         """
         Get a Chromosome score.
         This score is a tuple [score (float), additional data (dict)].
@@ -137,7 +137,7 @@ class Chromosome:
         gene_space_func: str = None,
         gene_space_func_kwargs: dict = None,
         random_state: RandomState = None,
-    ) -> Chromosome:
+    ) -> "Chromosome":
         """
         Randomly changes the inner genes of the Chromosome, picking and
         replacing them using a `gene_space`.
