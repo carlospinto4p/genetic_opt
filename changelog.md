@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.13 - 12th October 2026
+
+- Fixed `algorithms.GeneticAlgorithm.mutate`: every Chromosome mutated
+  in the same positions. Each one drew from its own `RandomState`, and
+  they all shared one seed (442 from `BinaryGeneticAlgorithm`'s
+  crossover, the algorithm's seed from `init_population`). The draws
+  now come from the algorithm's `random_state`.
+- `chromosome.Chromosome.random_mutate`: added the parameter
+  `random_state`. Default to the Chromosome's own, as before.
+- Added the test `test_mutation_differs_between_chromosomes`.
+- A `fit` with a given seed no longer gives the populations it gave
+  before this version.
+- `chromosome.py` was reformatted by the pinned `ruff`.
+
+
 ### 0.2.12 - 12th October 2026
 
 - Fixed `algorithms.GeneticAlgorithm._sort_population`: with `n_jobs`

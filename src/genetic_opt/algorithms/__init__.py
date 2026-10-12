@@ -227,7 +227,9 @@ class GeneticAlgorithm(ABC):
             a Chromosome that could have mutated or not.
         """
         return chromosome.random_mutate(
-            gene_space=self.gene_space, gene_mutate_prob=prob
+            gene_space=self.gene_space,
+            gene_mutate_prob=prob,
+            random_state=self.random_state,
         )
 
     def _crossover(
