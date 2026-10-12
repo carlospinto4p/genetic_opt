@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.5.0 - 12th October 2026
+
+- The package now needs Python 3.14 or later: `requires-python` in
+  `pyproject.toml` went from `>=3.11` to `>=3.14`. `uv.lock` is
+  resolved for that range. `downstream`, the one project that installs
+  this package, already needs 3.14.
+- Removed the quotes from the 9 type hints that name their own class,
+  in `algorithms/__init__.py`, `chromosome.py`, `gene_collection.py`
+  and `metrics.py`. Python 3.14 reads a type hint only when asked for
+  it, so they are no longer needed.
+- `.gitlab-ci.yml`: the `publish-package` job runs on
+  `python:3.14-slim`, from `python:3.12-slim`.
+
 ### v0.4.3 - 12th October 2026
 
 - Decided that the Python package gets no binding to the Rust crate

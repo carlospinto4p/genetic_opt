@@ -22,7 +22,7 @@ stages:
 
 publish-package:
   stage: publish
-  image: python:3.12-slim
+  image: python:3.14-slim
   rules:
     # Only offer the job on a semver tag pipeline, and only when clicked.
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'

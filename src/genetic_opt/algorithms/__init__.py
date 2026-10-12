@@ -330,11 +330,11 @@ class GeneticAlgorithm(ABC):
         besties_prop: float = 0.6,
         mutate_prob: float = 0.05,
         min_population_size: int = 10,
-        exit_condition: Callable[["GeneticAlgorithm"], bool] | None = None,
+        exit_condition: Callable[[GeneticAlgorithm], bool] | None = None,
         plot_metrics: bool = True,
         other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
         | None = None,
-        callback_func: Callable[["GeneticAlgorithm"], None] | None = None,
+        callback_func: Callable[[GeneticAlgorithm], None] | None = None,
         iter_func: Callable | None = None,
         n_jobs: int = -2,
     ) -> dict:

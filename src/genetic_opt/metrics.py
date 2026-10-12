@@ -44,7 +44,7 @@ class Metric:
         d: dict,
         load_decoded_chromosome_func: Callable[[Any], Any] | None = None,
         load_gene_func: Callable[[Any], Any] | None = None,
-    ) -> "Metric":
+    ) -> Metric:
         """
         Get a Metric object from a serialized object, created by the method
             `from_dict` of this class.

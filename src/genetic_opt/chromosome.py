@@ -66,7 +66,7 @@ class Chromosome:
     @classmethod
     def from_dict(
         cls, d: dict, load_genes_func: Callable[[Any], Any] | None = None
-    ) -> "Chromosome":
+    ) -> Chromosome:
         """
         Create a Chromosome from a serialized dictionary, created with the
         method `to_dict`.
@@ -115,9 +115,7 @@ class Chromosome:
         m.update(self.__repr__().encode("utf-8"))
         return int(str(int(m.hexdigest(), 16))[:30])
 
-    def get_score(
-        self, fitness_func: Callable[["Chromosome"], Score]
-    ) -> Score:
+    def get_score(self, fitness_func: Callable[[Chromosome], Score]) -> Score:
         """
         Get a Chromosome score.
         This score is a tuple [score (float), additional data (dict)].
@@ -137,7 +135,7 @@ class Chromosome:
         gene_space_func: str | None = None,
         gene_space_func_kwargs: dict | None = None,
         random_state: RandomState = None,
-    ) -> "Chromosome":
+    ) -> Chromosome:
         """
         Randomly changes the inner genes of the Chromosome, picking and
         replacing them using a `gene_space`.

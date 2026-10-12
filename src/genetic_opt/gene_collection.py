@@ -38,7 +38,7 @@ class GeneCollection(ABC):
         random_state: RandomState,
         gene_space_func: str | None = None,
         gene_space_func_kwargs: dict | None = None,
-    ) -> "GeneCollection":
+    ) -> GeneCollection:
         """
         Randomly mutate the entire Gene Collection.
         The Genes will change, but only a part of them, depending on
@@ -110,7 +110,7 @@ class GeneList(GeneCollection):
         random_state: RandomState,
         gene_space_func: str | None = None,
         gene_space_func_kwargs: dict | None = None,
-    ) -> "GeneList":
+    ) -> GeneList:
         """
         Randomly mutate the entire Gene List.
         The Genes will change, but only a part of them, depending on
@@ -197,7 +197,7 @@ class GeneSet(GeneCollection):
         random_state: RandomState,
         gene_space_func: str | None = None,
         gene_space_func_kwargs: dict | None = None,
-    ) -> "GeneSet":
+    ) -> GeneSet:
         """
         Randomly mutate the entire Gene Set.
         The Genes will change, but only a part of them, depending on
