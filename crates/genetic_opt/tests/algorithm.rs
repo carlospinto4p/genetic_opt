@@ -349,3 +349,47 @@ fn a_run_is_saved_one_file_per_generation() {
         assert_eq!(best["random_seed"], 442);
     }
 }
+
+fn saving_config(path: &std::path::Path, experiment_name: &str) -> FitConfig {
+    let mut config = FitConfig::new(1, 20);
+    config.save = Some(SaveConfig {
+        path: path.to_path_buf(),
+        experiment_name: experiment_name.into(),
+        format: SaveFormat::Json,
+    });
+    config
+}
+
+#[test]
+fn two_runs_with_one_name_get_a_folder_each() {
+    let folder = tempfile::tempdir().unwrap();
+    // More runs than fit in the second a folder is named after.
+    let run_folders: HashSet<_> = (0..5)
+        .map(|_| {
+            let config = saving_config(folder.path(), "bag");
+            let result = GeneticAlgorithm::new(knapsack(), config).fit().unwrap();
+            result.save_folder.unwrap()
+        })
+        .collect();
+
+    assert_eq!(run_folders.len(), 5);
+    for run_folder in &run_folders {
+        assert_eq!(run_folder.parent().unwrap(), folder.path().join("bag"));
+        assert!(run_folder.join("experiment_config.yml").is_file());
+    }
+}
+
+#[test]
+fn an_experiment_name_outside_the_save_path_is_refused() {
+    let folder = tempfile::tempdir().unwrap();
+    let save_path = folder.path().join("runs");
+    let absolute = folder.path().join("elsewhere");
+
+    for experiment_name in ["../elsewhere", "bag/../..", absolute.to_str().unwrap(), ""] {
+        let config = saving_config(&save_path, experiment_name);
+        let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
+        assert!(matches!(algorithm.fit(), Err(Error::Validation(_))));
+    }
+    assert!(!save_path.exists());
+    assert!(!absolute.exists());
+}

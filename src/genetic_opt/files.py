@@ -2,16 +2,43 @@
 
 from json import dump as dump_json
 from json import load as load_json_fun
-from os import makedirs, path, walk
+from os import makedirs, mkdir, path, walk
 from typing import Any
 
 import bson
 import matplotlib.pyplot as plt
-from yaml import Dumper
+from yaml import SafeDumper
 from yaml import dump as dump_yaml
 
 from genetic_opt.functions import format_bytes
 from genetic_opt.logs import logger
+
+
+class _NoAliasSafeDumper(SafeDumper):
+    """`SafeDumper` that writes an object met twice in full both times."""
+
+    def ignore_aliases(self, data: Any) -> bool:
+        return True
+
+
+def create_new_folder(folder: str) -> str:
+    """
+    Create a folder that did not exist. While one with that name exists,
+    `_2`, `_3` and so on is added to the name.
+    :param folder: folder path.
+    :return: path of the folder created.
+    """
+    folder = ensure_folder_format(normalize_path(folder))
+    ensure_folder_exists(get_container_folder(folder))
+    new_folder, attempt = folder, 1
+    while True:
+        try:
+            mkdir(new_folder)
+        except FileExistsError:
+            attempt += 1
+            new_folder = f"{folder}_{attempt}"
+        else:
+            return new_folder
 
 
 def ensure_file_extension(file_path: str, file_extension: str) -> str:
@@ -204,19 +231,27 @@ def save_yaml(
     ignore_aliases: bool = True,
 ) -> None:
     """
-    Save a .yaml file.
-    :param data: Data to save.
+    Save a .yaml file that a safe YAML loader reads back.
+    :param data: Data to save: dictionaries, lists, strings, numbers,
+        booleans, dates and None.
     :param file_path: file path to use. The `yml` extension will be added
         if not received.
     :param encoding: encoding to use. Default to 'utf8'.
     :param ignore_aliases: whether to ignore references for
         duplicated object ids.
+    :raises yaml.representer.RepresenterError: when `data` holds any
+        other object. No file is written.
     """
     ensure_folder_exists(get_container_folder(file_path))
     file_path = ensure_file_extension(file_path, "yml")
-    Dumper.ignore_aliases = lambda *args: ignore_aliases
+    text = dump_yaml(
+        data,
+        Dumper=_NoAliasSafeDumper if ignore_aliases else SafeDumper,
+        default_flow_style=False,
+        sort_keys=False,
+    )
     with open(file_path, "w", encoding=encoding) as file:
-        dump_yaml(data, file, default_flow_style=False, sort_keys=False)
+        file.write(text)
     logger.info(
         f"YAML saved on: `{file_path}`\n\tfile size: "
         f"{get_file_size(file_path)}"

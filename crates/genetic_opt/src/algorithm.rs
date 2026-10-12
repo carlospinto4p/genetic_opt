@@ -11,7 +11,9 @@ use serde::Serialize;
 
 use crate::format::{format_seconds, round2};
 use crate::metrics::{mean, median, variance};
-use crate::save::{BestsColumns, GenerationFile, write_experiment_config, write_generation};
+use crate::save::{
+    BestsColumns, GenerationFile, create_run_folder, write_experiment_config, write_generation,
+};
 use crate::{
     Best, Chromosome, Error, FitMetrics, FitnessCalls, Individual, Metric, Problem, Result, Rng,
     SaveConfig, TotalFitTime,
@@ -185,10 +187,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
             .num_threads(fit_parameters.n_jobs)
             .build()
             .map_err(|e| Error::Validation(e.to_string()))?;
-        let save_folder = self.config.save.as_ref().map(|save| {
-            let now = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-            save.path.join(&save.experiment_name).join(now.to_string())
-        });
+        let save_folder = match &self.config.save {
+            Some(save) => Some(create_run_folder(save)?),
+            None => None,
+        };
         if let Some(folder) = &save_folder {
             write_experiment_config(folder, &fit_parameters, self.problem.experiment_config())?;
         }

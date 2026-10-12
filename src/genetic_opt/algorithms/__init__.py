@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from os import cpu_count
+from pathlib import PurePosixPath
 from time import time
 from typing import Any
 
@@ -18,7 +19,9 @@ from genetic_opt.exceptions import (
     ValidationException,
 )
 from genetic_opt.files import (
+    create_new_folder,
     ensure_folder_format,
+    normalize_path,
     save_bson,
     save_current_figure,
     save_json,
@@ -148,11 +151,16 @@ class GeneticAlgorithm(ABC):
             opt_is_min: whether the optimum fitness value is the minimum
                 (True) or the maximum (False) of the `fitness_func`.
             experiment_name: Genetic algorithm experiment name.
-                Default to the class name.
+                Default to the class name. With a `save_path` it names
+                a folder inside it, so it can not be an absolute path
+                or hold `..`.
             random_seed: Random seed to handle internal methods.
             extra_config: Additional dictionary that will be returned
                 by the `fit` method, as a new key named `config`.
             save_path: Optional path to save the results of each run.
+                The folder of the run is created at once, as
+                `<save_path>/<experiment_name>/<UTC date and time>`,
+                with `_2`, `_3` and so on added when it exists.
             save_as_bson: Whether to save the fit result as a bson instead of
                 a json file. Default to True.
             serialize_decoded_chromosome_func: If `save_path` is used, then
@@ -177,12 +185,7 @@ class GeneticAlgorithm(ABC):
         #  optimization is not enough well done.
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
-        self.save_path: str = (
-            f"{ensure_folder_format(save_path)}/"
-            f"{self.experiment_name}/{now_for_file_path()}"
-            if save_path
-            else ""
-        )
+        self.save_path: str = ""
         self.save_as_bson: bool = save_as_bson
         self.serialize_decoded_chromosome_func = (
             serialize_decoded_chromosome_func
@@ -198,6 +201,19 @@ class GeneticAlgorithm(ABC):
             raise ValidationException(
                 "If `save_path` is used, `serialize_decoded_chromosome_func` "
                 "must be fulfilled"
+            )
+        if save_path:
+            name_path = PurePosixPath(normalize_path(self.experiment_name))
+            if name_path.is_absolute() or ".." in name_path.parts:
+                raise ValidationException(
+                    f"experiment_name = {self.experiment_name!r} must be "
+                    f"a path inside `save_path`"
+                )
+            # The folder is created here, so two runs started in the same
+            # second do not share it.
+            self.save_path = create_new_folder(
+                f"{ensure_folder_format(save_path)}/"
+                f"{self.experiment_name}/{now_for_file_path()}"
             )
 
         self.population: list[Chromosome] = []

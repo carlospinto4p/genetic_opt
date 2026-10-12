@@ -9,32 +9,12 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Security**
 
-- [ ] `src/genetic_opt/files.py:217-219`: `save_yaml` uses `yaml.dump`
-  with the full `Dumper`, so an object that is not plain data in
-  `experiment_config()` is written as a `!!python/object` tag that
-  only an unsafe loader can read back. Line 217 also replaces
-  `Dumper.ignore_aliases` on the shared PyYAML class, which changes
-  YAML output for the whole process and for every later test. Use
-  `safe_dump` with a local Dumper subclass. `ignore_aliases=False`
-  has no test. (LOW, S)
-- [ ] `src/genetic_opt/algorithms/__init__.py:175-178` and
-  `crates/genetic_opt/src/algorithm.rs:173-176`: the save folder is
-  `save_path` + `experiment_name` + timestamp, and the name is not
-  checked. A name with `../` writes outside `save_path`; in Rust an
-  absolute name discards `save.path`. Matters only when the name
-  comes from untrusted input. (LOW, S)
-- [ ] `src/genetic_opt/functions.py:60` and
-  `crates/genetic_opt/src/algorithm.rs:174`: the run folder name is a
-  UTC timestamp to the second. Two runs with one experiment name
-  started in the same second share the folder and overwrite each
-  other's `fit_data_<n>` files. (LOW, S)
-- [ ] `src/genetic_opt/utils.py:162-218`, `files.py:110-129`:
-  `load_fit_result` cannot execute code (`bson.decode` and
-  `json.load` only), but it reads each file whole with no size
-  limit and passes the dicts unchecked into `Score(**s)`,
-  `Metric(**d)` and `Chromosome(...)`, so a malformed file raises a
-  raw `KeyError` or `TypeError` and unknown keys are accepted.
-  (LOW, M)
+- [ ] **[manual]** `src/genetic_opt/utils.py`: since 0.6.1
+  `load_fit_result` refuses an unknown key in a `Score` or a
+  `Metric`, but still ignores one at the top level of a file and in
+  a saved Chromosome. Decide whether to refuse those too. Refusing
+  them makes an older version of the package unable to read a file
+  written by a newer one that adds a key.
 - [ ] `src/genetic_opt/exceptions.py:17-22`: every
   `GeneticOptException` logs at ERROR level in its constructor, so
   a caught exception still prints an error. Three raise sites pass

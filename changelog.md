@@ -2,6 +2,41 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.1 - 12th October 2026
+
+- `files.py`:
+  - `save_yaml` writes with PyYAML's `SafeDumper`, so
+    `experiment_config.yml` is read back by a safe loader. An object
+    that is not plain data in `experiment_config()` now raises
+    `yaml.representer.RepresenterError` and no file is written. It
+    was written as a `!!python/object` tag.
+  - `save_yaml` no longer replaces `ignore_aliases` on PyYAML's shared
+    `Dumper` class, which changed the YAML output of the whole
+    process.
+  - Added `create_new_folder`: it creates a folder that did not
+    exist, adding `_2`, `_3` and so on to the name while one exists.
+- The folder of a run is created when the run is set up, in
+  `GeneticAlgorithm.__init__` and at the start of the crate's `fit`.
+  Two runs with one experiment name started in the same second
+  shared a folder and overwrote each other's files. The second one
+  now gets `<UTC date and time>_2`.
+- An `experiment_name` that is an absolute path or holds `..` is
+  refused when saving, with `ValidationException` in Python and
+  `Error::Validation` in the crate. It wrote outside the save path.
+  A name with folders in it, such as `group/name`, is still accepted.
+- `utils.py`:
+  - `load_fit_result` and `load_fit_result_file` raise
+    `ValidationException` naming the file when its content is not the
+    one of a fit result file. They raised a raw `KeyError`,
+    `TypeError` or decoding error.
+  - Added the parameter `max_file_bytes` to both: a larger file is
+    refused without being read. There is no limit by default.
+- Added tests: 5 in `tests/unit/test_files.py`, 6 in
+  `tests/unit/test_fit_save.py` and 2 in
+  `crates/genetic_opt/tests/algorithm.rs`.
+- `backlog.md`: removed the four items above and added one to decide
+  whether the loader refuses unknown keys.
+
 ### v0.6.0 - 12th October 2026
 
 - Fixed `space_points` and `exploration_percentage` in
