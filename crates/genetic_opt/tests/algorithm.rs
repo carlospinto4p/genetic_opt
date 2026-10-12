@@ -267,7 +267,23 @@ fn bad_parameters_are_refused() {
     let mut no_threads = FitConfig::new(5, 30);
     no_threads.n_jobs = Some(0);
 
-    for config in [small_population, no_threads] {
+    let mut no_population = FitConfig::new(5, 0);
+    no_population.min_population_size = 0;
+    let mut crossovers_over_one = FitConfig::new(5, 30);
+    crossovers_over_one.crossovers_prop = 1.5;
+    let mut negative_besties = FitConfig::new(5, 30);
+    negative_besties.besties_prop = -0.1;
+    let mut mutate_not_a_number = FitConfig::new(5, 30);
+    mutate_not_a_number.mutate_prob = f64::NAN;
+
+    for config in [
+        small_population,
+        no_threads,
+        no_population,
+        crossovers_over_one,
+        negative_besties,
+        mutate_not_a_number,
+    ] {
         let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
         assert!(matches!(algorithm.fit(), Err(Error::Validation(_))));
     }

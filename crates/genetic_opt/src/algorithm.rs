@@ -237,6 +237,20 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 "n_jobs is {n_jobs}, and this machine has {cores} cores"
             )));
         }
+        if config.population_size == 0 {
+            return Err(Error::Validation("population_size is 0".into()));
+        }
+        for (name, value) in [
+            ("crossovers_prop", config.crossovers_prop),
+            ("besties_prop", config.besties_prop),
+            ("mutate_prob", config.mutate_prob),
+        ] {
+            if !(0.0..=1.0).contains(&value) {
+                return Err(Error::Validation(format!(
+                    "{name} is {value}, and it must be between 0 and 1"
+                )));
+            }
+        }
         if config.min_population_size > config.population_size {
             return Err(Error::Validation(format!(
                 "min_population_size {} is greater than population_size {}",

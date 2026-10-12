@@ -1,8 +1,11 @@
 import gc
 import weakref
 
+import pytest
+
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
+from genetic_opt.exceptions import ValidationException
 from genetic_opt.gene_space import AbstractGeneSpace
 
 
@@ -113,6 +116,23 @@ def test_fit_metrics_count_the_fitness_calls():
         100 * counted["processed"] / counted["total"], 2
     )
     assert 0 < counted["percent_processed"] <= 100
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"population_size": 0, "min_population_size": 0},
+        {"crossovers_prop": 1.5},
+        {"besties_prop": -0.1},
+        {"mutate_prob": float("nan")},
+    ],
+)
+def test_fit_refuses_parameters_out_of_range(parameters):
+    genetic_bag, calls = _counting_bag()
+    fit_parameters = {"n_generations": 5, "population_size": 30, "n_jobs": 1}
+    with pytest.raises(ValidationException):
+        genetic_bag.fit(**(fit_parameters | parameters))
+    assert not calls
 
 
 def test_get_chromosome_score_runs_the_fitness_function_once():

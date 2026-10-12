@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.5.1 - 12th October 2026
+
+- Fixed a panic in the Rust crate: `fit` with `population_size = 0`
+  and `min_population_size = 0` read the first chromosome of an empty
+  population. It now returns `Error::Validation`.
+- `fit` refuses a `crossovers_prop`, `besties_prop` or `mutate_prob`
+  outside 0 to 1, a NaN included, in both implementations:
+  `Error::Validation` in the crate and `ValidationException` in the
+  Python package, which also refuses a `population_size` under 1.
+  Before, no value of the three was checked.
+- Added tests for these cases: `bad_parameters_are_refused` in
+  `crates/genetic_opt/tests/algorithm.rs` and
+  `test_fit_refuses_parameters_out_of_range` in
+  `tests/unit/test_binary_algs.py`.
+
 ### v0.5.0 - 12th October 2026
 
 - The package now needs Python 3.14 or later: `requires-python` in

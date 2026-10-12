@@ -19,13 +19,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Security**
 
-- [ ] `crates/genetic_opt/src/algorithm.rs:390`: `population_size = 0`
-  with `min_population_size = 0` passes `fit_parameters()` (line 240)
-  and `measure` then indexes `self.population[0]`, so `fit` panics
-  instead of returning `Error::Validation`. `crossovers_prop`,
-  `besties_prop` and `mutate_prob` are not range-checked in either
-  implementation (Python checks only the two sizes and `n_jobs`,
-  `algorithms/__init__.py:423-433`). (MED, S)
 - [ ] `.gitlab-ci.yml`: the `publish-package` job that holds
   `CI_JOB_TOKEN` installs `build` and `twine` with no version, and
   `hatchling` has no version bound (`pyproject.toml:23`). The file

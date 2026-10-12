@@ -424,6 +424,18 @@ class GeneticAlgorithm(ABC):
         exit_func = exit_condition or self.no_exit_condition
         callback_func = callback_func or self.default_fit_callback
         # Validate parameters
+        if population_size < 1:
+            raise ValidationException(f"{population_size = } is not valid!")
+        for name, value in (
+            ("crossovers_prop", crossovers_prop),
+            ("besties_prop", besties_prop),
+            ("mutate_prob", mutate_prob),
+        ):
+            # Written this way, a NaN is refused too
+            if not 0 <= value <= 1:
+                raise ValidationException(
+                    f"{name} = {value} must be between 0 and 1"
+                )
         if min_population_size > population_size:
             raise ValidationException(
                 f"{min_population_size} is greater than {population_size = }"
