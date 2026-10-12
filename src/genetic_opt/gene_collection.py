@@ -1,15 +1,13 @@
-""" Genetic Opt Gene Space submodule. """
-
-from __future__ import annotations
+"""Genetic Opt Gene Space submodule."""
 
 from abc import ABC, abstractmethod
-from typing import Collection
+from collections.abc import Collection
 
 from numpy import ndarray
 from numpy.random import RandomState
 
-from genetic_opt.gene_space import GeneSpace
 from genetic_opt.exceptions import GeneticOptException
+from genetic_opt.gene_space import GeneSpace
 
 
 class GeneCollection(ABC):
@@ -18,6 +16,7 @@ class GeneCollection(ABC):
     A single gene is a symbol and can be anything.
     This class constitutes the Chromosome class for genetic algorithms.
     """
+
     def __init__(self, size: int, genes: Collection):
         """
         Initialize a gene collection.
@@ -25,15 +24,21 @@ class GeneCollection(ABC):
         :param genes: collection of genes. Properties: Sized and Iterable.
         """
         if len(genes) != size:
-            raise GeneticOptException('Chromosome size must match the '
-                                      'length of the genes', locals())
+            raise GeneticOptException(
+                "Chromosome size must match the length of the genes", locals()
+            )
         self.size: int = size
         self.genes: Collection = genes
 
     @abstractmethod
-    def random_mutate(self, gene_space: GeneSpace, gene_mutate_prob: float,
-                      random_state: RandomState, gene_space_func: str = None,
-                      gene_space_func_kwargs: dict = None) -> GeneCollection:
+    def random_mutate(
+        self,
+        gene_space: GeneSpace,
+        gene_mutate_prob: float,
+        random_state: RandomState,
+        gene_space_func: str | None = None,
+        gene_space_func_kwargs: dict | None = None,
+    ) -> "GeneCollection":
         """
         Randomly mutate the entire Gene Collection.
         The Genes will change, but only a part of them, depending on
@@ -46,10 +51,11 @@ class GeneCollection(ABC):
         :param gene_space_func_kwargs: GeneSpace function keyword arguments.
         :return: the transformed GeneCollection object.
         """
-        pass
 
     @abstractmethod
-    def select_random(self, gene_space: GeneSpace, n: int = None) -> Collection:
+    def select_random(
+        self, gene_space: GeneSpace, n: int | None = None
+    ) -> Collection:
         """
         Select a random gene collection using the input GeneSpace.
         :param gene_space: GeneSpace object to get genes from.
@@ -57,7 +63,6 @@ class GeneCollection(ABC):
             Default to the size of the GeneCollection.
         :return: a collection of genes.
         """
-        pass
 
 
 class GeneList(GeneCollection):
@@ -66,8 +71,13 @@ class GeneList(GeneCollection):
     A single gene is a symbol and can be anything.
     This class constitutes the Chromosome class for genetic algorithms.
     """
-    def __init__(self, size: int, genes: list = None,
-                 gene_space: GeneSpace = None):
+
+    def __init__(
+        self,
+        size: int,
+        genes: list | None = None,
+        gene_space: GeneSpace = None,
+    ):
         """
         Initialize the gene list.
         If `genes` is received, and it has a length less than the received
@@ -83,8 +93,9 @@ class GeneList(GeneCollection):
             genes = genes.tolist()
         if not (genes or gene_space):
             raise GeneticOptException(
-                'Chromosome must be initialized with the `genes` '
-                'parameter or using a `gene_space`')
+                "Chromosome must be initialized with the `genes` "
+                "parameter or using a `gene_space`"
+            )
         self.size = size
         if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)
@@ -92,9 +103,14 @@ class GeneList(GeneCollection):
             genes = genes + self.select_random(gene_space, n=size_dif)
         super().__init__(size=size, genes=genes)
 
-    def random_mutate(self, gene_space: GeneSpace, gene_mutate_prob: float,
-                      random_state: RandomState, gene_space_func: str = None,
-                      gene_space_func_kwargs: dict = None) -> GeneList:
+    def random_mutate(
+        self,
+        gene_space: GeneSpace,
+        gene_mutate_prob: float,
+        random_state: RandomState,
+        gene_space_func: str | None = None,
+        gene_space_func_kwargs: dict | None = None,
+    ) -> "GeneList":
         """
         Randomly mutate the entire Gene List.
         The Genes will change, but only a part of them, depending on
@@ -109,15 +125,19 @@ class GeneList(GeneCollection):
             Default to the empty set.
         :return: the transformed GeneList object.
         """
-        gene_space_func = gene_space_func or 'select_random'
+        gene_space_func = gene_space_func or "select_random"
         gene_space_func_kwargs = gene_space_func_kwargs or {}
         self.genes = [
             getattr(gene_space, gene_space_func)(**gene_space_func_kwargs)
-            if random_state.random() < gene_mutate_prob else gene
-            for gene in self.genes]
+            if random_state.random() < gene_mutate_prob
+            else gene
+            for gene in self.genes
+        ]
         return self
 
-    def select_random(self, gene_space: GeneSpace, n: int = None) -> list:
+    def select_random(
+        self, gene_space: GeneSpace, n: int | None = None
+    ) -> list:
         """
         Select a random gene list using the input GeneSpace.
         :param gene_space: GeneSpace object to get genes from.
@@ -135,8 +155,13 @@ class GeneSet(GeneCollection):
     A single gene is a symbol and can be anything.
     This class constitutes the Chromosome class for genetic algorithms.
     """
-    def __init__(self, size: int, genes: set = None,
-                 gene_space: GeneSpace = None):
+
+    def __init__(
+        self,
+        size: int,
+        genes: set | None = None,
+        gene_space: GeneSpace = None,
+    ):
         """
         Initialize the gene set.
         If `genes` is received, and it has a length lesser to the size
@@ -154,20 +179,25 @@ class GeneSet(GeneCollection):
             genes = set(genes)
         if not (genes or gene_space):
             raise GeneticOptException(
-                'Chromosome must be initialized with the `genes` '
-                'parameter or using a `gene_space`')
+                "Chromosome must be initialized with the `genes` "
+                "parameter or using a `gene_space`"
+            )
         self.size = size
         if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)
         if size > len(genes):
             # GeneSpace required
-            genes = self._complete_genes(
-                genes, gene_space=gene_space, n=size)
+            genes = self._complete_genes(genes, gene_space=gene_space, n=size)
         super().__init__(size=size, genes=genes)
 
-    def random_mutate(self, gene_space: GeneSpace, gene_mutate_prob: float,
-                      random_state: RandomState, gene_space_func: str = None,
-                      gene_space_func_kwargs: dict = None) -> GeneSet:
+    def random_mutate(
+        self,
+        gene_space: GeneSpace,
+        gene_mutate_prob: float,
+        random_state: RandomState,
+        gene_space_func: str | None = None,
+        gene_space_func_kwargs: dict | None = None,
+    ) -> "GeneSet":
         """
         Randomly mutate the entire Gene Set.
         The Genes will change, but only a part of them, depending on
@@ -182,20 +212,26 @@ class GeneSet(GeneCollection):
             Default to the empty set.
         :return: the transformed GeneSet object.
         """
-        gene_space_func = gene_space_func or 'select_random'
+        gene_space_func = gene_space_func or "select_random"
         gene_space_func_kwargs = gene_space_func_kwargs or {}
         new_genes = set()
         for gene in self.genes:
             if random_state.random() < gene_mutate_prob:
-                new_genes.add(getattr(gene_space, gene_space_func)(
-                    **gene_space_func_kwargs))
+                new_genes.add(
+                    getattr(gene_space, gene_space_func)(
+                        **gene_space_func_kwargs
+                    )
+                )
             else:
                 new_genes.add(gene)
         self.genes = self._complete_genes(
-            genes=new_genes, gene_space=gene_space)
+            genes=new_genes, gene_space=gene_space
+        )
         return self
 
-    def select_random(self, gene_space: GeneSpace, n: int = None) -> set:
+    def select_random(
+        self, gene_space: GeneSpace, n: int | None = None
+    ) -> set:
         """
         Select a random gene set using the input GeneSpace.
         :param gene_space: GeneSpace object to get genes from.
@@ -210,8 +246,9 @@ class GeneSet(GeneCollection):
         genes = self._complete_genes(genes=genes, gene_space=gene_space, n=n)
         return genes
 
-    def _complete_genes(self, genes: set, gene_space: GeneSpace,
-                        n: int = None) -> set:
+    def _complete_genes(
+        self, genes: set, gene_space: GeneSpace, n: int | None = None
+    ) -> set:
         """
         Return a set of genes built adding new genes to the genes received.
         :param genes: initial set of genes. Can be an empty set.
@@ -222,8 +259,10 @@ class GeneSet(GeneCollection):
         :return: a set of genes of size `n`.
         """
         if len(gene_space) < self.size:
-            raise GeneticOptException('Chromosome received a `size` greater '
-                                      'than its `gene_space`', locals())
+            raise GeneticOptException(
+                "Chromosome received a `size` greater than its `gene_space`",
+                locals(),
+            )
         n = n or self.size
         while len(genes) < n:
             genes.add(gene_space.select_random())

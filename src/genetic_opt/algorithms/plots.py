@@ -36,7 +36,7 @@ def set_pyplot_config() -> None:
 def plot_genetic_algo_metrics(
     metrics: list[Metric],
     fit_metrics: dict,
-    other_keys: dict[str, Callable[[Chromosome], float]] = None,
+    other_keys: dict[str, Callable[[Chromosome], float]] | None = None,
 ) -> None:
     """
     Plot genetic algorithm training metrics summary.

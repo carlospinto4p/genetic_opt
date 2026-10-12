@@ -1,9 +1,9 @@
-
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from genetic_opt.algorithms import GeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.gene_space import GeneSpace, BinaryGeneSpace
+from genetic_opt.gene_space import BinaryGeneSpace, GeneSpace
 from genetic_opt.score import Score
 
 
@@ -14,12 +14,19 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
 
     See the doc of the superclass, GeneticAlgorithm.
     """
-    def __init__(self, chromosome_length: int, chromosome_as_set: bool,
-                 decode_func: Callable[[Chromosome], Any],
-                 fitness_func: Callable[[Chromosome], Score],
-                 opt_is_min: bool, experiment_name: str = None,
-                 random_seed: int = 442, gene_space_random_seed: int = 2,
-                 **kwargs):
+
+    def __init__(
+        self,
+        chromosome_length: int,
+        chromosome_as_set: bool,
+        decode_func: Callable[[Chromosome], Any],
+        fitness_func: Callable[[Chromosome], Score],
+        opt_is_min: bool,
+        experiment_name: str | None = None,
+        random_seed: int = 442,
+        gene_space_random_seed: int = 2,
+        **kwargs,
+    ):
         """
         :param chromosome_length: length of the collection of genes that
             encodes a determined problem state.
@@ -38,23 +45,32 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         :param kwargs: Keyword Arguments for the GeneticAlgorithm class.
         """
         gene_space: GeneSpace = BinaryGeneSpace(
-            random_seed=gene_space_random_seed)
-        super().__init__(gene_space=gene_space,
-                         chromosome_length=chromosome_length,
-                         chromosome_as_set=chromosome_as_set,
-                         decode_func=decode_func, fitness_func=fitness_func,
-                         opt_is_min=opt_is_min, experiment_name=experiment_name,
-                         random_seed=random_seed, **kwargs)
+            random_seed=gene_space_random_seed
+        )
+        super().__init__(
+            gene_space=gene_space,
+            chromosome_length=chromosome_length,
+            chromosome_as_set=chromosome_as_set,
+            decode_func=decode_func,
+            fitness_func=fitness_func,
+            opt_is_min=opt_is_min,
+            experiment_name=experiment_name,
+            random_seed=random_seed,
+            **kwargs,
+        )
 
-    def crossover_func(self, c1: Chromosome,
-                       c2: Chromosome) -> tuple[Chromosome, Chromosome]:
+    def crossover_func(
+        self, c1: Chromosome, c2: Chromosome
+    ) -> tuple[Chromosome, Chromosome]:
         """
         Realizes a cross between two chromosomes. Also called `recombination`.
         :param c1: first chromosome.
         :param c2: second chromosome.
         :return: a tuple of chromosomes.
         """
-        cut_position = self.random_state.randint(1, self.chromosome_length - 1)
+        cut_position = self.random_state.randint(
+            1, self.chromosome_length - 1
+        )
         genes_1 = c1.genes[:cut_position] + c2.genes[cut_position:]
         genes_2 = c2.genes[:cut_position] + c1.genes[cut_position:]
         cr1 = Chromosome(size=self.chromosome_length, genes=genes_1)

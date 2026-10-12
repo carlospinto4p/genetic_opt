@@ -8,24 +8,6 @@
   parallel scoring fix only once a newer version is published. Since
   0.4.1 the job is `publish-package` in `.gitlab-ci.yml`, offered
   only on a `vX.Y.Z` tag that matches the version.
-- [ ] `ruff check src tests` reports 56 findings with the default
-  rules of `ruff` 0.16.4: 45 `RUF013` (a parameter typed `str` with
-  the default `None`), 3 `I001`, 3 `PIE790`, 2 `UP035`, 2 `SIM102`
-  and 1 `B019`. Only `algorithms/__init__.py`, `chromosome.py`,
-  `metrics.py` and the files added in 0.3.0 have been through the
-  formatter.
-- [ ] `B019`: `GeneticAlgorithm.get_chromosome_score` is cached with
-  `functools.cache` on a method, so the cache keeps every Chromosome
-  and the algorithm itself alive. `_chromosome_cache` already holds
-  the same scores. Keep one of the two.
-  - `/scan` of 12th October 2026: the cached method is also the sort
-    key at `algorithms/__init__.py:946` and is called at lines 757,
-    790 and 974, and each lookup costs an md5 hash of the genes plus
-    an equality check. `x.score.value` is already set at lines
-    940-943 and can be the sort key.
-- [ ] `fit_metrics.fitness_func_calls` in `_get_fitted_data` is
-  mislabelled: `total` is the number of cache hits, not of calls, and
-  `percent_processed` divides the misses by the hits.
 - [ ] Decide how Python code uses the Rust crate added in 0.4.0
   (`crates/genetic_opt`), then build it with PyO3 and maturin. Second
   step of the plan agreed on 12th October 2026; the engine is done.
@@ -331,10 +313,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 - [ ] `src/genetic_opt/gene_space.py:11`: `GeneSpace` is a `TypeVar`
   bound to `AbstractGeneSpace` but is used as a class annotation
   everywhere. Annotate with the class, or rename it. (MED, S)
-- [ ] `src/genetic_opt/gene_space.py:3` and `gene_collection.py:3`
-  have `from __future__ import annotations`. Remove both;
-  `gene_collection.py` then needs its own class names quoted at
-  lines 36, 97 and 170. (MED, S)
 - [ ] Code with no caller in this repo (check `downstream` first):
   `get_best` and `get_bests` (`algorithms/__init__.py:541-565`),
   which also pick the bests differently from `_get_fitted_data`;
@@ -459,9 +437,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `extra_metrics` saved and loaded; `files.py` on missing and
   corrupt files; `format_seconds` at 0, 60, 3600 and 86400 seconds
   (the last gives "1 day, 0.00 seconds", also in `format.rs`) and
-  the "Yi" case of `format_bytes`; `logs.py`; and
-  `fit_metrics.fitness_func_calls`, which the fix filed above will
-  need. (LOW, M)
+  the "Yi" case of `format_bytes`; and `logs.py`. (LOW, M)
 - [ ] Rust, small gaps: the set and minimise tests
   (`tests/algorithm.rs:201-238`) assert "never gets worse" but not
   the known optimum (30 and 3); `Chromosome::new` sorting and

@@ -2,6 +2,34 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.4.2 - 12th October 2026
+
+- Fixed `fit_metrics.fitness_func_calls` in the fit result of the
+  Python package. `total` was the number of hits of a method cache and
+  `percent_processed` divided the misses by the hits. Now `total` is
+  the number of Chromosomes that needed a score, `processed` the times
+  the fitness function ran, `cached` their difference and
+  `percent_processed` is `100 * processed / total`, as in the Rust
+  crate. `README.md` no longer lists it as a difference.
+- `GeneticAlgorithm.get_chromosome_score` is no longer wrapped in
+  `functools.cache`, which kept every Chromosome and the algorithm
+  itself alive. It reads and fills `_chromosome_cache`, which already
+  held the same scores. The sort of the population and the fit result
+  read `Chromosome.score` directly.
+- `tests/unit/test_binary_algs.py`: 3 tests, for the counters, for
+  `get_chromosome_score` and for the algorithm being freed.
+- `ruff check src tests` reports nothing, from 56 findings. The commit
+  hook checks every line of a changed file, so this could not be a
+  release of its own. No behaviour changes in it:
+  - A parameter with the default `None` is now typed `X | None` (45
+    places).
+  - Import order, `collections.abc` imports, three `pass` statements
+    after a docstring, and the two nested `if` of the invariant
+    checks in `algorithms/__init__.py`.
+  - Removed `from __future__ import annotations` from `gene_space.py`
+    and `gene_collection.py`.
+  - Every file under `src` and `tests` has been through `ruff format`.
+
 ### v0.4.1 - 12th October 2026
 
 - Registered the project in `programme` and added the files its

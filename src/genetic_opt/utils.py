@@ -17,8 +17,8 @@ from genetic_opt.score import Score
 # TODO 2024.03.03 Pending to test the functions of this script!
 def load_fit_result(
     folder_path: str,
-    load_decoded_chromosome_func: Callable[[Any], Any] = None,
-    load_gene_func: Callable[[Any], Any] = None,
+    load_decoded_chromosome_func: Callable[[Any], Any] | None = None,
+    load_gene_func: Callable[[Any], Any] | None = None,
     remove_duplicates: bool = False,
 ) -> dict:
     """
@@ -53,12 +53,12 @@ def load_fit_result(
                     population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
-                    - total: number of times `self.fit_func` has been invoked.
-                    - processed: number of different calls to the fit function
-                        that have been processed.
-                    - percent_processed: percent of processed calls over the
-                        total calls. From 0 to 100.
-                    - cached: number of cached calls to the fit function.
+                    - total: number of Chromosomes that needed a Score.
+                    - processed: number of times the fitness function ran:
+                        once for each different Chromosome.
+                    - percent_processed: 100 * processed / total.
+                    - cached: number of Scores taken from an earlier
+                        Chromosome with the same genes.
                     - space_points: size of the gene_space of the experiment.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
@@ -96,8 +96,8 @@ def load_fit_result(
 
 def load_fit_result_file(
     file_path: str,
-    load_decoded_chromosome_func: Callable[[Any], Any] = None,
-    load_gene_func: Callable[[Any], Any] = None,
+    load_decoded_chromosome_func: Callable[[Any], Any] | None = None,
+    load_gene_func: Callable[[Any], Any] | None = None,
     remove_duplicates: bool = False,
 ) -> dict:
     """
@@ -132,12 +132,12 @@ def load_fit_result_file(
                     population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
-                    - total: number of times `self.fit_func` has been invoked.
-                    - processed: number of different calls to the fit function
-                        that have been processed.
-                    - percent_processed: percent of processed calls over the
-                        total calls. From 0 to 100.
-                    - cached: number of cached calls to the fit function.
+                    - total: number of Chromosomes that needed a Score.
+                    - processed: number of times the fitness function ran:
+                        once for each different Chromosome.
+                    - percent_processed: 100 * processed / total.
+                    - cached: number of Scores taken from an earlier
+                        Chromosome with the same genes.
                     - space_points: size of the gene_space of the experiment.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
@@ -221,7 +221,7 @@ def load_fit_result_file(
 def serialize_fit_result(
     fit_result: dict,
     serialize_decoded_chromosome_func: Callable[[Any], Any],
-    serialize_gene_func: Callable[[Any], Any] = None,
+    serialize_gene_func: Callable[[Any], Any] | None = None,
 ) -> dict:
     """
     Transform the result of the function `GeneticAlgorithm.fit` into a
@@ -248,12 +248,12 @@ def serialize_fit_result(
                     population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
-                    - total: number of times `self.fit_func` has been invoked.
-                    - processed: number of different calls to the fit function
-                        that have been processed.
-                    - percent_processed: percent of processed calls over the
-                        total calls. From 0 to 100.
-                    - cached: number of cached calls to the fit function.
+                    - total: number of Chromosomes that needed a Score.
+                    - processed: number of times the fitness function ran:
+                        once for each different Chromosome.
+                    - percent_processed: 100 * processed / total.
+                    - cached: number of Scores taken from an earlier
+                        Chromosome with the same genes.
                     - space_points: size of the gene_space of the experiment.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:

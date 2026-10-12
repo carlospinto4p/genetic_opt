@@ -24,7 +24,7 @@ class Chromosome:
     def __init__(
         self,
         size: int,
-        genes: Collection = None,
+        genes: Collection | None = None,
         gene_space: GeneSpace = None,
         random_seed: int = 442,
         is_gene_set: bool = False,
@@ -65,7 +65,7 @@ class Chromosome:
 
     @classmethod
     def from_dict(
-        cls, d: dict, load_genes_func: Callable[[Any], Any] = None
+        cls, d: dict, load_genes_func: Callable[[Any], Any] | None = None
     ) -> "Chromosome":
         """
         Create a Chromosome from a serialized dictionary, created with the
@@ -134,8 +134,8 @@ class Chromosome:
         self,
         gene_space: GeneSpace,
         gene_mutate_prob: float,
-        gene_space_func: str = None,
-        gene_space_func_kwargs: dict = None,
+        gene_space_func: str | None = None,
+        gene_space_func_kwargs: dict | None = None,
         random_state: RandomState = None,
     ) -> "Chromosome":
         """
@@ -164,7 +164,7 @@ class Chromosome:
         return self
 
     def to_dict(
-        self, serialize_gene_func: Callable[[Any], Any] = None
+        self, serialize_gene_func: Callable[[Any], Any] | None = None
     ) -> dict:
         """
         Get a dictionary that describes the Chromosome.

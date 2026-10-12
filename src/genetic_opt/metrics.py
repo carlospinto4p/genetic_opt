@@ -42,8 +42,8 @@ class Metric:
     def from_dict(
         cls,
         d: dict,
-        load_decoded_chromosome_func: Callable[[Any], Any] = None,
-        load_gene_func: Callable[[Any], Any] = None,
+        load_decoded_chromosome_func: Callable[[Any], Any] | None = None,
+        load_gene_func: Callable[[Any], Any] | None = None,
     ) -> "Metric":
         """
         Get a Metric object from a serialized object, created by the method
@@ -76,8 +76,8 @@ class Metric:
 
     def to_dict(
         self,
-        serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
-        serialize_gene_func: Callable[[Any], Any] = None,
+        serialize_decoded_chromosome_func: Callable[[Any], Any] | None = None,
+        serialize_gene_func: Callable[[Any], Any] | None = None,
     ) -> dict:
         """
         Get a dictionary that describes the Metrics.

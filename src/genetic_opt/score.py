@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 
 
@@ -9,6 +8,7 @@ class Score:
     :param name: Optional score name.
     :param extra_metrics: optional dictionary or list.
     """
+
     value: float
     name: str = None
     extra_metrics: dict | list = None
@@ -19,9 +19,9 @@ class Score:
         Keys: `value`.
         Optional keys: `name`, `extra_metrics`.
         """
-        response = {'value': self.value}
+        response = {"value": self.value}
         if self.name:
-            response['name'] = self.name
+            response["name"] = self.name
         if self.extra_metrics:
-            response['extra_metrics'] = self.extra_metrics
+            response["extra_metrics"] = self.extra_metrics
         return response

@@ -1,1 +1,1 @@
-""" Genetic Opt tests module. """
+"""Genetic Opt tests module."""

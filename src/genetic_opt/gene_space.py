@@ -1,14 +1,11 @@
-""" Genetic Opt Gene Space submodule. """
-
-from __future__ import annotations
+"""Genetic Opt Gene Space submodule."""
 
 from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 
 from numpy.random import RandomState
 
-
-GeneSpace = TypeVar('GeneSpace', bound='AbstractGeneSpace')
+GeneSpace = TypeVar("GeneSpace", bound="AbstractGeneSpace")
 
 
 class AbstractGeneSpace(ABC):
@@ -34,12 +31,11 @@ class AbstractGeneSpace(ABC):
         pass
 
     @abstractmethod
-    def select_random(self, n: int | tuple[int, ...] = None) -> Any:
+    def select_random(self, n: int | tuple[int, ...] | None = None) -> Any:
         """
         Get a random element of the Gene Space.
         :param n: dimensions of the output. Default to 1.
         """
-        pass
 
 
 class BinaryGeneSpace(AbstractGeneSpace):
@@ -50,5 +46,5 @@ class BinaryGeneSpace(AbstractGeneSpace):
     def __len__(self) -> int:
         return 2
 
-    def select_random(self, n: int | tuple[int] = None) -> int:
+    def select_random(self, n: int | tuple[int] | None = None) -> int:
         return self.random_state.choice([0, 1], size=n)

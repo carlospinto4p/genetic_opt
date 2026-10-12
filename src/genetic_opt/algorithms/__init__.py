@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from functools import cache
 from os import cpu_count
 from time import time
 from typing import Any
@@ -113,18 +112,20 @@ class GeneticAlgorithm(ABC):
         decode_func: Callable[[Chromosome], Any],
         fitness_func: Callable[[Chromosome], Score],
         opt_is_min: bool,
-        experiment_name: str = None,
+        experiment_name: str | None = None,
         random_seed: int = 442,
-        extra_config: dict = None,
-        save_path: str = None,
+        extra_config: dict | None = None,
+        save_path: str | None = None,
         save_as_bson: bool = True,
-        serialize_decoded_chromosome_func: Callable[[Any], Any] = None,
-        serialize_gene_func: Callable[[Any], Any] = None,
-        mutation_invariant: Callable[[Chromosome, Chromosome], bool] = None,
+        serialize_decoded_chromosome_func: Callable[[Any], Any] | None = None,
+        serialize_gene_func: Callable[[Any], Any] | None = None,
+        mutation_invariant: Callable[[Chromosome, Chromosome], bool]
+        | None = None,
         crossover_invariant: Callable[
             [tuple[Chromosome, Chromosome], tuple[Chromosome, Chromosome]],
             bool,
-        ] = None,
+        ]
+        | None = None,
     ):
         """
         Initialize the GeneticAlgorithm base class.
@@ -205,6 +206,8 @@ class GeneticAlgorithm(ABC):
         self.extra_config: dict = extra_config or {}
         # Inner mapping to keep track of the cached chromosome values
         self._chromosome_cache: dict[int, tuple[Any, float]] = {}
+        # Number of Chromosomes that needed a score
+        self._score_requests: int = 0
 
         # Some logging
         logger.info(
@@ -252,11 +255,12 @@ class GeneticAlgorithm(ABC):
             a tuple of Chromosomes.
         """
         crossover = self.crossover_func(c1, c2)
-        if self.crossover_invariant:
-            if not self.crossover_invariant((c1, c2), crossover):
-                raise InvariantException(
-                    f"Chromosomes {c1}, {c2} mutated to {crossover}"
-                )
+        if self.crossover_invariant and not self.crossover_invariant(
+            (c1, c2), crossover
+        ):
+            raise InvariantException(
+                f"Chromosomes {c1}, {c2} mutated to {crossover}"
+            )
         return crossover
 
     def _mutate(self, chromosome: Chromosome, prob: float) -> Chromosome:
@@ -269,11 +273,12 @@ class GeneticAlgorithm(ABC):
             a Chromosome that could have mutated or not. Inner managed.
         """
         mutation = self.mutate(chromosome, prob)
-        if self.mutation_invariant:
-            if not self.mutation_invariant(chromosome, mutation):
-                raise InvariantException(
-                    f"Chromosome {chromosome} mutated to {mutation}"
-                )
+        if self.mutation_invariant and not self.mutation_invariant(
+            chromosome, mutation
+        ):
+            raise InvariantException(
+                f"Chromosome {chromosome} mutated to {mutation}"
+            )
         return mutation
 
     def cross_parents(self, parents: list[Chromosome]) -> list[Chromosome]:
@@ -325,13 +330,12 @@ class GeneticAlgorithm(ABC):
         besties_prop: float = 0.6,
         mutate_prob: float = 0.05,
         min_population_size: int = 10,
-        exit_condition: Callable[["GeneticAlgorithm"], bool] = None,
+        exit_condition: Callable[["GeneticAlgorithm"], bool] | None = None,
         plot_metrics: bool = True,
-        other_metrics_to_plot: dict[
-            str, Callable[[Chromosome], float]
-        ] = None,
-        callback_func: Callable[["GeneticAlgorithm"], None] = None,
-        iter_func: Callable = None,
+        other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
+        | None = None,
+        callback_func: Callable[["GeneticAlgorithm"], None] | None = None,
+        iter_func: Callable | None = None,
         n_jobs: int = -2,
     ) -> dict:
         """
@@ -390,12 +394,12 @@ class GeneticAlgorithm(ABC):
                     population to get fitted.
             - fit_metrics: dict:
                 - fitness_func_calls: dict:
-                    - total: number of times `self.fit_func` has been invoked.
-                    - processed: number of different calls to the fit function
-                        that have been processed.
-                    - percent_processed: percent of processed calls over the
-                        total calls. From 0 to 100.
-                    - cached: number of cached calls to the fit function.
+                    - total: number of Chromosomes that needed a Score.
+                    - processed: number of times the fitness function ran:
+                        once for each different Chromosome.
+                    - percent_processed: 100 * processed / total.
+                    - cached: number of Scores taken from an earlier
+                        Chromosome with the same genes.
                     - space_points: size of the gene_space of the experiment.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
@@ -524,19 +528,27 @@ class GeneticAlgorithm(ABC):
                     break
         return fit_result
 
-    @cache
     def get_chromosome_score(self, chromosome: Chromosome) -> Score:
         """
-        Get a chromosome score. This method is cached for better performance.
+        Get a chromosome score. The fitness function runs once for each
+        different Chromosome: later ones with the same genes get the
+        Score kept in `self._chromosome_cache`.
         :param chromosome: Chromosome to get the Score from.
         :return: the Chromosome Score.
         """
-        score = chromosome.get_score(self.algo_fitness_func)
-        self._chromosome_cache[chromosome.__hash__()] = (
-            score,
-            chromosome.score_time,
-        )
-        return score
+        if chromosome.score is None:
+            chromosome_hash = chromosome.__hash__()
+            if chromosome_hash in self._chromosome_cache:
+                chromosome.score, chromosome.score_time = (
+                    self._chromosome_cache[chromosome_hash]
+                )
+            else:
+                chromosome.get_score(self.algo_fitness_func)
+                self._chromosome_cache[chromosome_hash] = (
+                    chromosome.score,
+                    chromosome.score_time,
+                )
+        return chromosome.score
 
     def get_best(self, population_idx: int = -1) -> tuple[Score, Any]:
         """
@@ -577,7 +589,7 @@ class GeneticAlgorithm(ABC):
     def init_population(
         self,
         population_size: int,
-        iter_func: Callable = None,
+        iter_func: Callable | None = None,
         n_jobs: int = -2,
     ) -> None:
         """
@@ -636,7 +648,7 @@ class GeneticAlgorithm(ABC):
         crossovers_prop: float = 0.7,
         besties_prop: float = 0.6,
         mutate_prob: float = 0.05,
-        iter_func: Callable = None,
+        iter_func: Callable | None = None,
         n_jobs: int = -2,
     ) -> None:
         """
@@ -720,12 +732,12 @@ class GeneticAlgorithm(ABC):
                     population to get fitted.
             - fit_metrics: dictionary:
                 - fitness_func_calls: dict:
-                    - total: number of times `self.fit_func` has been invoked.
-                    - processed: number of different calls to the fit function
-                        that have been processed.
-                    - percent_processed: percent of processed calls over the
-                        total calls. From 0 to 100.
-                    - cached: number of cached calls to the fit function.
+                    - total: number of Chromosomes that needed a Score.
+                    - processed: number of times the fitness function ran:
+                        once for each different Chromosome.
+                    - percent_processed: 100 * processed / total.
+                    - cached: number of Scores taken from an earlier
+                        Chromosome with the same genes.
                     - space_points: size of the gene_space of the experiment.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
@@ -745,7 +757,8 @@ class GeneticAlgorithm(ABC):
                 - random_seed
             - config: optional, custom dictionary added by the child classes.
         """
-        cached_info = self.get_chromosome_score.cache_info()
+        requests = self._score_requests
+        processed = len(self._chromosome_cache)
         # Get the bests (unique) chromosomes
         bests = []
         for chromosome in self.population:
@@ -753,10 +766,7 @@ class GeneticAlgorithm(ABC):
                 bests.append(chromosome)
         summary = {
             "bests": {
-                "scores": [
-                    self.get_chromosome_score(chromosome)
-                    for chromosome in bests
-                ],
+                "scores": [chromosome.score for chromosome in bests],
                 "result": [
                     self.decode_func(chromosome) for chromosome in bests
                 ],
@@ -765,15 +775,13 @@ class GeneticAlgorithm(ABC):
             "metrics": self.metrics,
             "fit_metrics": {
                 "fitness_func_calls": {
-                    "total": cached_info.hits,
-                    "processed": cached_info.misses,
-                    "percent_processed": round(
-                        100 * cached_info.misses / cached_info.hits, 2
-                    ),
-                    "cached": cached_info.hits - cached_info.misses,
+                    "total": requests,
+                    "processed": processed,
+                    "percent_processed": round(100 * processed / requests, 2),
+                    "cached": requests - processed,
                     "space_points": len(self.gene_space),
                     "exploration_percentage": round(
-                        100 * cached_info.misses / len(self.gene_space), 2
+                        100 * processed / len(self.gene_space), 2
                     ),
                 },
                 "total_fit_time": {
@@ -785,10 +793,7 @@ class GeneticAlgorithm(ABC):
                 "genetic_opt_version": __version__,
             },
             "last_population": [
-                (
-                    self.decode_func(chromosome),
-                    self.get_chromosome_score(chromosome),
-                )
+                (self.decode_func(chromosome), chromosome.score)
                 for chromosome in self.population
             ],
             "historial": self.historial,
@@ -858,9 +863,8 @@ class GeneticAlgorithm(ABC):
         self,
         fit_result: dict,
         plot_metrics: bool = True,
-        other_metrics_to_plot: dict[
-            str, Callable[[Chromosome], float]
-        ] = None,
+        other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
+        | None = None,
     ) -> None:
         """
         Save the result of the `fit` method into a folder.
@@ -904,7 +908,7 @@ class GeneticAlgorithm(ABC):
             save_current_figure(f"{self.save_path}/fit_plots")
 
     def _sort_population(
-        self, iter_func: Callable = None, n_jobs: int = -2
+        self, iter_func: Callable | None = None, n_jobs: int = -2
     ) -> None:
         """
         Sort the current `self.population` list using the
@@ -923,11 +927,11 @@ class GeneticAlgorithm(ABC):
         # Note that len(self.population) > self.population size at this step.
         new_population: dict[int, Chromosome] = {}
         for chromosome in self.population:
+            if chromosome.score is not None:
+                continue
+            self._score_requests += 1
             chromosome_hash = chromosome.__hash__()
-            if (
-                chromosome.score is None
-                and chromosome_hash not in self._chromosome_cache
-            ):
+            if chromosome_hash not in self._chromosome_cache:
                 new_population.setdefault(chromosome_hash, chromosome)
         # The workers are other processes and score copies of the
         # Chromosomes, so the scores must come back as results.
@@ -943,7 +947,7 @@ class GeneticAlgorithm(ABC):
                 )
 
         self.population.sort(
-            key=lambda x: self.get_chromosome_score(x).value,
+            key=lambda x: x.score.value,
             reverse=not self.opt_is_min,
         )
 
@@ -970,10 +974,7 @@ class GeneticAlgorithm(ABC):
         :return: None.
         """
         self.historial.append(
-            [
-                (self.get_chromosome_score(chromosome), chromosome)
-                for chromosome in self.population
-            ]
+            [(chromosome.score, chromosome) for chromosome in self.population]
         )
         population_metrics = get_population_metrics(
             population_with_scores=self.historial[-1],
