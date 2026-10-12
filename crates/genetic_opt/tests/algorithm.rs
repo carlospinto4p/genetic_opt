@@ -145,6 +145,10 @@ fn each_different_chromosome_is_scored_once() {
     assert_eq!(calls.processed, fitness_calls);
     assert_eq!(calls.cached, calls.total - fitness_calls);
     assert!(calls.total > fitness_calls);
+    // Every list of 10 genes out of 2.
+    assert_eq!(calls.space_points, 1024.0);
+    let explored = 100.0 * fitness_calls as f64 / 1024.0;
+    assert!((calls.exploration_percentage - explored).abs() < 0.005);
     let kept: HashSet<_> = algorithm
         .history()
         .iter()
@@ -203,6 +207,8 @@ fn set_chromosomes_stay_sets_and_the_best_never_gets_worse() {
     let result = algorithm.fit().unwrap();
 
     assert!(result.metrics.len() > 1);
+    // Every set of 3 numbers out of 12.
+    assert_eq!(result.fit_metrics.fitness_func_calls.space_points, 220.0);
     assert!(
         result
             .metrics

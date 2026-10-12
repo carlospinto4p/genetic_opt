@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from math import comb, inf
 from operator import itemgetter
 from typing import Any
 
@@ -169,3 +170,25 @@ def get_population_metrics(
         fitting_seconds=round(fitting_seconds, 2),
     )
     return genetic_algo_metrics
+
+
+def get_space_points(
+    gene_space_size: int, chromosome_length: int, is_gene_set: bool
+) -> float:
+    """
+    Get the number of different Chromosomes of a problem: every list of
+    `chromosome_length` genes, or every set of that many different ones.
+    :param gene_space_size: number of different genes.
+    :param chromosome_length: number of genes of each Chromosome.
+    :param is_gene_set: whether a Chromosome is a set of genes.
+    :return: the count as a float, which is infinite when it is too
+        large for one.
+    """
+    if is_gene_set:
+        points = comb(gene_space_size, chromosome_length)
+    else:
+        points = gene_space_size**chromosome_length
+    try:
+        return float(points)
+    except OverflowError:
+        return inf

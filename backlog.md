@@ -1,15 +1,5 @@
 # Backlog - Genetic-Opt
 
-### 2026.10.12 (found while fixing parallel scoring and removing `cpinto`)
-
-- [ ] The Rust crate does not save the plot `fit_plots.jpg` that the
-  Python package saves with each generation.
-- [ ] `space_points` in the saved `fit_metrics` is the number of
-  different genes (2 for a binary problem), not the number of
-  possible chromosomes, so `exploration_percentage` is not a
-  percentage: a knapsack run of 10 objects reports 7500. Both
-  implementations do it.
-
 ### 2026.10.12 (`/scan`: security, performance, refactoring, test coverage)
 
 Read from the code by four scanners. Nothing was built and neither

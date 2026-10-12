@@ -7,6 +7,7 @@ from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.gene_space import AbstractGeneSpace
+from genetic_opt.metrics import get_space_points
 
 
 def test_genetic_bag():
@@ -116,6 +117,18 @@ def test_fit_metrics_count_the_fitness_calls():
         100 * counted["processed"] / counted["total"], 2
     )
     assert 0 < counted["percent_processed"] <= 100
+    # Every list of 10 genes out of 2.
+    assert counted["space_points"] == 1024
+    assert counted["exploration_percentage"] == round(
+        100 * counted["processed"] / 1024, 2
+    )
+
+
+def test_get_space_points_counts_lists_and_sets():
+    assert get_space_points(2, 10, is_gene_set=False) == 1024
+    assert get_space_points(12, 3, is_gene_set=True) == 220
+    assert get_space_points(12, 12, is_gene_set=True) == 1
+    assert get_space_points(2, 2000, is_gene_set=False) == float("inf")
 
 
 @pytest.mark.parametrize(

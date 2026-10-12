@@ -44,8 +44,9 @@ pub struct FitnessCalls {
     pub percent_processed: f64,
     /// Scores taken from an earlier chromosome with the same genes.
     pub cached: usize,
-    /// Number of different genes of the problem.
-    pub space_points: usize,
+    /// Number of different chromosomes the problem has. Infinite when it
+    /// does not fit an `f64`, which a JSON file saves as `null`.
+    pub space_points: f64,
     /// `100 * processed / space_points`.
     pub exploration_percentage: f64,
 }

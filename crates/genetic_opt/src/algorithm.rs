@@ -91,6 +91,21 @@ pub struct FitResult<G, S> {
     pub save_folder: Option<PathBuf>,
 }
 
+/// Number of different chromosomes a problem has: every list of `length`
+/// genes, or every set of `length` different ones. A number too large
+/// for an `f64` is infinite.
+fn space_points(gene_space_size: usize, length: usize, as_set: bool) -> f64 {
+    let genes = gene_space_size as f64;
+    if !as_set {
+        return genes.powi(length as i32);
+    }
+    // The binomial coefficient, one factor at a time.
+    let picked = length.min(gene_space_size.saturating_sub(length));
+    (1..=picked).fold(1.0, |count, i| {
+        count * (genes - (picked - i) as f64) / i as f64
+    })
+}
+
 type Population<G> = Vec<Arc<Individual<G>>>;
 type Bests<P> = Vec<Best<<P as Problem>::Gene, <P as Problem>::Solution>>;
 
@@ -431,7 +446,11 @@ impl<P: Problem> GeneticAlgorithm<P> {
             .map(|i| self.best(i))
             .collect();
         let processed = self.scores.len();
-        let space_points = self.problem.gene_space_size();
+        let space_points = space_points(
+            self.problem.gene_space_size(),
+            self.problem.chromosome_length(),
+            self.problem.chromosome_as_set(),
+        );
         let raw = round2(self.metrics.iter().map(|m| m.fitting_seconds).sum());
         let fit_metrics = FitMetrics {
             fitness_func_calls: FitnessCalls {
@@ -440,7 +459,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 percent_processed: round2(100.0 * processed as f64 / self.score_requests as f64),
                 cached: self.score_requests - processed,
                 space_points,
-                exploration_percentage: round2(100.0 * processed as f64 / space_points as f64),
+                exploration_percentage: round2(100.0 * processed as f64 / space_points),
             },
             total_fit_time: TotalFitTime {
                 n_jobs: fit_parameters.n_jobs,
@@ -478,5 +497,20 @@ impl<P: Problem> GeneticAlgorithm<P> {
             population: self.population.iter().map(|i| (&i.score, &**i)).collect(),
         };
         write_generation(folder, save.format, &generation)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn space_points_counts_lists_and_sets() {
+        assert_eq!(space_points(2, 10, false), 1024.0);
+        assert_eq!(space_points(12, 3, true), 220.0);
+        assert_eq!(space_points(12, 12, true), 1.0);
+        assert_eq!(space_points(2, 2000, false), f64::INFINITY);
+        // What a JSON file of a run holds for an infinite count.
+        assert!(serde_json::to_value(f64::INFINITY).unwrap().is_null());
     }
 }

@@ -32,7 +32,11 @@ from genetic_opt.functions import (
 )
 from genetic_opt.gene_space import GeneSpace
 from genetic_opt.logs import log_format, logger
-from genetic_opt.metrics import Metric, get_population_metrics
+from genetic_opt.metrics import (
+    Metric,
+    get_population_metrics,
+    get_space_points,
+)
 from genetic_opt.score import Score
 from genetic_opt.utils import serialize_fit_result
 
@@ -400,7 +404,8 @@ class GeneticAlgorithm(ABC):
                     - percent_processed: 100 * processed / total.
                     - cached: number of Scores taken from an earlier
                         Chromosome with the same genes.
-                    - space_points: size of the gene_space of the experiment.
+                    - space_points: number of different Chromosomes of the
+                        experiment, as a float.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
@@ -750,7 +755,8 @@ class GeneticAlgorithm(ABC):
                     - percent_processed: 100 * processed / total.
                     - cached: number of Scores taken from an earlier
                         Chromosome with the same genes.
-                    - space_points: size of the gene_space of the experiment.
+                    - space_points: number of different Chromosomes of the
+                        experiment, as a float.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
@@ -771,6 +777,11 @@ class GeneticAlgorithm(ABC):
         """
         requests = self._score_requests
         processed = len(self._chromosome_cache)
+        space_points = get_space_points(
+            gene_space_size=len(self.gene_space),
+            chromosome_length=self.chromosome_length,
+            is_gene_set=self.chromosome_as_set,
+        )
         # Get the bests (unique) chromosomes
         bests = []
         for chromosome in self.population:
@@ -791,9 +802,9 @@ class GeneticAlgorithm(ABC):
                     "processed": processed,
                     "percent_processed": round(100 * processed / requests, 2),
                     "cached": requests - processed,
-                    "space_points": len(self.gene_space),
+                    "space_points": space_points,
                     "exploration_percentage": round(
-                        100 * processed / len(self.gene_space), 2
+                        100 * processed / space_points, 2
                     ),
                 },
                 "total_fit_time": {

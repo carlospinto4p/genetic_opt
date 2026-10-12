@@ -59,7 +59,8 @@ def load_fit_result(
                     - percent_processed: 100 * processed / total.
                     - cached: number of Scores taken from an earlier
                         Chromosome with the same genes.
-                    - space_points: size of the gene_space of the experiment.
+                    - space_points: number of different Chromosomes of the
+                        experiment, as a float.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
@@ -138,7 +139,8 @@ def load_fit_result_file(
                     - percent_processed: 100 * processed / total.
                     - cached: number of Scores taken from an earlier
                         Chromosome with the same genes.
-                    - space_points: size of the gene_space of the experiment.
+                    - space_points: number of different Chromosomes of the
+                        experiment, as a float.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.
@@ -254,7 +256,8 @@ def serialize_fit_result(
                     - percent_processed: 100 * processed / total.
                     - cached: number of Scores taken from an earlier
                         Chromosome with the same genes.
-                    - space_points: size of the gene_space of the experiment.
+                    - space_points: number of different Chromosomes of the
+                        experiment, as a float.
                     - exploration_percentage: 100 * processed / space_points.
                 - total_fit_time: dict:
                     - n_jobs: number of jobs used for processing.

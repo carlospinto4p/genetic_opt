@@ -2,6 +2,28 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.0 - 12th October 2026
+
+- Fixed `space_points` and `exploration_percentage` in
+  `fit_metrics.fitness_func_calls`, in both implementations.
+  `space_points` was the number of different genes, so a knapsack run
+  of 10 objects reported 2 and an exploration of 7500. It is now the
+  number of different chromosomes: every list of that length, or every
+  set of that many different genes. The same run reports 1024 and
+  17.29.
+- `space_points` is now a decimal number, not an integer: `f64` in the
+  crate's `FitnessCalls` and `float` in the Python fit result. A count
+  too large for one is infinite, with an exploration of 0. A JSON file
+  written by the crate holds `null` for it.
+- Added `get_space_points` to `metrics.py`.
+- Added tests: `space_points_counts_lists_and_sets` in
+  `crates/genetic_opt/src/algorithm.rs`,
+  `test_get_space_points_counts_lists_and_sets` in
+  `tests/unit/test_binary_algs.py`, and checks of the count in three
+  existing tests, one of them the Rust run loaded by Python.
+- `backlog.md`: removed the item about the Rust crate not saving
+  `fit_plots.jpg`. The crate stays without the plot.
+
 ### v0.5.2 - 12th October 2026
 
 - `pyproject.toml`: the build backend is now `hatchling>=1.32.4,<2.0.0`.

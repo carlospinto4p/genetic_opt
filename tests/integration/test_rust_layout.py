@@ -50,6 +50,8 @@ def test_python_loads_a_run_saved_by_the_rust_crate(tmp_path, extension):
     assert len(loaded["metrics"]) == len(files)
     assert loaded["metrics"][-1].best["score"] == Score(value=309.0)
     assert loaded["fit_parameters"]["population_size"] == 50
+    calls = loaded["fit_metrics"]["fitness_func_calls"]
+    assert calls["space_points"] == 1024
     best_score, best_chromosome = loaded["historial"][-1][0]
     assert best_score == Score(value=309.0)
     assert best_chromosome.score == Score(value=309.0)
