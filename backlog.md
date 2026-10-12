@@ -8,14 +8,6 @@
   parallel scoring fix only once a newer version is published. Since
   0.4.1 the job is `publish-package` in `.gitlab-ci.yml`, offered
   only on a `vX.Y.Z` tag that matches the version.
-- [ ] Decide how Python code uses the Rust crate added in 0.4.0
-  (`crates/genetic_opt`), then build it with PyO3 and maturin. Second
-  step of the plan agreed on 12th October 2026; the engine is done.
-  Two ways. Keep the Python engine for problems written in Python and
-  expose only problems written in Rust, which is where the speed is.
-  Or run Python problems through the Rust engine, which calls back
-  into Python for the fitness function, the crossover and the
-  mutation, and is not faster.
 - [ ] The Rust crate does not save the plot `fit_plots.jpg` that the
   Python package saves with each generation.
 - [ ] `space_points` in the saved `fit_metrics` is the number of
@@ -23,13 +15,6 @@
   possible chromosomes, so `exploration_percentage` is not a
   percentage: a knapsack run of 10 objects reports 7500. Both
   implementations do it.
-- [ ] Nothing uses the Rust crate `crates/genetic_opt` yet. The third
-  step of the plan was done on 12th October 2026 in `downstream` 0.6.0
-  as a Rust backtest that the Python engine of this package calls: the
-  backtest was the slow part (seconds a run, now milliseconds), not
-  the engine. Moving `downstream`'s `RuleOptimizer` onto the Rust engine
-  is only worth it if the Python engine shows up as the slow part of a
-  real run. Until then, decide whether to keep the crate.
 
 ### 2026.10.12 (`/scan`: security, performance, refactoring, test coverage)
 

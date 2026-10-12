@@ -13,7 +13,9 @@ in `examples.binary.GeneticBag`.
 ## Rust crate
 
 `crates/genetic_opt` is the same algorithm written in Rust. The Python
-package does not use it yet: they are two implementations side by side.
+package does not use it and has no binding to it: they are two
+implementations side by side. A Rust project uses the crate as a
+dependency. `roadmap.md` has the reasons.
 
 A problem implements the trait `Problem` (its genes, its fitness
 function, its crossover) and `GeneticAlgorithm` runs it. The fitness

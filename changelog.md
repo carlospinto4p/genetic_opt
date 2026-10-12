@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.4.3 - 12th October 2026
+
+- Decided that the Python package gets no binding to the Rust crate
+  (PyO3, maturin). The crate stays as a Rust library and the package
+  stays pure Python. `roadmap.md` records the reasons under "What NOT
+  to do", and `README.md` says it in the section on the crate.
+- `backlog.md`: removed the two items this settles, the binding and
+  whether to keep the crate.
+
 ### v0.4.2 - 12th October 2026
 
 - Fixed `fit_metrics.fitness_func_calls` in the fit result of the
