@@ -1,4 +1,5 @@
-""" Genetic algorithm optimizers package. """
+"""Genetic algorithm optimizers package."""
 
+from importlib.metadata import version
 
-__version__ = '0.2.9'
+__version__ = version('genetic-opt')

@@ -2,6 +2,24 @@
 ## Changelog - Genetic-Opt
 
 
+### 0.2.12 - 12th October 2026
+
+- Fixed `algorithms.GeneticAlgorithm._sort_population`: with `n_jobs`
+  above 1, the scores computed by the worker processes were discarded
+  and the main process computed every one again, one at a time. A `fit`
+  of the `GeneticBag` example with 4 jobs called the fitness function
+  267 times for 132 Chromosomes. The workers' scores are now kept, and
+  equal Chromosomes in one generation are scored once.
+- Added `algorithms._score_chromosome`, the function sent to the
+  workers. Only the fitness function travels with it, not the whole
+  `GeneticAlgorithm`.
+- `__version__` is read from the installed package. It was fixed at
+  `0.2.9`, which is what `fit` wrote as `genetic_opt_version`.
+- Added `pytest` to `dev`, and the test
+  `test_fit_scores_each_chromosome_once`.
+- `algorithms/__init__.py` was reformatted by the pinned `ruff`.
+
+
 ### 0.2.11 - 25th August 2026
 
 - Migrated `pyproject.toml` from Poetry to uv (PEP 621 `[project]` +

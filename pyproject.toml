@@ -1,6 +1,6 @@
 [project]
 name = "genetic-opt"
-version = "0.2.11"
+version = "0.2.12"
 description = "Genetic algorithm optimizers package."
 authors = [{ name = "Carlos Pinto", email = "carlospinto4p@gmail.com" }]
 readme = "README.md"
@@ -16,6 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pytest>=9.1.1",
     "ruff>=0.16.4",
 ]
 
