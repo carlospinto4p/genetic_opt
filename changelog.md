@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.7 - 13th October 2026
+
+- Added `.claude/rules/testing-areas.md` with the measured times
+  that 0.7.5 put in `.claude/rules/testing.md`, which is as it was
+  before 0.7.5 again. `programme` pushes `testing.md` to every
+  Python project, so an addition there would be overwritten.
+
 ### v0.7.6 - 13th October 2026
 
 - Fixed `BinaryGeneticAlgorithm.crossover_func` in

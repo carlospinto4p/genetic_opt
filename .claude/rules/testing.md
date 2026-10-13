@@ -42,23 +42,6 @@ and mark the suite `pytestmark = pytest.mark.integration` — so the
 default `pytest tests/` run stays green everywhere. See the global
 `testing-python.md` rule for the full pattern.
 
-## Measured times
-
-One run of each on 13th October 2026, version 0.7.4, on a machine
-with 16 cores. Measure again and change the date when a suite grows.
-
-| What | Wall-clock time |
-|------|-----------------|
-| `uv run pytest tests/unit --durations=10` (89 tests) | 5.2 s |
-| `uv run pytest tests/integration` (2 tests, crate built) | 0.5 s |
-| `cargo build` of the crate into an empty target folder | 12.7 s |
-| `cargo test` after that build (18 tests) | 5.3 s, tests 0.06 s |
-
-The slowest unit tests are the three of `test_fit_save.py` that save
-a run (1.6 s, 0.8 s and 0.75 s) and
-`test_fit_scores_each_chromosome_once` (0.6 s), which starts worker
-processes. No fixture takes 100 ms.
-
 ## Style
 
 - **No test classes.** Use plain functions with `test_` prefix.

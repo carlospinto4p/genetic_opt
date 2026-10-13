@@ -261,6 +261,12 @@ micro-timing run on a loaded machine and are orders of magnitude.
   asks for. `uv sync` compiled it from source: 3 minutes 25 seconds
   on 12th October 2026, paid again on every new environment. Check
   whether the package works with `numpy` 2 and raise the bound.
+- [ ] `.claude/rules/testing.md` holds text of this repo alone: the
+  "Rust crate" row of the table, the paragraph on the integration
+  suite and the `crates/genetic_opt/**` path. `programme` pushes
+  that file to every Python project. Whether its push keeps local
+  text was not read. If it does not, move the three to
+  `.claude/rules/testing-areas.md`, added in 0.7.7. (LOW, S)
 - [ ] The project has no `AGENTS.md`, so Codex and OpenCode do not
   get `CLAUDE.md` and `.claude/rules/`
   (`~/.claude/rules/claude-opencode-sync.md`). `downstream` has none
