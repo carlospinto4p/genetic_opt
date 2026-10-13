@@ -8,6 +8,7 @@ import pytest
 from joblib import Parallel
 from joblib.externals import cloudpickle
 
+from genetic_opt.algorithms import FitConfig
 from genetic_opt.algorithms import base as algorithms
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
@@ -26,12 +27,14 @@ def test_genetic_bag():
         weights=weights, values=values, capacity=capacity
     )
     opt_data = genetic_bag.fit(
-        n_generations=100,
-        population_size=50,
-        crossovers_prop=0.7,
-        besties_prop=0.6,
-        mutate_prob=0.05,
-        n_jobs=1,
+        FitConfig(
+            n_generations=100,
+            population_size=50,
+            crossovers_prop=0.7,
+            besties_prop=0.6,
+            mutate_prob=0.05,
+            n_jobs=1,
+        )
     )
     best_score = opt_data["bests"]["scores"][0].value
     assert best_score == 309
@@ -62,11 +65,13 @@ class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
 
 def test_fit_goes_on_after_a_first_generation_with_mean_score_0():
     result = ZeroStartAlgorithm().fit(
-        n_generations=3,
-        population_size=20,
-        mutate_prob=0.5,
-        min_population_size=0,
-        n_jobs=1,
+        FitConfig(
+            n_generations=3,
+            population_size=20,
+            mutate_prob=0.5,
+            min_population_size=0,
+            n_jobs=1,
+        ),
         plot_metrics=False,
     )
     assert result["metrics"][0].mean == 0
@@ -76,11 +81,13 @@ def test_fit_goes_on_after_a_first_generation_with_mean_score_0():
 def test_fit_stops_when_the_mean_score_does_not_change():
     # Without mutations every child is all zeros too.
     result = ZeroStartAlgorithm().fit(
-        n_generations=5,
-        population_size=20,
-        mutate_prob=0,
-        min_population_size=0,
-        n_jobs=1,
+        FitConfig(
+            n_generations=5,
+            population_size=20,
+            mutate_prob=0,
+            min_population_size=0,
+            n_jobs=1,
+        ),
         plot_metrics=False,
     )
     assert len(result["metrics"]) == 2
@@ -105,9 +112,9 @@ def test_fit_scores_each_chromosome_once(tmp_path):
     genetic_bag.algo_fitness_func = logged_fit_bag
     # Two jobs, or the one that a machine with one core allows.
     genetic_bag.fit(
-        n_generations=5,
-        population_size=50,
-        n_jobs=min(2, cpu_count()),
+        FitConfig(
+            n_generations=5, population_size=50, n_jobs=min(2, cpu_count())
+        ),
         plot_metrics=False,
     )
     calls = calls_log.read_text().splitlines()
@@ -356,9 +363,7 @@ def test_fit_without_a_save_path_decodes_the_population_once():
     genetic_bag.decode_func = counted_decode_bag
     population_size = 50
     result = genetic_bag.fit(
-        n_generations=5,
-        population_size=population_size,
-        n_jobs=1,
+        FitConfig(n_generations=5, population_size=population_size, n_jobs=1),
         plot_metrics=False,
     )
     generations = len(result["metrics"])
@@ -378,7 +383,8 @@ def test_the_fitness_function_of_the_bag_travels_without_the_bag():
     )
     sent_bytes = len(cloudpickle.dumps(genetic_bag.algo_fitness_func))
     genetic_bag.fit(
-        n_generations=5, population_size=50, n_jobs=1, plot_metrics=False
+        FitConfig(n_generations=5, population_size=50, n_jobs=1),
+        plot_metrics=False,
     )
     assert len(cloudpickle.dumps(genetic_bag.algo_fitness_func)) == sent_bytes
 
@@ -405,7 +411,8 @@ def test_fit_metrics_count_the_fitness_calls():
     # One process, so the fitness function runs here and `calls` fills.
     genetic_bag, calls = _counting_bag()
     result = genetic_bag.fit(
-        n_generations=5, population_size=50, n_jobs=1, plot_metrics=False
+        FitConfig(n_generations=5, population_size=50, n_jobs=1),
+        plot_metrics=False,
     )
     counted = result["fit_metrics"]["fitness_func_calls"]
     assert calls
@@ -429,18 +436,13 @@ def test_fit_metrics_count_the_fitness_calls():
 
 def test_a_second_fit_starts_a_new_run():
     genetic_bag, calls = _counting_bag()
-    fit_parameters = {
-        "n_generations": 3,
-        "population_size": 30,
-        "n_jobs": 1,
-        "plot_metrics": False,
-    }
-    first = genetic_bag.fit(**fit_parameters)
+    config = FitConfig(n_generations=3, population_size=30, n_jobs=1)
+    first = genetic_bag.fit(config, plot_metrics=False)
     first_calls = len(calls)
     assert first["fit_metrics"]["fitness_func_calls"]["processed"] == (
         first_calls
     )
-    result = genetic_bag.fit(**fit_parameters)
+    result = genetic_bag.fit(config, plot_metrics=False)
     generations = len(result["metrics"])
     assert 1 < generations <= 4
     assert len(result["historial"]) == generations
@@ -500,7 +502,9 @@ def test_fit_formats_the_metrics_only_when_they_are_logged(
 
     monkeypatch.setattr(algorithms, "log_format", counted_log_format)
     set_log_level(level)
-    result = genetic_bag.fit(n_generations=3, population_size=50, n_jobs=1)
+    result = genetic_bag.fit(
+        FitConfig(n_generations=3, population_size=50, n_jobs=1)
+    )
     metrics = [d for d in formatted if isinstance(d, Metric)]
     assert metrics == (result["metrics"] if logged else [])
 
@@ -525,7 +529,7 @@ def test_fit_refuses_parameters_out_of_range(parameters):
     genetic_bag, calls = _counting_bag()
     fit_parameters = {"n_generations": 5, "population_size": 30, "n_jobs": 1}
     with pytest.raises(ValidationException):
-        genetic_bag.fit(**(fit_parameters | parameters))
+        genetic_bag.fit(FitConfig(**(fit_parameters | parameters)))
     assert not calls
 
 
@@ -537,9 +541,28 @@ def test_fit_uses_one_job_when_fewer_are_left(monkeypatch, cores, parameters):
     monkeypatch.setattr(algorithms, "cpu_count", lambda: cores)
     genetic_bag, _ = _counting_bag()
     result = genetic_bag.fit(
-        n_generations=2, population_size=20, plot_metrics=False, **parameters
+        FitConfig(n_generations=2, population_size=20, **parameters),
+        plot_metrics=False,
     )
     assert result["fit_parameters"]["n_jobs"] == 1
+
+
+def test_fit_parameters_are_the_config_with_the_seed_and_the_jobs():
+    genetic_bag, _ = _counting_bag()
+    result = genetic_bag.fit(
+        FitConfig(n_generations=2, population_size=20, n_jobs=1),
+        plot_metrics=False,
+    )
+    assert result["fit_parameters"] == {
+        "n_generations": 2,
+        "population_size": 20,
+        "crossovers_prop": 0.7,
+        "besties_prop": 0.6,
+        "mutate_prob": 0.05,
+        "min_population_size": 10,
+        "n_jobs": 1,
+        "random_seed": 666,
+    }
 
 
 @pytest.mark.parametrize("n_jobs", [0, 3])
@@ -547,7 +570,9 @@ def test_fit_refuses_no_jobs_and_more_jobs_than_cores(monkeypatch, n_jobs):
     monkeypatch.setattr(algorithms, "cpu_count", lambda: 2)
     genetic_bag, calls = _counting_bag()
     with pytest.raises(ValidationException, match="n_jobs"):
-        genetic_bag.fit(n_generations=2, population_size=20, n_jobs=n_jobs)
+        genetic_bag.fit(
+            FitConfig(n_generations=2, population_size=20, n_jobs=n_jobs)
+        )
     assert not calls
 
 
@@ -564,13 +589,8 @@ def test_get_chromosome_score_runs_the_fitness_function_once():
 
 def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
     genetic_bag, _ = _counting_bag()
-    fit_parameters = {
-        "n_generations": 5,
-        "population_size": 30,
-        "n_jobs": 1,
-        "plot_metrics": False,
-    }
-    expected = genetic_bag.fit(**fit_parameters)["bests"]["scores"]
+    config = FitConfig(n_generations=5, population_size=30, n_jobs=1)
+    expected = genetic_bag.fit(config, plot_metrics=False)["bests"]["scores"]
 
     # Every Chromosome gets one id, as two would after a hash collision.
     monkeypatch.setattr(Chromosome, "id", property(lambda self: 1))
@@ -582,14 +602,15 @@ def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
     assert len(calls) == 2
 
     genetic_bag, _ = _counting_bag()
-    scores = genetic_bag.fit(**fit_parameters)["bests"]["scores"]
+    scores = genetic_bag.fit(config, plot_metrics=False)["bests"]["scores"]
     assert [s.value for s in scores] == [s.value for s in expected]
 
 
 def test_scoring_does_not_keep_the_algorithm_alive():
     genetic_bag, _ = _counting_bag()
     genetic_bag.fit(
-        n_generations=2, population_size=20, n_jobs=1, plot_metrics=False
+        FitConfig(n_generations=2, population_size=20, n_jobs=1),
+        plot_metrics=False,
     )
     reference = weakref.ref(genetic_bag)
     del genetic_bag

@@ -26,11 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/algorithms/base.py:108-128` and `:320-336`:
-  `__init__` takes 15 parameters and `fit` 12; `binary.py:17-22`
-  lists 8 again. The Rust crate groups them as `FitConfig` and
-  `SaveConfig`. Two dataclasses would replace the hand-built
-  `fit_parameters` dict at lines 434-443. (MED, M)
 - [ ] `src/genetic_opt/utils.py:97-333`: `serialize_fit_result`
   writes `last_population` and `FitSaver.save_generation` renames
   `historial[-1]` to `population` (`algorithms/save.py`),

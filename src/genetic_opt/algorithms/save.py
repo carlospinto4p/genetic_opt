@@ -2,8 +2,8 @@
 
 from collections.abc import Callable
 from pathlib import PurePosixPath
-from typing import Any
 
+from genetic_opt.algorithms.config import SaveConfig
 from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
@@ -29,50 +29,27 @@ class FitSaver:
     files of `fit_data/` back.
     """
 
-    def __init__(
-        self,
-        save_path: str,
-        experiment_name: str,
-        serialize_decoded_chromosome_func: Callable[[Any], Any] | None,
-        save_as_bson: bool = True,
-        serialize_gene_func: Callable[[Any], Any] | None = None,
-    ):
+    def __init__(self, save: SaveConfig, experiment_name: str):
         """
         Create the folder of a run that starts now, as
-        `<save_path>/<experiment_name>/<UTC date and time>`, with `_2`,
+        `<save.path>/<experiment_name>/<UTC date and time>`, with `_2`,
         `_3` and so on added when it exists. It is created here, so two
         runs started in the same second do not share it.
-        :param save_path: folder that holds the runs.
-        :param experiment_name: a path inside `save_path`: not an
+        :param save: where and how to save the run.
+        :param experiment_name: a path inside `save.path`: not an
             absolute one, and without `..`.
-        :param serialize_decoded_chromosome_func: function to get a
-            serializable object from a decoded Chromosome.
-        :param save_as_bson: whether to save each generation as a bson
-            file instead of a json one.
-        :param serialize_gene_func: function to get a serializable
-            object from each gene.
-        :raises ValidationException: without a
-            `serialize_decoded_chromosome_func`, or when
-            `experiment_name` is not a path inside `save_path`.
+        :raises ValidationException: when `experiment_name` is not a
+            path inside `save.path`.
         """
-        if not serialize_decoded_chromosome_func:
-            raise ValidationException(
-                "If `save_path` is used, `serialize_decoded_chromosome_func` "
-                "must be fulfilled"
-            )
         name_path = PurePosixPath(normalize_path(experiment_name))
         if name_path.is_absolute() or ".." in name_path.parts:
             raise ValidationException(
                 f"experiment_name = {experiment_name!r} must be "
-                f"a path inside `save_path`"
+                f"a path inside the save path"
             )
-        self.save_as_bson: bool = save_as_bson
-        self.serialize_decoded_chromosome_func = (
-            serialize_decoded_chromosome_func
-        )
-        self.serialize_gene_func = serialize_gene_func
+        self.save: SaveConfig = save
         self.folder: str = create_new_folder(
-            f"{ensure_folder_format(save_path)}/"
+            f"{ensure_folder_format(save.path)}/"
             f"{experiment_name}/{now_for_file_path()}"
         )
 
@@ -106,14 +83,14 @@ class FitSaver:
                 "historial": fit_result["historial"][-1:],
                 "metrics": fit_result["metrics"][-1:],
             },
-            self.serialize_decoded_chromosome_func,
-            serialize_gene_func=self.serialize_gene_func,
+            self.save.serialize_decoded_chromosome_func,
+            serialize_gene_func=self.save.serialize_gene_func,
         )
         serialized_data["population_idx"] = n_population
         serialized_data["population"] = serialized_data.pop("historial")[-1]
         file_path = f"{self.folder}/fit_data/fit_data_{n_population}"
 
-        if self.save_as_bson:
+        if self.save.as_bson:
             save_bson(serialized_data, file_path)
         else:
             save_json(serialized_data, file_path)

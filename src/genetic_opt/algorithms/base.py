@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import asdict
 from logging import INFO
 from os import cpu_count
 from time import time
@@ -11,6 +12,7 @@ from joblib import Parallel, delayed
 from numpy.random import RandomState
 
 from genetic_opt import __version__
+from genetic_opt.algorithms.config import FitConfig, SaveConfig
 from genetic_opt.algorithms.save import FitSaver
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import (
@@ -112,10 +114,7 @@ class GeneticAlgorithm(ABC):
         experiment_name: str | None = None,
         random_seed: int = 442,
         extra_config: dict | None = None,
-        save_path: str | None = None,
-        save_as_bson: bool = True,
-        serialize_decoded_chromosome_func: Callable[[Any], Any] | None = None,
-        serialize_gene_func: Callable[[Any], Any] | None = None,
+        save: SaveConfig | None = None,
         mutation_invariant: Callable[[Chromosome, Chromosome], bool]
         | None = None,
         crossover_invariant: Callable[
@@ -141,22 +140,15 @@ class GeneticAlgorithm(ABC):
             opt_is_min: whether the optimum fitness value is the minimum
                 (True) or the maximum (False) of the `fitness_func`.
             experiment_name: Genetic algorithm experiment name.
-                Default to the class name. With a `save_path` it names
-                a folder inside it, so it can not be an absolute path
-                or hold `..`.
+                Default to the class name. With `save` it names a
+                folder inside `save.path`, so it can not be an absolute
+                path or hold `..`.
             random_seed: Random seed to handle internal methods.
             extra_config: Additional dictionary that will be returned
                 by the `fit` method, as a new key named `config`.
-            save_path: Optional path to save the results of each run.
-                The folder of the run is created at once, as
-                `<save_path>/<experiment_name>/<UTC date and time>`,
-                with `_2`, `_3` and so on added when it exists.
-            save_as_bson: Whether to save the fit result as a bson instead of
-                a json file. Default to True.
-            serialize_decoded_chromosome_func: If `save_path` is used, then
-                this function will be used to serialize decoded Chromosomes.
-            serialize_gene_func: Function to get a serializable object from each
-                gene.
+            save: Where and how to save each run. Nothing is saved
+                without it. The folder of the run is created at once,
+                and `self.save_path` holds it.
             mutation_invariant: Optional function to check if the Chromosome
                 that will mutate and the mutation result share the same
                 invariant property.
@@ -180,18 +172,10 @@ class GeneticAlgorithm(ABC):
         self.mutation_invariant = mutation_invariant
         self.crossover_invariant = crossover_invariant
 
-        # What writes the run to its folder, when a `save_path` is given
-        self._saver: FitSaver | None = None
-        if save_path:
-            self._saver = FitSaver(
-                save_path=save_path,
-                experiment_name=self.experiment_name,
-                serialize_decoded_chromosome_func=(
-                    serialize_decoded_chromosome_func
-                ),
-                save_as_bson=save_as_bson,
-                serialize_gene_func=serialize_gene_func,
-            )
+        # What writes the run to its folder, when `save` is given
+        self._saver: FitSaver | None = (
+            FitSaver(save, self.experiment_name) if save else None
+        )
         # Folder of the run, or an empty text when it is not saved
         self.save_path: str = self._saver.folder if self._saver else ""
 
@@ -330,19 +314,13 @@ class GeneticAlgorithm(ABC):
     @time_it_with_logger(logger)
     def fit(
         self,
-        n_generations: int,
-        population_size: int,
-        crossovers_prop: float = 0.7,
-        besties_prop: float = 0.6,
-        mutate_prob: float = 0.05,
-        min_population_size: int = 10,
+        config: FitConfig,
         exit_condition: Callable[[GeneticAlgorithm], bool] | None = None,
         plot_metrics: bool = True,
         other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
         | None = None,
         callback_func: Callable[[GeneticAlgorithm], None] | None = None,
         iter_func: Callable | None = None,
-        n_jobs: int = -2,
     ) -> FitResult:
         """
         Fit the Genetic Algorithm. Each call is a new run: it keeps no
@@ -352,16 +330,7 @@ class GeneticAlgorithm(ABC):
         scores are kept, so a Chromosome met again is not scored again
         and the fitness function must not change between the runs.
         Args:
-            n_generations: number of iterations to run.
-            population_size: number of Chromosomes that make up each
-                population.
-            crossovers_prop: proportion of chromosomes to crossover in
-                each step.
-            besties_prop: proportion of bests chromosomes to maintain for
-                each generation.
-            mutate_prob: probability of a chromosome mutation.
-            min_population_size: minimum size a population can have before
-                stopping the training.
+            config: the parameters of the run.
             exit_condition: function which takes the self GeneticAlgorithm
                 instance and return True if the exit condition is met.
                 If so, the training will end before reaching
@@ -381,14 +350,6 @@ class GeneticAlgorithm(ABC):
                 Default to the method `default_fit_callback`.
             iter_func: function to keep track of the iterations.
                 For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
-            n_jobs: number of jobs to use to parallelize the evaluation of
-                each element of the population.
-                Default to -2 (all cpus except one). A negative number
-                that leaves no cpu gives one job.
-                With more than one job the fitness function is sent to
-                the worker processes. A bound method, or a function that
-                uses `self`, takes the whole algorithm with it: its
-                population, its history and its scores.
 
         Returns:
             a `FitResult`. It is empty with a negative `n_generations`.
@@ -398,13 +359,13 @@ class GeneticAlgorithm(ABC):
         exit_func = exit_condition or self.no_exit_condition
         callback_func = callback_func or self.default_fit_callback
         # Validate parameters
+        n_generations = config.n_generations
+        population_size = config.population_size
+        min_population_size = config.min_population_size
         if population_size < 1:
             raise ValidationException(f"{population_size = } is not valid!")
-        for name, value in (
-            ("crossovers_prop", crossovers_prop),
-            ("besties_prop", besties_prop),
-            ("mutate_prob", mutate_prob),
-        ):
+        for name in ("crossovers_prop", "besties_prop", "mutate_prob"):
+            value = getattr(config, name)
             # Written this way, a NaN is refused too
             if not 0 <= value <= 1:
                 raise ValidationException(
@@ -415,6 +376,7 @@ class GeneticAlgorithm(ABC):
                 f"{min_population_size} is greater than {population_size = }"
             )
         # Validate n_jobs
+        n_jobs = config.n_jobs
         if n_jobs < 0:
             # A negative number leaves cores out, down to one job
             n_jobs = max(cpu_count() + n_jobs + 1, 1)
@@ -423,12 +385,7 @@ class GeneticAlgorithm(ABC):
                 f"{n_jobs = } received is not valid! {cpu_count() = }"
             )
         fit_parameters: FitParameters = {
-            "n_generations": n_generations,
-            "population_size": population_size,
-            "crossovers_prop": crossovers_prop,
-            "besties_prop": besties_prop,
-            "mutate_prob": mutate_prob,
-            "min_population_size": min_population_size,
+            **asdict(config),
             "random_seed": self.random_seed,
             "n_jobs": n_jobs,
         }
@@ -457,9 +414,9 @@ class GeneticAlgorithm(ABC):
                 )
             else:
                 self.next_generation_selection(
-                    crossovers_prop=crossovers_prop,
-                    besties_prop=besties_prop,
-                    mutate_prob=mutate_prob,
+                    crossovers_prop=config.crossovers_prop,
+                    besties_prop=config.besties_prop,
+                    mutate_prob=config.mutate_prob,
                     iter_func=iter_func,
                     n_jobs=n_jobs,
                 )

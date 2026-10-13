@@ -10,6 +10,36 @@ methodologies in order to tackle different optimization problems.
 There is an example of optimization problem tackled with these classes
 in `examples.binary.GeneticBag`.
 
+The parameters of a run go in a `FitConfig`. To save the runs, the
+algorithm gets a `SaveConfig`:
+
+```python
+from genetic_opt.algorithms import FitConfig, SaveConfig
+from genetic_opt.examples.binary import GeneticBag
+
+bag = GeneticBag(
+    weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+    values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+    capacity=165,
+)
+result = bag.fit(FitConfig(n_generations=100, population_size=50))
+print(result["bests"]["scores"][0].value)
+```
+
+```python
+BinaryGeneticAlgorithm(
+    ...,
+    save=SaveConfig(
+        path="<folder>",
+        serialize_decoded_chromosome_func=list,
+        serialize_gene_func=int,
+    ),
+)
+```
+
+Before 0.11.0 these were loose arguments of `fit` and of the
+algorithm: `n_generations`, `save_path` and the rest.
+
 `fit` returns a dictionary. Its keys, and those of a run loaded with
 `utils.load_fit_result` or `utils.load_fit_result_file`, are written
 once, in `fit_result.py`: `FitResult`, `LoadedFitResult` and

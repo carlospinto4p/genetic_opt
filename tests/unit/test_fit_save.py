@@ -2,6 +2,7 @@ from os.path import exists
 
 import pytest
 
+from genetic_opt.algorithms import FitConfig, SaveConfig
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import get_files_inside_folder, load_json, save_json
@@ -37,10 +38,12 @@ def ones_algorithm(
         fitness_func=count_ones,
         opt_is_min=False,
         experiment_name=experiment_name,
-        save_path=f"{save_path}/",
-        save_as_bson=save_as_bson,
-        serialize_decoded_chromosome_func=list,
-        serialize_gene_func=int,
+        save=SaveConfig(
+            path=f"{save_path}/",
+            serialize_decoded_chromosome_func=list,
+            as_bson=save_as_bson,
+            serialize_gene_func=int,
+        ),
     )
 
 
@@ -49,7 +52,8 @@ def saved_run(tmp_path) -> str:
     """Path of the `fit_data` folder of a run saved as JSON."""
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     algorithm.fit(
-        n_generations=1, population_size=20, n_jobs=1, plot_metrics=False
+        FitConfig(n_generations=1, population_size=20, n_jobs=1),
+        plot_metrics=False,
     )
     return f"{algorithm.save_path}/fit_data"
 
@@ -57,7 +61,9 @@ def saved_run(tmp_path) -> str:
 @pytest.mark.parametrize("save_as_bson", [True, False])
 def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     algorithm = ones_algorithm(tmp_path, save_as_bson=save_as_bson)
-    fit_result = algorithm.fit(n_generations=3, population_size=20, n_jobs=1)
+    fit_result = algorithm.fit(
+        FitConfig(n_generations=3, population_size=20, n_jobs=1)
+    )
 
     saved_generations = len(algorithm.historial)
     extension = "bson" if save_as_bson else "json"
@@ -82,7 +88,8 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
 def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     fit_result = algorithm.fit(
-        n_generations=1, population_size=20, n_jobs=1, plot_metrics=False
+        FitConfig(n_generations=1, population_size=20, n_jobs=1),
+        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     fit_metrics = fit_result["fit_metrics"]
@@ -105,7 +112,8 @@ def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
 def test_each_file_holds_the_metrics_of_its_generation_alone(tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     fit_result = algorithm.fit(
-        n_generations=3, population_size=20, n_jobs=1, plot_metrics=False
+        FitConfig(n_generations=3, population_size=20, n_jobs=1),
+        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     assert len(fit_result["metrics"]) > 2
@@ -118,7 +126,8 @@ def test_each_file_holds_the_metrics_of_its_generation_alone(tmp_path):
 def test_load_fit_result_reads_a_run_saved_before_0_7_0(tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     fit_result = algorithm.fit(
-        n_generations=3, population_size=20, n_jobs=1, plot_metrics=False
+        FitConfig(n_generations=3, population_size=20, n_jobs=1),
+        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     # Before 0.7.0 a file held the metrics of every generation up to
@@ -144,9 +153,7 @@ def test_fit_saves_the_plot_when_the_run_ends(tmp_path):
     # The callback runs in each generation, before it is saved.
     plot_seen: list[bool] = []
     algorithm.fit(
-        n_generations=3,
-        population_size=20,
-        n_jobs=1,
+        FitConfig(n_generations=3, population_size=20, n_jobs=1),
         callback_func=lambda _: plot_seen.append(exists(plot_path)),
     )
     assert len(plot_seen) > 1
@@ -167,7 +174,8 @@ def test_runs_started_in_the_same_second_get_a_folder_each(
 
     for algorithm in (first, second):
         algorithm.fit(
-            n_generations=1, population_size=20, n_jobs=1, plot_metrics=False
+            FitConfig(n_generations=1, population_size=20, n_jobs=1),
+            plot_metrics=False,
         )
         assert get_files_inside_folder(algorithm.save_path, recursive=True)[
             :2

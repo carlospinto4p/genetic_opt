@@ -2,6 +2,37 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.11.0 - 13th October 2026
+
+- Added `src/genetic_opt/algorithms/config.py`, with the two classes
+  that replace loose arguments, as `FitConfig` and `SaveConfig` do in
+  the Rust crate. `genetic_opt.algorithms` exports both. Code that
+  calls `fit` or saves its runs has to be changed.
+  - `FitConfig`: `n_generations`, `population_size`,
+    `crossovers_prop`, `besties_prop`, `mutate_prob`,
+    `min_population_size` and `n_jobs`, with the defaults `fit` had.
+  - `SaveConfig`: `path`, `serialize_decoded_chromosome_func`,
+    `as_bson` and `serialize_gene_func`.
+- `src/genetic_opt/algorithms/base.py`:
+  - `GeneticAlgorithm.fit` takes a `FitConfig` in place of those seven
+    arguments. `exit_condition`, `plot_metrics`,
+    `other_metrics_to_plot`, `callback_func` and `iter_func` stay as
+    they were.
+  - `GeneticAlgorithm` takes `save`, a `SaveConfig`, in place of
+    `save_path`, `save_as_bson`, `serialize_decoded_chromosome_func`
+    and `serialize_gene_func`. The attribute `save_path` still holds
+    the folder of the run.
+  - `fit_parameters` is built from the `FitConfig`, and not key by
+    key.
+- `src/genetic_opt/algorithms/save.py`: `FitSaver` takes a
+  `SaveConfig`. A `SaveConfig` can not be built without
+  `serialize_decoded_chromosome_func`, so the `ValidationException`
+  for a `save_path` without one is gone.
+- `README.md`: added an example of each class.
+- Added `test_fit_parameters_are_the_config_with_the_seed_and_the_jobs`
+  to `tests/unit/test_binary_algs.py`. The other tests and
+  `sketches/genetic_bag.py` call `fit` the new way.
+
 ### v0.10.0 - 13th October 2026
 
 - Added `src/genetic_opt/fit_result.py`, which states once the keys of
