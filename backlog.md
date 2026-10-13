@@ -1,18 +1,5 @@
 # Backlog - Genetic-Opt
 
-### 2026.10.13 (found while batching the mutation draws, v0.6.9)
-
-- [ ] From reading, not run, and in another repository: `downstream`'s
-  `RuleGeneSpace.select_random` picks the rule class with
-  `randint(low=0, high=self.max_rules_idx)` when `n` is 2 or more
-  (`rule_space.py:90-94`) and with `randint(self.max_rules_idx + 1)`
-  for one gene (`:156`). `randint` excludes `high`, so the first
-  form never picks the last rule class. Since 0.6.9 a set
-  Chromosome missing 2 or more genes is completed through the first
-  form. `downstream` builds its Chromosomes with all their genes, so
-  this path may never run there. Check it in `downstream` and file it
-  in its backlog. (LOW, S)
-
 ### 2026.10.12 (`/scan`: security, performance, refactoring, test coverage)
 
 Read from the code by four scanners. Nothing was built and neither
