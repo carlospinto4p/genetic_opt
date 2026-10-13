@@ -1,4 +1,5 @@
 import gc
+import logging
 import pickle
 import weakref
 
@@ -11,7 +12,7 @@ from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.gene_space import AbstractGeneSpace
-from genetic_opt.metrics import get_space_points
+from genetic_opt.metrics import Metric, get_space_points
 
 
 def test_genetic_bag():
@@ -301,6 +302,31 @@ def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
     assert parallel_calls == [{"n_jobs": 1}]
     assert len(genetic_bag.population) == 50
     assert all(c.score is not None for c in genetic_bag.population)
+
+
+@pytest.mark.parametrize(
+    "level, logged", [(logging.INFO, True), (logging.WARNING, False)]
+)
+def test_fit_formats_the_metrics_only_when_they_are_logged(
+    monkeypatch, set_log_level, level, logged
+):
+    genetic_bag = GeneticBag(
+        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+        capacity=165,
+    )
+    formatted: list = []
+    log_format = algorithms.log_format
+
+    def counted_log_format(d, **kwargs):
+        formatted.append(d)
+        return log_format(d, **kwargs)
+
+    monkeypatch.setattr(algorithms, "log_format", counted_log_format)
+    set_log_level(level)
+    result = genetic_bag.fit(n_generations=3, population_size=50, n_jobs=1)
+    metrics = [d for d in formatted if isinstance(d, Metric)]
+    assert metrics == (result["metrics"] if logged else [])
 
 
 def test_get_space_points_counts_lists_and_sets():

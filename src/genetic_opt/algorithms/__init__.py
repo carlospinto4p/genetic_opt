@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from logging import INFO
 from os import cpu_count
 from pathlib import PurePosixPath
 from time import time
@@ -508,16 +509,20 @@ class GeneticAlgorithm(ABC):
                     iter_func=iter_func,
                     n_jobs=n_jobs,
                 )
-            logger.info(
-                f"iteration {n_generation} - Metrics:"
-                f"\n\t{log_format(self.metrics[-1])}"
-            )
-            iteration_improvement = self._get_iteration_improvement()
-            logger.info(f"improvement:\n{log_format(iteration_improvement)}")
-            logger.info(
-                f"measuring this generation took "
-                f"{format_seconds(self.metrics[-1].fitting_seconds)}"
-            )
+            # The texts are built only when they are going to be logged
+            if logger.isEnabledFor(INFO):
+                logger.info(
+                    f"iteration {n_generation} - Metrics:"
+                    f"\n\t{log_format(self.metrics[-1])}"
+                )
+                logger.info(
+                    f"improvement:\n"
+                    f"{log_format(self._get_iteration_improvement())}"
+                )
+                logger.info(
+                    f"measuring this generation took "
+                    f"{format_seconds(self.metrics[-1].fitting_seconds)}"
+                )
             # Callback function. Split the cases when it is a method of this
             # class and when not
             if (
@@ -725,15 +730,16 @@ class GeneticAlgorithm(ABC):
         n_crossovers = 2 * int((crossovers_prop * population_length) // 2)
         n_besties = int(n_crossovers * besties_prop)
         # Get the crossover candidates, choosing the besties and a random
-        # sample of the rest
-        parents = (
-            self.population[:n_besties]
-            + self.random_state.choice(
-                self.population[n_besties:],
-                size=n_crossovers - n_besties,
-                replace=True,
-            ).tolist()
-        )
+        # sample of the rest. Their positions are drawn, and not the
+        # Chromosomes, which numpy would copy into an array first: a
+        # seed gives the same parents either way.
+        rest = self.population[n_besties:]
+        parents = self.population[:n_besties] + [
+            rest[position]
+            for position in self.random_state.choice(
+                len(rest), size=n_crossovers - n_besties, replace=True
+            )
+        ]
         self.random_state.shuffle(parents)
         children = self.cross_parents(parents)
         mutated_children = self.mutate_chromosomes(children, mutate_prob)

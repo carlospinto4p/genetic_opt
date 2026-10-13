@@ -26,15 +26,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `history` and `scores` (`algorithm.rs:112`, `:114`) grow for the
   whole run. `historial` is part of what `fit` returns, so a limit
   is an API decision. (LOW, M)
-- [ ] Small costs in the Python loop: three `logger.info` calls per
-  generation build a `pformat` of the whole `Metric` even with the
-  level off (`algorithms/__init__.py:468-477`);
-  `_get_iteration_improvement()` runs twice a generation (lines 472
-  and 317); each save does one extra `stat` to log the file size
-  (`files.py:144-147`, `:171-174`, `:194-197`); `random_state.choice`
-  over a list of Chromosomes builds an object array each generation
-  (lines 670-674; drawing indices changes what a seed produces).
-  (LOW, S)
 - [ ] Small costs in the Rust crate: `median` copies and sorts
   scores that are already sorted and `variance` recomputes the mean
   (`metrics.rs:64-76`); with saving on, `decode` runs one by one

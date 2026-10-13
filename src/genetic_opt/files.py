@@ -2,6 +2,7 @@
 
 from json import dump as dump_json
 from json import load as load_json_fun
+from logging import INFO
 from os import makedirs, mkdir, path, walk
 from typing import Any
 
@@ -11,6 +12,20 @@ from genetic_opt.logs import logger
 # `bson`, `matplotlib` and `yaml` are imported inside the functions that
 # use them: together they take longer to import than the rest of the
 # package, and a run that saves nothing needs none of them.
+
+
+def _log_saved(kind: str, file_path: str) -> None:
+    """
+    Log that a file was saved, with its size. The size is read from the
+    disk only when the line is going to be logged.
+    :param kind: what was saved, as the line names it.
+    :param file_path: path of the saved file.
+    """
+    if logger.isEnabledFor(INFO):
+        logger.info(
+            f"{kind} saved on: `{file_path}`"
+            f"\n\tfile size: {get_file_size(file_path)}"
+        )
 
 
 def create_new_folder(folder: str) -> str:
@@ -164,10 +179,7 @@ def save_bson(data, file_path: str) -> None:
     bson_data = bson.BSON.encode(data)
     with open(file_path, "wb") as file:
         file.write(bson_data)
-    logger.info(
-        f"bson saved on: `{file_path}`"
-        f"\n\tfile size: {get_file_size(file_path)}"
-    )
+    _log_saved("bson", file_path)
 
 
 def save_current_figure(
@@ -193,10 +205,7 @@ def save_current_figure(
     ensure_folder_exists(get_container_folder(path))
     file_path = ensure_file_extension(path, extension)
     plt.savefig(file_path, bbox_inches="tight")
-    logger.info(
-        f"image saved on: `{file_path}`"
-        f"\n\tfile size: {get_file_size(file_path)}"
-    )
+    _log_saved("image", file_path)
     if clear_fig:
         plt.clf()
     if close_fig:
@@ -216,10 +225,7 @@ def save_json(data, file_path: str, **kwargs) -> None:
     file_path = ensure_file_extension(file_path, "json")
     with open(file_path, "w") as file:
         dump_json(data, file, **kwargs)
-    logger.info(
-        f"json saved on: `{file_path}`"
-        f"\n\tfile size: {get_file_size(file_path)}"
-    )
+    _log_saved("json", file_path)
 
 
 def save_yaml(
@@ -259,7 +265,4 @@ def save_yaml(
     )
     with open(file_path, "w", encoding=encoding) as file:
         file.write(text)
-    logger.info(
-        f"YAML saved on: `{file_path}`\n\tfile size: "
-        f"{get_file_size(file_path)}"
-    )
+    _log_saved("YAML", file_path)

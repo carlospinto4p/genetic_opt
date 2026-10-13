@@ -2,6 +2,33 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.3 - 13th October 2026
+
+- With the level of the `genetic_opt` logger above `INFO`, `fit` and
+  the save functions no longer do the work of the lines they do not
+  log. The logger starts at `INFO`, so a run that leaves it there
+  logs the same lines and does the same work as before.
+  - `GeneticAlgorithm.fit` in `src/genetic_opt/algorithms/__init__.py`
+    does not format the metrics of each generation, and calls
+    `_get_iteration_improvement` once a generation where it called it
+    twice.
+  - `save_bson`, `save_json`, `save_yaml` and `save_current_figure` in
+    `src/genetic_opt/files.py` do not read the size of the file they
+    wrote.
+- `next_generation_selection` draws the positions of the random
+  parents, where it handed the Chromosomes to `RandomState.choice`,
+  which copied them into an array each generation. A seed gives the
+  same run: on 13th October 2026 six knapsack runs, of seeds 442, 7
+  and 2026 with populations of 50 and 31, kept every population of
+  every generation.
+- Nothing was timed.
+- Tests:
+  - Added `tests/conftest.py` with the fixture `set_log_level`.
+  - `tests/unit/test_binary_algs.py`:
+    `test_fit_formats_the_metrics_only_when_they_are_logged`.
+  - `tests/unit/test_files.py`:
+    `test_a_save_reads_the_file_size_only_when_it_is_logged`.
+
 ### v0.7.2 - 13th October 2026
 
 - `crates/genetic_opt/src/algorithm.rs`:

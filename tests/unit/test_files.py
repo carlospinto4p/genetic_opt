@@ -1,6 +1,9 @@
+import logging
+
 import pytest
 import yaml
 
+from genetic_opt import files
 from genetic_opt.files import (
     create_new_folder,
     ensure_file_extension,
@@ -25,6 +28,40 @@ def test_save_bson_adds_extension_and_roundtrips(tmp_path):
 def test_save_json_adds_extension_and_roundtrips(tmp_path):
     save_json(DATA, f"{tmp_path}/folder/data")
     assert load_json(f"{tmp_path}/folder/data.json") == DATA
+
+
+@pytest.mark.parametrize(
+    "level, logged", [(logging.INFO, True), (logging.WARNING, False)]
+)
+def test_a_save_reads_the_file_size_only_when_it_is_logged(
+    tmp_path, monkeypatch, caplog, set_log_level, level, logged
+):
+    sizes: list[str] = []
+    get_file_size = files.get_file_size
+
+    def counted_get_file_size(file_path):
+        sizes.append(file_path)
+        return get_file_size(file_path)
+
+    monkeypatch.setattr(files, "get_file_size", counted_get_file_size)
+    set_log_level(level)
+    # The package logger does not propagate, so caplog is attached to it.
+    logger = logging.getLogger("genetic_opt")
+    logger.addHandler(caplog.handler)
+    try:
+        save_json(DATA, f"{tmp_path}/data")
+        save_bson(DATA, f"{tmp_path}/data")
+        save_yaml(DATA, f"{tmp_path}/data")
+    finally:
+        logger.removeHandler(caplog.handler)
+    saved = [f"{tmp_path}/data.{e}" for e in ("json", "bson", "yml")]
+    assert sizes == (saved if logged else [])
+    size = get_file_size(saved[0])
+    assert [r.message for r in caplog.records][:1] == (
+        [f"json saved on: `{saved[0]}`\n\tfile size: {size}"]
+        if logged
+        else []
+    )
 
 
 def test_save_yaml_keeps_the_order_of_the_keys(tmp_path):
