@@ -99,6 +99,44 @@ def test_a_chromosome_builds_its_random_state_on_first_use():
     assert unused_bytes < 1000 < len(pickle.dumps(first))
 
 
+def test_a_mutated_chromosome_gets_a_new_id():
+    size = 40
+    chromosome = Chromosome(size=size, genes=[0] * size)
+    unmutated_id = chromosome.id
+    chromosome.random_mutate(gene_space=OnesGeneSpace(), gene_mutate_prob=0.5)
+    assert chromosome.id != unmutated_id
+    same_genes = Chromosome(size=size, genes=list(chromosome.genes))
+    assert chromosome.id == same_genes.id
+    assert hash(chromosome) == hash(same_genes)
+    assert chromosome == same_genes
+
+
+def test_fit_without_a_save_path_decodes_the_population_once():
+    genetic_bag, _ = _counting_bag()
+    decode_bag = genetic_bag.decode_func
+    decoded: list[str] = []
+
+    def counted_decode_bag(chromosome):
+        decoded.append(repr(chromosome))
+        return decode_bag(chromosome)
+
+    genetic_bag.decode_func = counted_decode_bag
+    population_size = 50
+    result = genetic_bag.fit(
+        n_generations=5,
+        population_size=population_size,
+        n_jobs=1,
+        plot_metrics=False,
+    )
+    generations = len(result["metrics"])
+    assert generations > 1
+    assert len(result["last_population"]) == population_size
+    # The best of each generation for its metrics, then the bests and
+    # the last population when the run ends.
+    n_bests = len(result["bests"]["result"])
+    assert len(decoded) == generations + n_bests + population_size
+
+
 def test_the_fitness_function_of_the_bag_travels_without_the_bag():
     genetic_bag = GeneticBag(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],

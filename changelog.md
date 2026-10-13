@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.8 - 13th October 2026
+
+- `GeneticAlgorithm.fit` with no `save_path` builds its result once,
+  when the run ends, instead of after every generation. Building it
+  decodes the whole population, and every result but the last was
+  thrown away. With a `save_path` nothing changes: each generation is
+  still saved.
+- `Chromosome.id` is computed on first use and kept; `random_mutate`
+  clears it. `__hash__` and `__eq__` no longer hash the genes on every
+  call. Code that changes `genes` some other way must build a new
+  Chromosome to get a new id.
+- Neither change alters what a seed produces: a knapsack run of 61
+  generations gives the same history before and after.
+- Added to `tests/unit/test_binary_algs.py`:
+  `test_fit_without_a_save_path_decodes_the_population_once` and
+  `test_a_mutated_chromosome_gets_a_new_id`.
+- The crate's version had stayed at 0.6.6 when v0.6.7 bumped
+  `pyproject.toml` alone. `Cargo.toml` and `Cargo.lock` now read 0.6.8.
+
 ### v0.6.7 - 13th October 2026
 
 - Rotated changelog: archived 18 entries to `changelog/2023.md`, `changelog/2024.md`.

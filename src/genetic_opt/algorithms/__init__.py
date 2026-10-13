@@ -528,10 +528,11 @@ class GeneticAlgorithm(ABC):
             else:
                 callback_func(self)
             # Save result for each iteration
-            fit_result = self._get_fitted_data(
-                fit_parameters=fit_parameters, n_jobs=n_jobs
-            )
-            self._save_fit_result(fit_result)
+            if self.save_path:
+                fit_result = self._get_fitted_data(
+                    fit_parameters=fit_parameters, n_jobs=n_jobs
+                )
+                self._save_fit_result(fit_result)
             # Exit conditions
             if self.metrics[-1].n_uniques < min_population_size:
                 logger.info(
@@ -561,6 +562,12 @@ class GeneticAlgorithm(ABC):
                         f"finished at iteration {n_generation}"
                     )
                     break
+        # With nothing to save, the result is built once, when the run
+        # ends: it decodes the whole population.
+        if not self.save_path and n_generations >= 0:
+            fit_result = self._get_fitted_data(
+                fit_parameters=fit_parameters, n_jobs=n_jobs
+            )
         if self.save_path and plot_metrics and fit_result:
             plot_genetic_algo_metrics(
                 metrics=fit_result["metrics"],

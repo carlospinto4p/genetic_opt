@@ -63,6 +63,8 @@ class Chromosome:
         # Built on first use: `GeneticAlgorithm` passes its own state to
         # `random_mutate`, so most Chromosomes never need one.
         self._random_state: RandomState | None = None
+        # Kept after the first use and cleared by `random_mutate`.
+        self._id: int | None = None
 
     @property
     def random_state(self) -> RandomState:
@@ -122,10 +124,16 @@ class Chromosome:
 
     @property
     def id(self) -> int:
-        """Hash id limited to a length of 30."""
-        m = md5(usedforsecurity=False)
-        m.update(self.__repr__().encode("utf-8"))
-        return int(str(int(m.hexdigest(), 16))[:30])
+        """
+        Hash id limited to a length of 30. It is computed once and kept,
+        so code that changes `genes` by another way than `random_mutate`
+        must build a new Chromosome.
+        """
+        if self._id is None:
+            m = md5(usedforsecurity=False)
+            m.update(self.__repr__().encode("utf-8"))
+            self._id = int(str(int(m.hexdigest(), 16))[:30])
+        return self._id
 
     def get_score(self, fitness_func: Callable[[Chromosome], Score]) -> Score:
         """
@@ -171,6 +179,7 @@ class Chromosome:
             gene_space_func_kwargs=gene_space_func_kwargs,
         )
         self.genes = self.gene_collection.genes
+        self._id = None
         return self
 
     def to_dict(
