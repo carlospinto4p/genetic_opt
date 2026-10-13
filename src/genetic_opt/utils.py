@@ -3,8 +3,6 @@ from operator import itemgetter
 from os.path import getsize
 from typing import Any
 
-from bson.errors import BSONError
-
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import (
@@ -175,6 +173,8 @@ def load_fit_result_file(
                 - random_seed
             - config: optional, custom dictionary added by the child classes.
     """
+    from bson.errors import BSONError
+
     if max_file_bytes is not None and getsize(file_path) > max_file_bytes:
         raise ValidationException(
             f"`{file_path}` has {getsize(file_path)} bytes, more than "

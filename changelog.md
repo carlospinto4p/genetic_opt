@@ -2,6 +2,26 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.12 - 13th October 2026
+
+- `import genetic_opt.algorithms` no longer imports `matplotlib`,
+  `bson` and `yaml`. Each is imported by the function that uses it:
+  - `src/genetic_opt/files.py`: `load_bson`, `save_bson`,
+    `save_current_figure` and `save_yaml`.
+  - `src/genetic_opt/algorithms/plots.py`: `set_pyplot_config` and
+    `plot_genetic_algo_metrics`.
+  - `src/genetic_opt/utils.py`: `load_fit_result_file`, for
+    `BSONError`.
+- A run that saves and plots nothing imports none of the three, and
+  neither does a worker process.
+- Timed on 13th October 2026, three runs on a machine in use: the
+  import after `numpy` took 0.55 to 0.62 seconds before and 0.10 to
+  0.11 after.
+- Removed `_NoAliasSafeDumper` from `files.py`; `save_yaml` builds the
+  class itself.
+- Added `tests/unit/test_imports.py`: 2 tests that import the package
+  in a new interpreter and check none of the three is loaded.
+
 ### v0.6.11 - 13th October 2026
 
 - `GeneticAlgorithm._sort_population` in

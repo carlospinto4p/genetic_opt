@@ -5,20 +5,12 @@ from json import load as load_json_fun
 from os import makedirs, mkdir, path, walk
 from typing import Any
 
-import bson
-import matplotlib.pyplot as plt
-from yaml import SafeDumper
-from yaml import dump as dump_yaml
-
 from genetic_opt.functions import format_bytes
 from genetic_opt.logs import logger
 
-
-class _NoAliasSafeDumper(SafeDumper):
-    """`SafeDumper` that writes an object met twice in full both times."""
-
-    def ignore_aliases(self, data: Any) -> bool:
-        return True
+# `bson`, `matplotlib` and `yaml` are imported inside the functions that
+# use them: together they take longer to import than the rest of the
+# package, and a run that saves nothing needs none of them.
 
 
 def create_new_folder(folder: str) -> str:
@@ -140,6 +132,8 @@ def load_bson(bson_path: str) -> Any:
     :param bson_path: bson file path.
     :return: content of the binary json file.
     """
+    import bson
+
     with open(bson_path, "rb") as file:
         bson_data = file.read()
     return bson.decode(bson_data)
@@ -163,6 +157,8 @@ def normalize_path(p: str, /) -> str:
 
 def save_bson(data, file_path: str) -> None:
     """Save a .bson file."""
+    import bson
+
     ensure_folder_exists(get_container_folder(file_path))
     file_path = ensure_file_extension(file_path, "bson")
     bson_data = bson.BSON.encode(data)
@@ -192,6 +188,8 @@ def save_current_figure(
         See https://stackoverflow.com/a/8228808/13376096.
     :return: None.
     """
+    import matplotlib.pyplot as plt
+
     ensure_folder_exists(get_container_folder(path))
     file_path = ensure_file_extension(path, extension)
     plt.savefig(file_path, bbox_inches="tight")
@@ -242,11 +240,20 @@ def save_yaml(
     :raises yaml.representer.RepresenterError: when `data` holds any
         other object. No file is written.
     """
+    from yaml import SafeDumper
+    from yaml import dump as dump_yaml
+
+    class NoAliasSafeDumper(SafeDumper):
+        """`SafeDumper` that writes an object met twice in full."""
+
+        def ignore_aliases(self, data: Any) -> bool:
+            return True
+
     ensure_folder_exists(get_container_folder(file_path))
     file_path = ensure_file_extension(file_path, "yml")
     text = dump_yaml(
         data,
-        Dumper=_NoAliasSafeDumper if ignore_aliases else SafeDumper,
+        Dumper=NoAliasSafeDumper if ignore_aliases else SafeDumper,
         default_flow_style=False,
         sort_keys=False,
     )

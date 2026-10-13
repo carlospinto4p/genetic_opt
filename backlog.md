@@ -21,13 +21,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `src/genetic_opt/algorithms/__init__.py:14`, `plots.py:6`,
-  `files.py:8-11`: importing `genetic_opt.algorithms` imports
-  `matplotlib.pyplot`, `bson` and `yaml` whether or not anything is
-  saved: 0.88 seconds on top of numpy's 0.19, paid again by each
-  worker process. 0.3.0 moved these imports to the top
-  (`changelog.md:55-56`). Import them inside the save and plot
-  functions. (MED, S)
 - [ ] `tests/unit/test_binary_algs.py:13-19`: `test_genetic_bag` uses the
   default `n_jobs=-2`, which starts 15 worker processes on a
   16-core machine for a 10-gene knapsack. The same `fit` with

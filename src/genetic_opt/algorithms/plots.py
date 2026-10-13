@@ -3,11 +3,11 @@
 from collections.abc import Callable
 from operator import itemgetter
 
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.metrics import Metric
+
+# `matplotlib` is imported inside the functions that plot: it takes
+# longer to import than the rest of the package.
 
 PYPLOT_STYLE: str = "seaborn-v0_8"
 PYPLOT_RC_PARAMS: dict = {
@@ -29,6 +29,9 @@ def set_pyplot_config() -> None:
         - Change default plot parameters using the ones in
           `PYPLOT_RC_PARAMS`.
     """
+    import matplotlib.pyplot as plt
+    from matplotlib import rcParams
+
     plt.style.use(PYPLOT_STYLE)
     rcParams.update(PYPLOT_RC_PARAMS)
 
@@ -62,6 +65,8 @@ def plot_genetic_algo_metrics(
     Returns:
         None (but it creates a plt.Figure)
     """
+    import matplotlib.pyplot as plt
+
     set_pyplot_config()
     population_idxs = [i for i, _ in enumerate(metrics)]
     if other_keys:
