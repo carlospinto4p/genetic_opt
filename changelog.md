@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.13.0 - 13th October 2026
+
+- Renamed the module `genetic_opt.utils` to `genetic_opt.fit_result_io`.
+  It holds `load_fit_result`, `load_fit_result_file` and
+  `serialize_fit_result` and nothing else, which the old name did not
+  say. Code that imports `genetic_opt.utils` has to import
+  `genetic_opt.fit_result_io`.
+- The docstrings, `README.md`, `CLAUDE.md`, `backlog.md` and two
+  comments of the Rust crate name the module by its new name.
+
 ### v0.12.0 - 13th October 2026
 
 - `src/genetic_opt/utils.py`: `load_fit_result` returns

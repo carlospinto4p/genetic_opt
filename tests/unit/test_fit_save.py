@@ -15,8 +15,8 @@ from genetic_opt.fit_result import (
     FitResultFile,
     TotalFitTime,
 )
+from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
 from genetic_opt.score import Score
-from genetic_opt.utils import load_fit_result, load_fit_result_file
 
 
 def decode_genes(chromosome) -> list[int]:

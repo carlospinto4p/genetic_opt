@@ -4,8 +4,8 @@
 //! it with [`GeneticAlgorithm`]. [`problems::Knapsack`] is a worked example.
 //!
 //! A run can be saved to a folder, one file per generation, in the layout
-//! of the Python package `genetic_opt`, whose `utils.load_fit_result` reads
-//! it back.
+//! of the Python package `genetic_opt`, whose
+//! `fit_result_io.load_fit_result` reads it back.
 
 mod algorithm;
 mod chromosome;

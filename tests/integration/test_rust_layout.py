@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 from genetic_opt.files import get_files_inside_folder
+from genetic_opt.fit_result_io import load_fit_result
 from genetic_opt.score import Score
-from genetic_opt.utils import load_fit_result
 
 CRATE_MANIFEST = (
     Path(__file__).parents[2] / "crates" / "genetic_opt" / "Cargo.toml"

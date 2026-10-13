@@ -61,8 +61,8 @@ struct ExperimentConfig<'a> {
     experiment_config: Option<serde_json::Value>,
 }
 
-/// One file of `fit_data/`, as the Python `utils.load_fit_result_file`
-/// reads it.
+/// One file of `fit_data/`, as the Python
+/// `fit_result_io.load_fit_result_file` reads it.
 #[derive(Serialize)]
 pub(crate) struct GenerationFile<'a, G: Serialize, S: Serialize> {
     pub bests: BestsColumns<'a, G, S>,

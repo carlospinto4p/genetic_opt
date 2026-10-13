@@ -54,7 +54,7 @@ A genetic algorithm library with two implementations side by side:
 the Python package `src/genetic_opt` and the Rust crate
 `crates/genetic_opt`. The Python package does not use the crate. A run
 saved by either one has the same layout on disk, and
-`utils.load_fit_result` reads both.
+`fit_result_io.load_fit_result` reads both.
 
 ## Changes that break `downstream`
 

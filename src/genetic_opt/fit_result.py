@@ -86,8 +86,8 @@ class FitSummary(TypedDict):
 
 class FitResult(FitSummary):
     """
-    What `GeneticAlgorithm.fit` returns, and what `utils.load_fit_result`
-    returns for a saved run.
+    What `GeneticAlgorithm.fit` returns, and what
+    `fit_result_io.load_fit_result` returns for a saved run.
     """
 
     # One for each generation, the first population included
@@ -100,8 +100,8 @@ class FitResult(FitSummary):
 
 class FitResultFile(FitSummary):
     """
-    What `utils.load_fit_result_file` returns: one generation of a
-    saved run. `fit_metrics`, `fit_parameters` and `config` are as the
+    What `fit_result_io.load_fit_result_file` returns: one generation
+    of a saved run. `fit_metrics`, `fit_parameters` and `config` are as the
     file holds them. The `last_population` of the file is not loaded:
     it is `population`, decoded.
     """

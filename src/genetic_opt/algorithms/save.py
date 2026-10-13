@@ -17,16 +17,16 @@ from genetic_opt.files import (
     save_yaml,
 )
 from genetic_opt.fit_result import FitParameters, FitResult
+from genetic_opt.fit_result_io import serialize_fit_result
 from genetic_opt.functions import now_for_file_path
-from genetic_opt.utils import serialize_fit_result
 
 
 class FitSaver:
     """
     Saves a run of a `GeneticAlgorithm` to a folder of its own:
     `experiment_config.yml`, one file for each generation inside
-    `fit_data/` and `fit_plots.jpg`. `utils.load_fit_result` reads the
-    files of `fit_data/` back.
+    `fit_data/` and `fit_plots.jpg`. `fit_result_io.load_fit_result`
+    reads the files of `fit_data/` back.
     """
 
     def __init__(self, save: SaveConfig, experiment_name: str):

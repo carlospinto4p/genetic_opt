@@ -40,10 +40,11 @@ BinaryGeneticAlgorithm(
 Before 0.11.0 these were loose arguments of `fit` and of the
 algorithm: `n_generations`, `save_path` and the rest.
 
-`fit` returns a dictionary, and `utils.load_fit_result` returns one
-with the same keys for a saved run. Those keys, and the ones of a
-single file loaded with `utils.load_fit_result_file`, are written
-once, in `fit_result.py`: `FitResult` and `FitResultFile`.
+`fit` returns a dictionary, and `fit_result_io.load_fit_result`
+returns one with the same keys for a saved run. Those keys, and the
+ones of a single file loaded with `fit_result_io.load_fit_result_file`,
+are written once, in `fit_result.py`: `FitResult` and `FitResultFile`.
+Before 0.13.0 the module `fit_result_io` was named `utils`.
 
 ## Logs
 
@@ -91,13 +92,13 @@ println!("{}", result.bests[0].score.value);
 
 With `FitConfig::save` set, a run is saved in the layout of the Python
 package: `experiment_config.yml` and one `fit_data/fit_data_<n>` file
-per generation, as BSON or JSON. `utils.load_fit_result` reads them. It
-does not save the plot `fit_plots.jpg`.
+per generation, as BSON or JSON. `fit_result_io.load_fit_result` reads
+them. It does not save the plot `fit_plots.jpg`.
 
 Since 0.7.0 each `fit_data_<n>` file holds the metrics of its own
 generation, in both implementations. Before, it held those of every
-generation up to its own. `utils.load_fit_result` reads both. A
-version before 0.7.0 that loads a run saved since gets the metrics of
+generation up to its own. `fit_result_io.load_fit_result` reads both.
+A version before 0.7.0 that loads a run saved since gets the metrics of
 the last generation only.
 
 ```bash

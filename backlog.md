@@ -14,7 +14,7 @@ some tens of lines off.
 
 **Security**
 
-- [ ] **[manual]** `src/genetic_opt/utils.py`: since 0.6.1
+- [ ] **[manual]** `src/genetic_opt/fit_result_io.py`: since 0.6.1
   `load_fit_result` refuses an unknown key in a `Score` or a
   `Metric`, but still ignores one at the top level of a file and in
   a saved Chromosome. Decide whether to refuse those too. Refusing
@@ -26,13 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/utils.py:97-333`: `serialize_fit_result`
-  writes `last_population` and `FitSaver.save_generation` renames
-  `historial[-1]` to `population` (`algorithms/save.py`),
-  but `load_fit_result_file` never reads `last_population`, so a
-  loaded result has a different shape from what `fit` returns. The
-  name `utils` hides that the module only reads and writes fit
-  results. (MED, M)
 - [ ] `src/genetic_opt/algorithms/base.py:480-486` and `:511-524`:
   `fit` checks `hasattr(f, "__self__") and f.__self__ == self` to
   decide how to call `callback_func` and `exit_func`, and repeats
@@ -78,7 +71,7 @@ some tens of lines off.
   `history`, `opt_is_min` and `minimize`, `GeneticBag` and
   `Knapsack`, `fitness_func` stored as `algo_fitness_func`. Two
   docstring styles in `algorithms/base.py`. (LOW, M)
-- [ ] Stale comments: the 2024 TODO at `utils.py:17` (the functions
+- [ ] Stale comments: the 2024 TODO at `fit_result_io.py:25` (the functions
   are tested now); notes from 2023 and 2024 at
   `algorithms/base.py:55-56`, `:186-187`, `:658-661`;
   `examples/__init__.py:4` refers to a `core` module that does not
@@ -117,7 +110,7 @@ some tens of lines off.
 - [ ] `tests/unit/test_fit_save.py`: since 0.6.3 the loaded history is
   compared with the one `fit` returns, but `fit_metrics` is not
   checked. The run has at most 4 files, so the ordering of `fit_data_10` after `fit_data_2`
-  that `utils.py:89` handles never runs. (MED, S)
+  that `fit_result_io.py:79` handles never runs. (MED, S)
 - [ ] Python error paths with no test: the three
   `ValidationException` cases (`algorithms/base.py:423-433`,
   `:192-196`) and `examples/binary.py:38-41`; `InvariantException`
@@ -131,7 +124,7 @@ some tens of lines off.
   Python test; the no-improvement stop has one since 0.7.11. In
   Rust the `min_population_size` stop and the stalled-mean stop
   (`algorithm.rs:213-219`, `:401-406`) have none either. (MED, M)
-- [ ] `load_fit_result` (`utils.py:79-94`) on an empty or missing
+- [ ] `load_fit_result` (`fit_result_io.py:26-92`) on an empty or missing
   folder reaches `fit_data_list[-1]` and raises `IndexError`; a
   folder with another file in it and a corrupt BSON or JSON file
   are untested. `remove_duplicates` (`:192-198`),
