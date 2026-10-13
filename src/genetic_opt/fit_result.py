@@ -85,7 +85,10 @@ class FitSummary(TypedDict):
 
 
 class FitResult(FitSummary):
-    """What `GeneticAlgorithm.fit` returns."""
+    """
+    What `GeneticAlgorithm.fit` returns, and what `utils.load_fit_result`
+    returns for a saved run.
+    """
 
     # One for each generation, the first population included
     metrics: list[Metric]
@@ -95,22 +98,12 @@ class FitResult(FitSummary):
     last_population: list[tuple[Any, Score]]
 
 
-class LoadedFitResult(FitSummary):
-    """
-    What `utils.load_fit_result` returns: a `FitResult` without
-    `last_population`. `fit_metrics`, `fit_parameters` and `config` are
-    as the files hold them.
-    """
-
-    metrics: list[Metric]
-    historial: list[list[tuple[Score, Chromosome]]]
-
-
 class FitResultFile(FitSummary):
     """
     What `utils.load_fit_result_file` returns: one generation of a
     saved run. `fit_metrics`, `fit_parameters` and `config` are as the
-    file holds them.
+    file holds them. The `last_population` of the file is not loaded:
+    it is `population`, decoded.
     """
 
     # Those of its own generation, or of every generation up to its

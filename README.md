@@ -40,10 +40,10 @@ BinaryGeneticAlgorithm(
 Before 0.11.0 these were loose arguments of `fit` and of the
 algorithm: `n_generations`, `save_path` and the rest.
 
-`fit` returns a dictionary. Its keys, and those of a run loaded with
-`utils.load_fit_result` or `utils.load_fit_result_file`, are written
-once, in `fit_result.py`: `FitResult`, `LoadedFitResult` and
-`FitResultFile`.
+`fit` returns a dictionary, and `utils.load_fit_result` returns one
+with the same keys for a saved run. Those keys, and the ones of a
+single file loaded with `utils.load_fit_result_file`, are written
+once, in `fit_result.py`: `FitResult` and `FitResultFile`.
 
 ## Logs
 

@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.12.0 - 13th October 2026
+
+- `src/genetic_opt/utils.py`: `load_fit_result` returns
+  `last_population` too, read from the file of the last generation, so
+  a loaded run has the keys `GeneticAlgorithm.fit` returns. The files
+  always held it and nothing read it. `load_fit_result_file` returns
+  what it did: the `last_population` of a file is its `population`,
+  decoded.
+- `src/genetic_opt/fit_result.py`: removed `LoadedFitResult`.
+  `load_fit_result` returns a `FitResult`.
+- `tests/unit/test_fit_save.py`: the loaded `last_population` and the
+  keys of the loaded run are compared with those `fit` returns, and a
+  `Score` of `last_population` with an unknown key is refused.
+- `README.md`: says that a loaded run has the keys of `fit`.
+
 ### v0.11.1 - 13th October 2026
 
 - `CLAUDE.md`: a change that breaks the code of `downstream` gets an

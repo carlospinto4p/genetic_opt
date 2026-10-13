@@ -13,7 +13,6 @@ from genetic_opt.fit_result import (
     FitParameters,
     FitResult,
     FitResultFile,
-    LoadedFitResult,
     TotalFitTime,
 )
 from genetic_opt.score import Score
@@ -83,6 +82,8 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert loaded["fit_parameters"] == fit_result["fit_parameters"]
     assert len(loaded["historial"]) == saved_generations
     assert loaded["historial"] == fit_result["historial"]
+    assert loaded["last_population"] == fit_result["last_population"]
+    assert set(loaded) == set(fit_result)
 
 
 def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
@@ -97,7 +98,7 @@ def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
     # Without an `extra_config` there is no `config`, the one optional key
     for result, result_type in (
         (fit_result, FitResult),
-        (load_fit_result(folder), LoadedFitResult),
+        (load_fit_result(folder), FitResult),
         (load_fit_result_file(f"{folder}/fit_data_1.json"), FitResultFile),
         (fit_result["bests"], Bests),
         (fit_result["fit_parameters"], FitParameters),
@@ -223,6 +224,7 @@ def test_load_fit_result_refuses_a_malformed_file(
         ("fit_data_1.json", lambda raw: raw["population"][0][0]),
         ("fit_data_2.json", lambda raw: raw["population"][0][0]),
         ("fit_data_2.json", lambda raw: raw["bests"]["scores"][0]),
+        ("fit_data_2.json", lambda raw: raw["last_population"][0][1]),
     ],
 )
 def test_load_fit_result_refuses_a_score_with_an_unknown_key(
