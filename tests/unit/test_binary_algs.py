@@ -3,8 +3,10 @@ import pickle
 import weakref
 
 import pytest
+from joblib import Parallel
 from joblib.externals import cloudpickle
 
+from genetic_opt import algorithms
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
 from genetic_opt.exceptions import ValidationException
@@ -271,6 +273,33 @@ def test_fit_metrics_count_the_fitness_calls():
     assert counted["exploration_percentage"] == round(
         100 * counted["processed"] / 1024, 2
     )
+
+
+def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
+    # Two genes give 4 Chromosomes, so the first population has them all.
+    genetic_bag = GeneticBag(weights=[1, 2], values=[3, 4], capacity=3)
+    fit_bag = genetic_bag.algo_fitness_func
+    calls: list[str] = []
+
+    def counted_fit_bag(chromosome):
+        calls.append(repr(chromosome))
+        return fit_bag(chromosome)
+
+    genetic_bag.algo_fitness_func = counted_fit_bag
+    parallel_calls: list[dict] = []
+
+    def counted_parallel(**kwargs):
+        parallel_calls.append(kwargs)
+        return Parallel(**kwargs)
+
+    monkeypatch.setattr(algorithms, "Parallel", counted_parallel)
+    genetic_bag.init_population(population_size=50, n_jobs=1)
+    assert len(calls) == 4
+    genetic_bag.init_population(population_size=50, n_jobs=1)
+    assert len(calls) == 4
+    assert parallel_calls == [{"n_jobs": 1}]
+    assert len(genetic_bag.population) == 50
+    assert all(c.score is not None for c in genetic_bag.population)
 
 
 def test_get_space_points_counts_lists_and_sets():

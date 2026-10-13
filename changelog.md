@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.11 - 13th October 2026
+
+- `GeneticAlgorithm._sort_population` in
+  `src/genetic_opt/algorithms/__init__.py` no longer calls `joblib`'s
+  `Parallel` when every Chromosome waiting for a score is already in
+  the cache. `iter_func` is not called for that step either.
+- Timed on 13th October 2026, one run on a machine in use: a
+  `Parallel` call over an empty list took about 5 milliseconds the
+  first time and 0.4 to 1 after that with `n_jobs=-2`, and 0.05 with
+  `n_jobs=1`. No `fit` was timed.
+- Added `test_sorting_starts_no_workers_when_no_chromosome_is_new` to
+  `tests/unit/test_binary_algs.py`.
+
 ### v0.6.10 - 13th October 2026
 
 - `AbstractGeneSpace.select_random` in `src/genetic_opt/gene_space.py`

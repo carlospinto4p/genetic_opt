@@ -21,12 +21,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `src/genetic_opt/algorithms/__init__.py:934-937`:
-  `Parallel(n_jobs=n_jobs)` is called every generation, also when
-  no Chromosome is new, and the default `n_jobs=-2` starts worker
-  processes for a fitness function that takes microseconds. Skip
-  the call when `new_population` is empty. Effect not measured.
-  (MED, S)
 - [ ] `src/genetic_opt/algorithms/__init__.py:14`, `plots.py:6`,
   `files.py:8-11`: importing `genetic_opt.algorithms` imports
   `matplotlib.pyplot`, `bson` and `yaml` whether or not anything is

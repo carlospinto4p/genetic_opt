@@ -967,13 +967,14 @@ class GeneticAlgorithm(ABC):
             chromosome_key = repr(chromosome)
             if chromosome_key not in self._chromosome_cache:
                 new_population.setdefault(chromosome_key, chromosome)
-        # The workers are other processes and score copies of the
-        # Chromosomes, so the scores must come back as results.
-        scores = Parallel(n_jobs=n_jobs)(
-            delayed(_score_chromosome)(self.algo_fitness_func, chromosome)
-            for chromosome in iter_func(list(new_population.values()))
-        )
-        self._chromosome_cache.update(zip(new_population, scores))
+        if new_population:
+            # The workers are other processes and score copies of the
+            # Chromosomes, so the scores must come back as results.
+            scores = Parallel(n_jobs=n_jobs)(
+                delayed(_score_chromosome)(self.algo_fitness_func, chromosome)
+                for chromosome in iter_func(list(new_population.values()))
+            )
+            self._chromosome_cache.update(zip(new_population, scores))
         for chromosome in self.population:
             if chromosome.score is None:
                 chromosome.score, chromosome.score_time = (
