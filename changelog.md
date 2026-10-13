@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.13.1 - 13th October 2026
+
+- `src/genetic_opt/algorithms/base.py`: `fit` always calls
+  `callback_func` and `exit_condition` with the algorithm. It looked
+  at `__self__` to call a method of the algorithm with no argument,
+  and wrote the lines that end the run twice. Without a
+  `callback_func` it still calls the method `default_fit_callback`,
+  which a subclass overrides. A method of the algorithm passed as
+  `callback_func` or `exit_condition` now gets the algorithm as an
+  argument, as any other function does.
+- Added two tests to `tests/unit/test_binary_algs.py`: the callback
+  and the exit condition get the algorithm, and a subclass that
+  overrides `default_fit_callback` has it called in each generation.
+
 ### v0.13.0 - 13th October 2026
 
 - Renamed the module `genetic_opt.utils` to `genetic_opt.fit_result_io`.

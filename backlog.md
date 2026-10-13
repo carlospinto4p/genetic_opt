@@ -26,11 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/algorithms/base.py:480-486` and `:511-524`:
-  `fit` checks `hasattr(f, "__self__") and f.__self__ == self` to
-  decide how to call `callback_func` and `exit_func`, and repeats
-  the log-and-break block. Defaults of `lambda _: None` and
-  `lambda _: False` remove both branches. (MED, S)
 - [ ] The "genes or gene_space" check is written three times
   (`chromosome.py:43-50`, `gene_collection.py:84-87`, `:155-158`).
   `Chromosome` keeps `genes` and `size` as copies of its gene
@@ -119,9 +114,10 @@ some tens of lines off.
   `gene_collection.py:27-29`, `:84-92`; `__eq__` against something
   that is not a Chromosome, which raises `AttributeError`
   (`chromosome.py:97-116`). (MED, S)
-- [ ] `callback_func`, `exit_condition` and the `min_population_size`
-  stop (`algorithms/base.py:480-486`, `:497-524`) have no
-  Python test; the no-improvement stop has one since 0.7.11. In
+- [ ] The `min_population_size` stop of `fit` in
+  `algorithms/base.py` has no Python test; the no-improvement stop
+  has one since 0.7.11, and `callback_func` and `exit_condition`
+  since 0.13.1. In
   Rust the `min_population_size` stop and the stalled-mean stop
   (`algorithm.rs:213-219`, `:401-406`) have none either. (MED, M)
 - [ ] `load_fit_result` (`fit_result_io.py:26-92`) on an empty or missing

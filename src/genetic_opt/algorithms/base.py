@@ -291,9 +291,11 @@ class GeneticAlgorithm(ABC):
         return {}
 
     # Fit functions
-    # This one has to be a method and can not be static. Be careful.
     def default_fit_callback(self) -> None:
-        """Default callback function applied in the `fit` method."""
+        """
+        Called after each generation when `fit` gets no `callback_func`.
+        It does nothing: a subclass overrides it.
+        """
         return
 
     def no_exit_condition(self) -> bool:
@@ -356,8 +358,11 @@ class GeneticAlgorithm(ABC):
         """
         # Default parameters
         iter_func = iter_func or identity_func
-        exit_func = exit_condition or self.no_exit_condition
-        callback_func = callback_func or self.default_fit_callback
+        # The defaults are methods, which take no argument
+        exit_func = exit_condition or (lambda _: self.no_exit_condition())
+        callback_func = callback_func or (
+            lambda _: self.default_fit_callback()
+        )
         # Validate parameters
         n_generations = config.n_generations
         population_size = config.population_size
@@ -432,15 +437,7 @@ class GeneticAlgorithm(ABC):
                     f"measuring this generation took "
                     f"{format_seconds(self.metrics[-1].fitting_seconds)}"
                 )
-            # Callback function. Split the cases when it is a method of this
-            # class and when not
-            if (
-                hasattr(callback_func, "__self__")
-                and callback_func.__self__ == self
-            ):
-                callback_func()
-            else:
-                callback_func(self)
+            callback_func(self)
             # Save result for each iteration
             if self._saver:
                 fit_result = self._get_fitted_data(
@@ -461,21 +458,12 @@ class GeneticAlgorithm(ABC):
                     f"Training finished at iteration {n_generation}"
                 )
                 break
-            # Apply exit function
-            if hasattr(exit_func, "__self__") and exit_func.__self__ == self:
-                if exit_func():
-                    logger.info(
-                        f"exit condition reached!\n\tTraining "
-                        f"finished at iteration {n_generation}"
-                    )
-                    break
-            else:
-                if exit_func(self):
-                    logger.info(
-                        f"exit condition reached!\n\tTraining "
-                        f"finished at iteration {n_generation}"
-                    )
-                    break
+            if exit_func(self):
+                logger.info(
+                    f"exit condition reached!\n\tTraining "
+                    f"finished at iteration {n_generation}"
+                )
+                break
         # With nothing to save, the result is built once, when the run
         # ends: it decodes the whole population.
         if not self._saver and n_generations >= 0:

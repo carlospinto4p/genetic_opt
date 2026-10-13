@@ -455,6 +455,45 @@ def test_a_second_fit_starts_a_new_run():
     assert counted["processed"] == len(calls) - first_calls
 
 
+def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
+    genetic_bag, _ = _counting_bag()
+    genetic_bag.no_improvement_condition = genetic_bag.no_exit_condition
+    seen: list[GeneticBag] = []
+    result = genetic_bag.fit(
+        FitConfig(n_generations=5, population_size=30, n_jobs=1),
+        plot_metrics=False,
+        callback_func=seen.append,
+        exit_condition=lambda algorithm: len(algorithm.metrics) == 2,
+    )
+    assert len(result["metrics"]) == 2
+    assert len(seen) == 2
+    assert all(algorithm is genetic_bag for algorithm in seen)
+
+
+class CallbackCountingBag(GeneticBag):
+    callbacks = 0
+
+    def default_fit_callback(self) -> None:
+        self.callbacks += 1
+
+
+def test_fit_calls_the_callback_method_of_a_subclass_by_default():
+    genetic_bag = CallbackCountingBag(
+        weights=[23, 31, 29, 44], values=[92, 57, 49, 68], capacity=80
+    )
+    genetic_bag.no_improvement_condition = genetic_bag.no_exit_condition
+    result = genetic_bag.fit(
+        FitConfig(
+            n_generations=2,
+            population_size=10,
+            min_population_size=2,
+            n_jobs=1,
+        ),
+        plot_metrics=False,
+    )
+    assert genetic_bag.callbacks == len(result["metrics"]) == 3
+
+
 def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
     # Two genes give 4 Chromosomes, so the first population has them all.
     genetic_bag = GeneticBag(weights=[1, 2], values=[3, 4], capacity=3)
