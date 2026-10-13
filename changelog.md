@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.4 - 13th October 2026
+
+- `crates/genetic_opt/src/metrics.rs`:
+  - `median` reads the middle of scores that are already sorted,
+    in either direction. It copied them and sorted the copy.
+  - `variance` takes the mean, which the caller has, where it
+    computed it again.
+  - Test `median_of_values_sorted_in_either_direction`.
+- `crates/genetic_opt/Cargo.toml`: `chrono` is built with its `now`
+  feature alone, which is what the name of a run folder needs. The
+  lock file went from 102 crates to 89.
+- Nothing was timed.
+
 ### v0.7.3 - 13th October 2026
 
 - With the level of the `genetic_opt` logger above `INFO`, `fit` and

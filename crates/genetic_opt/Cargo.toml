@@ -1,13 +1,13 @@
 [package]
 name = "genetic_opt"
 # Kept equal to the version in the repository's `pyproject.toml`.
-version = "0.7.3"
+version = "0.7.4"
 edition = "2024"
 description = "Genetic algorithm optimizers."
 
 [dependencies]
 bson = { version = "3.1.0", features = ["serde"] }
-chrono = "0.4.45"
+chrono = { version = "0.4.45", default-features = false, features = ["now"] }
 rand = "0.10.3"
 rand_chacha = "0.10.0"
 rayon = "1.12.0"

@@ -62,9 +62,8 @@ pub(crate) fn mean(values: &[f64]) -> f64 {
     values.iter().sum::<f64>() / values.len() as f64
 }
 
-pub(crate) fn median(values: &[f64]) -> f64 {
-    let mut sorted = values.to_vec();
-    sorted.sort_by(f64::total_cmp);
+/// The median of values sorted in either direction.
+pub(crate) fn median(sorted: &[f64]) -> f64 {
     let middle = sorted.len() / 2;
     if sorted.len().is_multiple_of(2) {
         (sorted[middle - 1] + sorted[middle]) / 2.0
@@ -73,8 +72,8 @@ pub(crate) fn median(values: &[f64]) -> f64 {
     }
 }
 
-pub(crate) fn variance(values: &[f64]) -> f64 {
-    let mean = mean(values);
+/// The variance of values whose mean is `mean`.
+pub(crate) fn variance(values: &[f64], mean: f64) -> f64 {
     values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64
 }
 
@@ -86,8 +85,14 @@ mod tests {
     fn statistics_of_a_population() {
         let values = [4.0, 1.0, 3.0, 2.0];
         assert_eq!(mean(&values), 2.5);
-        assert_eq!(median(&values), 2.5);
-        assert_eq!(variance(&values), 1.25);
-        assert_eq!(median(&[5.0, 1.0, 3.0]), 3.0);
+        assert_eq!(variance(&values, 2.5), 1.25);
+    }
+
+    #[test]
+    fn median_of_values_sorted_in_either_direction() {
+        assert_eq!(median(&[1.0, 2.0, 3.0, 5.0]), 2.5);
+        assert_eq!(median(&[5.0, 3.0, 2.0, 1.0]), 2.5);
+        assert_eq!(median(&[1.0, 3.0, 5.0]), 3.0);
+        assert_eq!(median(&[5.0, 3.0, 1.0]), 3.0);
     }
 }

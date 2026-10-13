@@ -21,14 +21,14 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] Small costs in the Rust crate: `median` copies and sorts
-  scores that are already sorted and `variance` recomputes the mean
-  (`metrics.rs:64-76`); with saving on, `decode` runs one by one
-  over the population while the thread pool is idle
-  (`algorithm.rs:454-458`); `chrono` is used for one timestamp with
-  its default features on, and `bson` and `serde_norway` are needed
-  only when saving (`Cargo.toml:9-17`, 102 crates in the lock
-  file). (LOW, S)
+- [ ] **[manual]** Two small costs in the Rust crate are left from
+  the item closed in 0.7.4, and each needs a decision. With saving
+  on, `decode` runs one by one over the population while the thread
+  pool is idle (`save_generation` in `algorithm.rs`): running it on
+  the pool needs `Problem::Solution` to be `Send`, a new bound on a
+  public trait. `bson` and `serde_norway` are needed only when
+  saving (`Cargo.toml`, 89 crates in the lock file): leaving them
+  out needs a cargo feature around `SaveConfig` and `save.rs`.
 - [ ] The repo records no wall-clock time for the Python suite, the
   Rust suite or a cargo build. Run `pytest --durations=10` and
   `cargo test` once and write the date beside the result. (LOW, S)

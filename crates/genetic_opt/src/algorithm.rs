@@ -453,7 +453,9 @@ impl<P: Problem> GeneticAlgorithm<P> {
     }
 
     fn measure(&self, fitting_seconds: f64) -> Metric<P::Gene, P::Solution> {
+        // Sorted, as the population is.
         let values: Vec<f64> = self.population.iter().map(|i| i.score.value).collect();
+        let mean = mean(&values);
         // Equal chromosomes share one `Individual`, so its address tells
         // the different ones apart.
         let n_uniques = self
@@ -465,9 +467,9 @@ impl<P: Problem> GeneticAlgorithm<P> {
         Metric {
             best: self.best(&self.population[0]),
             size: values.len(),
-            mean: mean(&values),
+            mean,
             median: median(&values),
-            var: variance(&values),
+            var: variance(&values, mean),
             n_uniques,
             percent_uniques: 100.0 * n_uniques as f64 / values.len() as f64,
             fitting_seconds: round2(fitting_seconds),
