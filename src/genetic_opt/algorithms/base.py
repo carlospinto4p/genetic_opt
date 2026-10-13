@@ -235,7 +235,8 @@ class GeneticAlgorithm(ABC):
             chromosome: Chromosome to mutate.
             prob: probability to gen mutation.
         Returns:
-            a Chromosome that could have mutated or not.
+            a new Chromosome, that could have mutated or not. The one
+            received is not changed.
         """
         return chromosome.random_mutate(
             gene_space=self.gene_space,

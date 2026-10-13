@@ -193,8 +193,9 @@ class RangeGeneSpace(AbstractGeneSpace):
 def test_list_mutation_draws_its_new_genes_with_one_call():
     size = 40
     gene_space = RangeGeneSpace()
-    chromosome = Chromosome(size=size, genes=[-1] * size)
-    chromosome.random_mutate(gene_space=gene_space, gene_mutate_prob=0.5)
+    chromosome = Chromosome(size=size, genes=[-1] * size).random_mutate(
+        gene_space=gene_space, gene_mutate_prob=0.5
+    )
     n_mutated = sum(gene != -1 for gene in chromosome.genes)
     assert 1 < n_mutated < size
     assert gene_space.calls == [n_mutated]
@@ -204,8 +205,7 @@ def test_list_mutation_draws_its_new_genes_with_one_call():
 @pytest.mark.parametrize("probability, n_mutated", [(0, 0), (1, 40)])
 def test_list_mutation_with_probability_0_and_1(probability, n_mutated):
     gene_space = RangeGeneSpace()
-    chromosome = Chromosome(size=40, genes=[-1] * 40)
-    chromosome.random_mutate(
+    chromosome = Chromosome(size=40, genes=[-1] * 40).random_mutate(
         gene_space=gene_space, gene_mutate_prob=probability
     )
     assert sum(gene != -1 for gene in chromosome.genes) == n_mutated
@@ -214,10 +214,13 @@ def test_list_mutation_with_probability_0_and_1(probability, n_mutated):
 
 def test_set_mutation_keeps_the_size_of_the_set():
     gene_space = RangeGeneSpace()
-    chromosome = Chromosome(
+    unmutated = Chromosome(
         size=8, genes=set(range(100, 108)), is_gene_set=True
     )
-    chromosome.random_mutate(gene_space=gene_space, gene_mutate_prob=0.5)
+    chromosome = unmutated.random_mutate(
+        gene_space=gene_space, gene_mutate_prob=0.5
+    )
+    assert unmutated.genes == set(range(100, 108))
     assert isinstance(chromosome.genes, set)
     assert len(chromosome.genes) == 8
     kept = chromosome.genes & set(range(100, 108))
@@ -230,8 +233,10 @@ def test_a_set_as_large_as_its_gene_space_holds_every_gene():
     chromosome = Chromosome(size=20, gene_space=gene_space, is_gene_set=True)
     assert isinstance(chromosome.genes, set)
     assert chromosome.genes == set(range(20))
-    chromosome.random_mutate(gene_space=gene_space, gene_mutate_prob=0.5)
-    assert chromosome.genes == set(range(20))
+    mutated = chromosome.random_mutate(
+        gene_space=gene_space, gene_mutate_prob=0.5
+    )
+    assert mutated.genes == set(range(20))
 
 
 def test_a_chromosome_built_from_a_gene_space_draws_with_one_call():
@@ -245,8 +250,7 @@ def test_a_chromosome_built_from_a_gene_space_draws_with_one_call():
 def test_mutation_calls_another_gene_space_function_once_for_each_gene():
     size = 40
     gene_space = RangeGeneSpace()
-    chromosome = Chromosome(size=size, genes=[-1] * size)
-    chromosome.random_mutate(
+    chromosome = Chromosome(size=size, genes=[-1] * size).random_mutate(
         gene_space=gene_space,
         gene_mutate_prob=0.5,
         gene_space_func="pick",
@@ -290,14 +294,54 @@ def test_a_chromosome_builds_its_random_state_on_first_use():
 
 def test_a_mutated_chromosome_gets_a_new_id():
     size = 40
-    chromosome = Chromosome(size=size, genes=[0] * size)
-    unmutated_id = chromosome.id
-    chromosome.random_mutate(gene_space=OnesGeneSpace(), gene_mutate_prob=0.5)
+    unmutated = Chromosome(size=size, genes=[0] * size)
+    unmutated_id = unmutated.id
+    chromosome = unmutated.random_mutate(
+        gene_space=OnesGeneSpace(), gene_mutate_prob=0.5
+    )
     assert chromosome.id != unmutated_id
     same_genes = Chromosome(size=size, genes=list(chromosome.genes))
     assert chromosome.id == same_genes.id
     assert hash(chromosome) == hash(same_genes)
     assert chromosome == same_genes
+
+
+def test_mutation_leaves_the_chromosome_as_it_was():
+    size = 40
+    chromosome = Chromosome(size=size, genes=[0] * size)
+    chromosome.score, chromosome.score_time = Score(value=3), 0.5
+    by_chromosome = {chromosome: "kept"}
+    mutated = chromosome.random_mutate(
+        gene_space=OnesGeneSpace(), gene_mutate_prob=0.5
+    )
+    assert mutated is not chromosome
+    assert 0 < sum(mutated.genes) < size
+    assert mutated.score is None
+    assert mutated.score_time == 0
+    assert chromosome.genes == [0] * size
+    assert chromosome.score.value == 3
+    assert by_chromosome[chromosome] == "kept"
+
+
+def test_the_mutation_invariant_gets_the_chromosome_before_and_after():
+    size = 40
+    genetic_bag = GeneticBag(
+        weights=[1] * size, values=[1] * size, capacity=10
+    )
+    genetic_bag.gene_space = OnesGeneSpace()
+    pairs: list[tuple[list[int], list[int]]] = []
+
+    def record(before: Chromosome, after: Chromosome) -> bool:
+        pairs.append((list(before.genes), list(after.genes)))
+        return True
+
+    genetic_bag.mutation_invariant = record
+    genetic_bag.mutate_chromosomes(
+        [Chromosome(size=size, genes=[0] * size)], mutate_prob=0.5
+    )
+    ((before, after),) = pairs
+    assert before == [0] * size
+    assert 0 < sum(after) < size
 
 
 def test_fit_without_a_save_path_decodes_the_population_once():

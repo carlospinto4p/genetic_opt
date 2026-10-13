@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Collection
+from copy import copy
 
 from numpy import ndarray
 from numpy.random import RandomState
@@ -70,16 +71,16 @@ class GeneCollection(ABC):
         gene_space_func_kwargs: dict | None = None,
     ) -> GeneCollection:
         """
-        Randomly mutate the entire Gene Collection.
-        The Genes will change, but only a part of them, depending on
-        the value of `gene_mutate_prob`.
+        Get a Gene Collection with a part of the genes of this one
+        replaced at random, depending on the value of
+        `gene_mutate_prob`. This one keeps its genes.
         :param gene_space: GeneSpace object to get genes from.
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
         :param random_state: numpy RandomState object to handle randomness.
         :param gene_space_func: GeneSpace function to call for replacement.
         :param gene_space_func_kwargs: GeneSpace function keyword arguments.
-        :return: the transformed GeneCollection object.
+        :return: a new GeneCollection object with the mutated genes.
         """
 
     @abstractmethod
@@ -142,9 +143,9 @@ class GeneList(GeneCollection):
         gene_space_func_kwargs: dict | None = None,
     ) -> GeneList:
         """
-        Randomly mutate the entire Gene List.
-        The Genes will change, but only a part of them, depending on
-        the value of `gene_mutate_prob`.
+        Get a Gene List with a part of the genes of this one replaced
+        at random, depending on the value of `gene_mutate_prob`. This
+        one keeps its genes.
         :param gene_space: GeneSpace object to get genes from.
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
@@ -153,7 +154,7 @@ class GeneList(GeneCollection):
             Default to `select_random`.
         :param gene_space_func_kwargs: GeneSpace function keyword arguments.
             Default to the empty set.
-        :return: the transformed GeneList object.
+        :return: a new GeneList object with the mutated genes.
         """
         mutates = (
             random_state.random(len(self.genes)) < gene_mutate_prob
@@ -166,11 +167,12 @@ class GeneList(GeneCollection):
                 gene_space_func_kwargs,
             )
         )
-        self.genes = [
+        mutated = copy(self)
+        mutated.genes = [
             next(new_genes) if gene_mutates else gene
             for gene, gene_mutates in zip(self.genes, mutates)
         ]
-        return self
+        return mutated
 
     def select_random(
         self, gene_space: GeneSpace, n: int | None = None
@@ -235,9 +237,9 @@ class GeneSet(GeneCollection):
         gene_space_func_kwargs: dict | None = None,
     ) -> GeneSet:
         """
-        Randomly mutate the entire Gene Set.
-        The Genes will change, but only a part of them, depending on
-        the value of `gene_mutate_prob`.
+        Get a Gene Set with a part of the genes of this one replaced
+        at random, depending on the value of `gene_mutate_prob`. This
+        one keeps its genes.
         :param gene_space: GeneSpace object to get genes from.
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
@@ -246,7 +248,7 @@ class GeneSet(GeneCollection):
             Default to `select_random`.
         :param gene_space_func_kwargs: GeneSpace function keyword arguments.
             Default to the empty set.
-        :return: the transformed GeneSet object.
+        :return: a new GeneSet object with the mutated genes.
         """
         genes = list(self.genes)
         mutates = (
@@ -265,10 +267,11 @@ class GeneSet(GeneCollection):
                 gene_space_func_kwargs,
             )
         )
-        self.genes = self._complete_genes(
+        mutated = copy(self)
+        mutated.genes = self._complete_genes(
             genes=new_genes, gene_space=gene_space
         )
-        return self
+        return mutated
 
     def select_random(
         self, gene_space: GeneSpace, n: int | None = None

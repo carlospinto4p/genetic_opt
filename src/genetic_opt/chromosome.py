@@ -1,6 +1,7 @@
 """Genetic Opt Chromosome submodule."""
 
 from collections.abc import Callable, Collection
+from copy import copy
 from hashlib import md5
 from time import time
 from typing import Any
@@ -63,7 +64,7 @@ class Chromosome:
         # Built on first use: `GeneticAlgorithm` passes its own state to
         # `random_mutate`, so most Chromosomes never need one.
         self._random_state: RandomState | None = None
-        # Kept after the first use and cleared by `random_mutate`.
+        # Kept after the first use: `random_mutate` builds a new Chromosome.
         self._id: int | None = None
 
     @property
@@ -126,8 +127,8 @@ class Chromosome:
     def id(self) -> int:
         """
         Hash id limited to a length of 30. It is computed once and kept,
-        so code that changes `genes` by another way than `random_mutate`
-        must build a new Chromosome.
+        so code that changes `genes` must build a new Chromosome, as
+        `random_mutate` does.
         """
         if self._id is None:
             m = md5(usedforsecurity=False)
@@ -157,8 +158,9 @@ class Chromosome:
         random_state: RandomState = None,
     ) -> Chromosome:
         """
-        Randomly changes the inner genes of the Chromosome, picking and
-        replacing them using a `gene_space`.
+        Get a Chromosome with some genes of this one replaced at random
+        by others picked from a `gene_space`. This Chromosome is not
+        changed: it keeps its genes, its score and its hash.
         :param gene_space: GeneSpace object to get new genes from.
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
@@ -169,18 +171,23 @@ class Chromosome:
         :param random_state: numpy RandomState object that decides which
             genes mutate. Default to the one of this Chromosome, which
             gives the same draws to every Chromosome sharing its seed.
-        :return: the mutated Chromosome.
+        :return: the mutated Chromosome, a new one without a score. It
+            shares the random state of this one.
         """
-        self.gene_collection = self.gene_collection.random_mutate(
+        # Before the copy, so that it gets a state built here
+        random_state = random_state or self.random_state
+        mutated = copy(self)
+        mutated.gene_collection = self.gene_collection.random_mutate(
             gene_space=gene_space,
             gene_mutate_prob=gene_mutate_prob,
-            random_state=random_state or self.random_state,
+            random_state=random_state,
             gene_space_func=gene_space_func,
             gene_space_func_kwargs=gene_space_func_kwargs,
         )
-        self.genes = self.gene_collection.genes
-        self._id = None
-        return self
+        mutated.genes = mutated.gene_collection.genes
+        mutated.score, mutated.score_time = None, 0
+        mutated._id = None
+        return mutated
 
     def to_dict(
         self, serialize_gene_func: Callable[[Any], Any] | None = None

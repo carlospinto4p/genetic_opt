@@ -2,6 +2,28 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.8.0 - 13th October 2026
+
+- `Chromosome.random_mutate` in `src/genetic_opt/chromosome.py`
+  returns a new Chromosome and leaves the one it is called on as it
+  was. Before, it changed the genes in place and returned the same
+  object, which kept its old score and changed its hash while it
+  could be the key of a dictionary. Code that calls it and does not
+  use what it returns has to be changed.
+  - The new Chromosome has no score and shares the random state of
+    the first.
+  - `GeneList.random_mutate` and `GeneSet.random_mutate` in
+    `src/genetic_opt/gene_collection.py` return a new collection
+    too.
+  - A `mutation_invariant` of `GeneticAlgorithm` got the same object
+    twice, so it compared the mutated Chromosome with itself. It
+    gets the one before and the one after now.
+- `tests/unit/test_binary_algs.py`:
+  - Added `test_mutation_leaves_the_chromosome_as_it_was`.
+  - Added
+    `test_the_mutation_invariant_gets_the_chromosome_before_and_after`.
+  - The other mutation tests read the Chromosome that is returned.
+
 ### v0.7.13 - 13th October 2026
 
 - Fixed a second `fit` on the same `GeneticAlgorithm`, which mixed

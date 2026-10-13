@@ -26,13 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/chromosome.py:133-164`,
-  `gene_collection.py:114-118`, `:187-196`: `random_mutate` changes
-  the genes in place and returns `self` without clearing
-  `self.score`, while `__hash__` comes from the genes. A mutated
-  object that is already a dict key or already scored is then
-  inconsistent. The Rust `Problem::mutate` returns a new `Vec`.
-  (MED, M)
 - [ ] `src/genetic_opt/logs.py:26-49`, `:58`: the library calls
   `logging.config.dictConfig` at import, adds a stdout handler and
   sets `propagate: False`, and reads `LOG_FORMAT` and
