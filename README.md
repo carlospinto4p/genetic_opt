@@ -10,6 +10,11 @@ methodologies in order to tackle different optimization problems.
 There is an example of optimization problem tackled with these classes
 in `examples.binary.GeneticBag`.
 
+`fit` returns a dictionary. Its keys, and those of a run loaded with
+`utils.load_fit_result` or `utils.load_fit_result_file`, are written
+once, in `fit_result.py`: `FitResult`, `LoadedFitResult` and
+`FitResultFile`.
+
 ## Logs
 
 The package writes the progress of a run to the logger `genetic_opt`

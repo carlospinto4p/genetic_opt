@@ -31,13 +31,6 @@ some tens of lines off.
   lists 8 again. The Rust crate groups them as `FitConfig` and
   `SaveConfig`. Two dataclasses would replace the hand-built
   `fit_parameters` dict at lines 434-443. (MED, M)
-- [ ] The shape of the fit result is pasted into eight docstrings
-  (`algorithms/base.py:373-416`, `:703-746`, `:955-967`,
-  `utils.py:36-77`, `:115-157`, `:231-274`, `metrics.py:18-29`,
-  `:140-151`) and has drifted: it names `self.fit_func`, which does
-  not exist, and omits `min_population_size`, `n_jobs` and
-  `genetic_opt_version`. A `FitResult` dataclass or TypedDict
-  states it once, as the Rust `FitResult` does. (MED, M)
 - [ ] `src/genetic_opt/utils.py:97-333`: `serialize_fit_result`
   writes `last_population` and `FitSaver.save_generation` renames
   `historial[-1]` to `population` (`algorithms/save.py`),
@@ -232,3 +225,10 @@ some tens of lines off.
   (`algorithm.rs`, `create_run_folder`). `downstream` writes into
   `self.save_path` before `fit` (`rule_optimizer.py:321-326`), so the
   first folder has to exist at once. (LOW, S)
+
+### 2026.10.13 (found while writing the `FitResult` types, 0.10.0)
+
+- [ ] `src/genetic_opt/algorithms/base.py`: `fit` with a negative
+  `n_generations` runs no generation and returns an empty dictionary,
+  which is not a `FitResult`. Refuse it with a
+  `ValidationException`, as a `population_size` below 1 is. (LOW, S)

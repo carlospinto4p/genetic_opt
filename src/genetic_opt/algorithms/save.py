@@ -16,6 +16,7 @@ from genetic_opt.files import (
     save_json,
     save_yaml,
 )
+from genetic_opt.fit_result import FitParameters, FitResult
 from genetic_opt.functions import now_for_file_path
 from genetic_opt.utils import serialize_fit_result
 
@@ -76,7 +77,7 @@ class FitSaver:
         )
 
     def save_experiment_config(
-        self, fit_parameters: dict, experiment_config: dict
+        self, fit_parameters: FitParameters, experiment_config: dict
     ) -> None:
         """
         Save `experiment_config.yml`.
@@ -89,7 +90,7 @@ class FitSaver:
             config["experiment_config"] = experiment_config
         save_yaml(config, file_path=f"{self.folder}/experiment_config")
 
-    def save_generation(self, fit_result: dict) -> None:
+    def save_generation(self, fit_result: FitResult) -> None:
         """
         Save the last generation of a fit result as
         `fit_data/fit_data_<number of the generation>`.
@@ -119,7 +120,7 @@ class FitSaver:
 
     def save_plots(
         self,
-        fit_result: dict,
+        fit_result: FitResult,
         other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
         | None = None,
     ) -> None:

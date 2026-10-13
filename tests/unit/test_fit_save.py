@@ -5,6 +5,16 @@ import pytest
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import get_files_inside_folder, load_json, save_json
+from genetic_opt.fit_result import (
+    Bests,
+    FitMetrics,
+    FitnessFuncCalls,
+    FitParameters,
+    FitResult,
+    FitResultFile,
+    LoadedFitResult,
+    TotalFitTime,
+)
 from genetic_opt.score import Score
 from genetic_opt.utils import load_fit_result, load_fit_result_file
 
@@ -67,6 +77,29 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert loaded["fit_parameters"] == fit_result["fit_parameters"]
     assert len(loaded["historial"]) == saved_generations
     assert loaded["historial"] == fit_result["historial"]
+
+
+def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    fit_result = algorithm.fit(
+        n_generations=1, population_size=20, n_jobs=1, plot_metrics=False
+    )
+    folder = f"{algorithm.save_path}/fit_data"
+    fit_metrics = fit_result["fit_metrics"]
+
+    # Without an `extra_config` there is no `config`, the one optional key
+    for result, result_type in (
+        (fit_result, FitResult),
+        (load_fit_result(folder), LoadedFitResult),
+        (load_fit_result_file(f"{folder}/fit_data_1.json"), FitResultFile),
+        (fit_result["bests"], Bests),
+        (fit_result["fit_parameters"], FitParameters),
+        (fit_metrics, FitMetrics),
+        (fit_metrics["fitness_func_calls"], FitnessFuncCalls),
+        (fit_metrics["total_fit_time"], TotalFitTime),
+    ):
+        assert set(result) == result_type.__required_keys__
+    assert FitResult.__optional_keys__ == {"config"}
 
 
 def test_each_file_holds_the_metrics_of_its_generation_alone(tmp_path):

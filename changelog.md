@@ -2,6 +2,28 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.10.0 - 13th October 2026
+
+- Added `src/genetic_opt/fit_result.py`, which states once the keys of
+  what `GeneticAlgorithm.fit` returns and of a loaded run. They are
+  typed dictionaries, so the results stay plain dictionaries:
+  - `FitResult`: what `fit` returns.
+  - `LoadedFitResult`: what `utils.load_fit_result` returns.
+  - `FitResultFile`: what `utils.load_fit_result_file` returns.
+  - `Bests`, `FitMetrics`, `FitnessFuncCalls`, `TotalFitTime`,
+    `FitParameters` and `FitSummary`: their parts.
+- The description of those keys was pasted into eight docstrings of
+  `algorithms/base.py`, `utils.py`, `metrics.py` and
+  `algorithms/plots.py`, which name the type now. The copies left out
+  `min_population_size`, `n_jobs` and `genetic_opt_version`, and said
+  that `population_idx` starts with 0, where it starts with 1.
+- `fit`, the two load functions, `serialize_fit_result`, `FitSaver` and
+  `plot_genetic_algo_metrics` are annotated with the new types.
+- `metrics.py`: the docstring of `Metric` lists `size`.
+- Added `test_the_fit_result_types_name_the_keys_of_each_result` to
+  `tests/unit/test_fit_save.py`: the keys of each result are the ones
+  its type names.
+
 ### v0.9.0 - 13th October 2026
 
 - `src/genetic_opt/logs.py` no longer sets up logging when the

@@ -21,12 +21,13 @@ class Metric:
         - score: best Score of the population.
         - result: best Chromosome of the population, decoded.
         - encoded: best Chromosome of the population.
+    - size: number of Chromosomes of the population.
     - mean: mean of the population scores.
     - median: median of the population scores.
     - var: variance of the population scores.
     - n_uniques: number of unique Chromosomes in the population.
     - percent_uniques: percent of unique Chromosomes in the population.
-    - fitting seconds: number of seconds that it took for the population
+    - fitting_seconds: number of seconds that it took for the population
         to get fitted.
     """
 
@@ -138,18 +139,7 @@ def get_population_metrics(
         fitting_seconds: number of seconds that it took for the population
             to get fitted.
 
-    Returns: a Metric dataclass object. Keys:
-        - best: dictionary with keys:
-            - score: best Score of the population.
-            - result: best Chromosome of the population, decoded.
-            - encoded: best Chromosome of the population.
-        - mean: mean of the population scores.
-        - median: median of the population scores.
-        - var: variance of the population scores.
-        - n_uniques: number of unique Chromosomes in the population.
-        - percent_uniques: percent of unique Chromosomes in the population.
-        - fitting seconds: number of seconds that it took for the population
-            to get fitted.
+    Returns: the `Metric` of the population.
     """
     scores = [score for score, chromosome in population_with_scores]
     chromosomes = [chromosome for score, chromosome in population_with_scores]

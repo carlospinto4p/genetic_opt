@@ -18,6 +18,7 @@ from genetic_opt.exceptions import (
     InvariantException,
     ValidationException,
 )
+from genetic_opt.fit_result import FitParameters, FitResult
 from genetic_opt.functions import (
     format_seconds,
     identity_func,
@@ -342,7 +343,7 @@ class GeneticAlgorithm(ABC):
         callback_func: Callable[[GeneticAlgorithm], None] | None = None,
         iter_func: Callable | None = None,
         n_jobs: int = -2,
-    ) -> dict:
+    ) -> FitResult:
         """
         Fit the Genetic Algorithm. Each call is a new run: it keeps no
         population, history or metrics of the run before, and
@@ -389,51 +390,8 @@ class GeneticAlgorithm(ABC):
                 uses `self`, takes the whole algorithm with it: its
                 population, its history and its scores.
 
-        Returns: dictionary with keys:
-            - bests: dictionary:
-                - scores: list with the 5 best Scores.
-                - result: list with the 5 best chromosomes, decoded.
-                - encoded: list with the 5 bests chromosomes.
-            - metrics: list of metrics of each generation. Keys:
-                - best: dictionary with keys:
-                    - score: best Score of the population.
-                    - result: best Chromosome of the population, decoded.
-                    - encoded: best Chromosome of the population.
-                - mean: mean of the population scores.
-                - median: median of the population scores.
-                - var: variance of the population scores.
-                - n_uniques: number of unique Chromosomes in the population.
-                - percent_uniques: percent of unique Chromosomes in the
-                    population.
-                - fitting_seconds: number of seconds that it took for the
-                    population to get fitted.
-            - fit_metrics: dict:
-                - fitness_func_calls: dict:
-                    - total: number of Chromosomes that needed a Score.
-                    - processed: number of times the fitness function ran:
-                        once for each different Chromosome.
-                    - percent_processed: 100 * processed / total.
-                    - cached: number of Scores taken from an earlier
-                        Chromosome with the same genes.
-                    - space_points: number of different Chromosomes of the
-                        experiment, as a float.
-                    - exploration_percentage: 100 * processed / space_points.
-                - total_fit_time: dict:
-                    - n_jobs: number of jobs used for processing.
-                    - raw: total number of seconds of the training.
-                    - formatted: same, but formatted.
-            - last_population: list of tuples
-                (decoded Chromosome, Chromosome Score).
-            - historial: list of the tuples (Chromosome Score, Chromosome)
-                for each generation.
-            - fit_parameters: fit parameters used in the experiment:
-                - n_generations
-                - population_size
-                - crossovers_prop
-                - besties_prop
-                - mutate_prob
-                - random_seed
-            - config: optional, custom dictionary added by the child classes.
+        Returns:
+            a `FitResult`. It is empty with a negative `n_generations`.
         """
         # Default parameters
         iter_func = iter_func or identity_func
@@ -464,7 +422,7 @@ class GeneticAlgorithm(ABC):
             raise ValidationException(
                 f"{n_jobs = } received is not valid! {cpu_count() = }"
             )
-        fit_parameters = {
+        fit_parameters: FitParameters = {
             "n_generations": n_generations,
             "population_size": population_size,
             "crossovers_prop": crossovers_prop,
@@ -742,65 +700,14 @@ class GeneticAlgorithm(ABC):
         generation_fitting_time = round(time() - init_time, 2)
         self._update_metrics(generation_fitting_time=generation_fitting_time)
 
-    def _get_fitted_data(self, fit_parameters: dict, n_jobs: int) -> dict:
+    def _get_fitted_data(
+        self, fit_parameters: FitParameters, n_jobs: int
+    ) -> FitResult:
         """
-        Post-fit method that returns a dictionary with main parameters of
-        the experiment.
-        :param fit_parameters: fit parameters used in the experiment.
-            This is the input of the function `self.fit`, adding the
-            random_seed used:
-                - n_generations
-                - population_size
-                - crossovers_prop
-                - besties_prop
-                - mutate_prob
-                - random_seed
-        :param n_jobs: number of jobs used for the ´fit´ function.
-        :return dictionary with keys:
-            - bests: dictionary:
-                - scores: list with the 5 best Scores.
-                - result: list with the 5 best chromosomes, decoded.
-                - encoded: list with the 5 bests chromosomes.
-            - metrics: list of metrics of each generation. Keys:
-                - best: dictionary with keys:
-                    - score: best Score of the population.
-                    - result: best Chromosome of the population, decoded.
-                    - encoded: best Chromosome of the population.
-                - mean: mean of the population scores.
-                - median: median of the population scores.
-                - var: variance of the population scores.
-                - n_uniques: number of unique Chromosomes in the population.
-                - percent_uniques: percent of unique Chromosomes in the
-                    population.
-                - fitting_seconds: number of seconds that it took for the
-                    population to get fitted.
-            - fit_metrics: dictionary:
-                - fitness_func_calls: dict:
-                    - total: number of Chromosomes that needed a Score.
-                    - processed: number of times the fitness function ran:
-                        once for each different Chromosome.
-                    - percent_processed: 100 * processed / total.
-                    - cached: number of Scores taken from an earlier
-                        Chromosome with the same genes.
-                    - space_points: number of different Chromosomes of the
-                        experiment, as a float.
-                    - exploration_percentage: 100 * processed / space_points.
-                - total_fit_time: dict:
-                    - n_jobs: number of jobs used for processing.
-                    - raw: total number of seconds of the training.
-                    - formatted: same, but formatted.
-            - last_population: list of tuples
-                (decoded Chromosome, Chromosome Score).
-            - historial: list of the tuples (Chromosome Score, Chromosome)
-                for each generation.
-            - fit_parameters: fit parameters used in the experiment:
-                - n_generations
-                - population_size
-                - crossovers_prop
-                - besties_prop
-                - mutate_prob
-                - random_seed
-            - config: optional, custom dictionary added by the child classes.
+        Build the result of the run so far.
+        :param fit_parameters: the parameters `fit` runs with.
+        :param n_jobs: number of jobs used by `fit`.
+        :return: the `FitResult` of the generations measured so far.
         """
         requests = self._score_requests
         processed = len(self._chromosome_cache) - self._scores_before_run
@@ -814,7 +721,8 @@ class GeneticAlgorithm(ABC):
         for chromosome in self.population:
             if len(bests) < 5 and chromosome not in bests:
                 bests.append(chromosome)
-        summary = {
+        raw_fit_time = round(sum(m.fitting_seconds for m in self.metrics), 2)
+        summary: FitResult = {
             "bests": {
                 "scores": [chromosome.score for chromosome in bests],
                 "result": [
@@ -836,9 +744,8 @@ class GeneticAlgorithm(ABC):
                 },
                 "total_fit_time": {
                     "n_jobs": n_jobs,
-                    "raw": round(
-                        sum(m.fitting_seconds for m in self.metrics), 2
-                    ),
+                    "raw": raw_fit_time,
+                    "formatted": format_seconds(raw_fit_time),
                 },
                 "genetic_opt_version": __version__,
             },
@@ -851,9 +758,6 @@ class GeneticAlgorithm(ABC):
         }
         if self.extra_config:
             summary["config"] = self.extra_config
-        summary["fit_metrics"]["total_fit_time"]["formatted"] = (
-            format_seconds(summary["fit_metrics"]["total_fit_time"]["raw"])
-        )
         return summary
 
     def _get_iteration_improvement(self) -> dict:
@@ -944,22 +848,8 @@ class GeneticAlgorithm(ABC):
 
     def _update_metrics(self, generation_fitting_time: float) -> None:
         """
-        Update inner `self.metrics` anf `self.historial`.
-        - `self.historial`: list of the tuples (Chromosome Score, Chromosome)
-            for each generation.
-        - `self.metrics`: list of metrics of each generation. Keys:
-            - best: dictionary with keys:
-                - score: best Score of the population.
-                - result: best Chromosome of the population, decoded.
-                - encoded: best Chromosome of the population.
-            - mean: mean of the population scores.
-            - median: median of the population scores.
-            - var: variance of the population scores.
-            - n_uniques: number of unique Chromosomes in the population.
-            - percent_uniques: percent of unique Chromosomes in the
-                population.
-            - fitting_seconds: number of seconds that it took for the
-                population to get fitted.
+        Add the current population to `self.historial` and its `Metric`
+        to `self.metrics`.
         :param generation_fitting_time: fitting time of the last generation,
             in seconds.
         :return: None.
