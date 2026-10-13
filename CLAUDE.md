@@ -56,6 +56,14 @@ the Python package `src/genetic_opt` and the Rust crate
 saved by either one has the same layout on disk, and
 `utils.load_fit_result` reads both.
 
+## Changes that break `downstream`
+
+`downstream` (`~/development/python/rialto/downstream`) uses this package.
+When a change here breaks its code, file an item in its `backlog.md`
+in the same task, with the lines that break and what to write in their
+place, then commit and push it there. Saying so in the reply is not
+enough. Set 13th October 2026 at the user's instruction.
+
 ## Shell Commands
 
 Never use compound shell commands with `cd && git` or `cd &&` chaining. Always use separate commands or `cd` first, then run the git/shell command independently.

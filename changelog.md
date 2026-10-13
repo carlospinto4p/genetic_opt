@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.11.1 - 13th October 2026
+
+- `CLAUDE.md`: a change that breaks the code of `downstream` gets an
+  item in the backlog of `downstream` in the same task. The changes of
+  0.9.0 and 0.11.0 were only reported, and the item was filed
+  afterwards.
+
 ### v0.11.0 - 13th October 2026
 
 - Added `src/genetic_opt/algorithms/config.py`, with the two classes
