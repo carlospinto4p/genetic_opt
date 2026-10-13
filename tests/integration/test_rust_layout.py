@@ -1,3 +1,4 @@
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -20,23 +21,39 @@ pytestmark = [
 ]
 
 
-@pytest.mark.parametrize("extension", ["bson", "json"])
-def test_python_loads_a_run_saved_by_the_rust_crate(tmp_path, extension):
-    subprocess.run(
+@pytest.fixture(scope="session")
+def knapsack_example() -> str:
+    """Build the knapsack example of the crate once; return its path."""
+    built = subprocess.run(
         [
             "cargo",
-            "run",
+            "build",
             "--quiet",
             "--manifest-path",
             str(CRATE_MANIFEST),
             "--example",
             "knapsack",
-            "--",
-            str(tmp_path),
-            extension,
+            "--message-format=json",
         ],
         check=True,
+        capture_output=True,
+        text=True,
     )
+    # One JSON message a line; the example's own names its executable.
+    (executable,) = (
+        message["executable"]
+        for message in map(json.loads, built.stdout.splitlines())
+        if message.get("reason") == "compiler-artifact"
+        and message["target"]["name"] == "knapsack"
+    )
+    return executable
+
+
+@pytest.mark.parametrize("extension", ["bson", "json"])
+def test_python_loads_a_run_saved_by_the_rust_crate(
+    tmp_path, extension, knapsack_example
+):
+    subprocess.run([knapsack_example, str(tmp_path), extension], check=True)
     (run_folder,) = (tmp_path / "Knapsack").iterdir()
     assert (run_folder / "experiment_config.yml").is_file()
     files = get_files_inside_folder(str(run_folder / "fit_data"))

@@ -27,6 +27,7 @@ def test_genetic_bag():
         crossovers_prop=0.7,
         besties_prop=0.6,
         mutate_prob=0.05,
+        n_jobs=1,
     )
     best_score = opt_data["bests"]["scores"][0].value
     assert best_score == 309

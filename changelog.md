@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.13 - 13th October 2026
+
+- `test_genetic_bag` in `tests/unit/test_binary_algs.py` passes
+  `n_jobs=1`. With the default it started one worker process for
+  each core but one, for a knapsack of 10 genes.
+  `test_fit_scores_each_chromosome_once` still runs with two
+  processes.
+- `tests/integration/test_rust_layout.py` builds the crate's knapsack
+  example once, in the session fixture `knapsack_example`, and both
+  tests run the built program. Before, each test called `cargo run`.
+  The first build on a machine still compiles the crate and its
+  dependencies inside pytest, and the tests are still skipped when
+  `cargo` is missing.
+
 ### v0.6.12 - 13th October 2026
 
 - `import genetic_opt.algorithms` no longer imports `matplotlib`,

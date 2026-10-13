@@ -21,18 +21,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `tests/unit/test_binary_algs.py:13-19`: `test_genetic_bag` uses the
-  default `n_jobs=-2`, which starts 15 worker processes on a
-  16-core machine for a 10-gene knapsack. The same `fit` with
-  `n_jobs=1` took 0.12 seconds. Line 46-48 already covers two
-  processes. Pass `n_jobs=1`. (MED, S)
-- [ ] `tests/integration/test_rust_layout.py:15-36`: the Python suite runs
-  `cargo run --example knapsack` twice. With no `target/` folder
-  that compiles the crate and 102 dependencies inside pytest, needs
-  the network, and writes to `crates/genetic_opt/target/`. The test
-  is skipped without a word when `cargo` is missing, so a machine
-  without Rust reports green. It carries the `integration` marker
-  since 0.4.1. Build once in a session fixture. (MED, S)
 - [ ] `src/genetic_opt/utils.py:79-94` and `:200-207`:
   `load_fit_result` parses every generation file in full, and each
   file holds the metrics of all generations so far, so loading
