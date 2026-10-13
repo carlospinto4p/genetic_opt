@@ -26,13 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/algorithms/base.py:308-317` with `:831-839`:
-  `_get_iteration_improvement` returns the raw metrics for the
-  first generation and differences afterwards, under the same keys,
-  so a run whose first population has mean score 0 stops at once.
-  `README.md:58` documents it as a difference from the Rust crate.
-  Lines 843-850 depend on the field order of `Metric.__dict__`. No
-  test pins either behaviour. (MED, S)
 - [ ] `crates/genetic_opt/src/algorithm.rs:213`:
   `self.metrics[generation]` assumes `metrics` is empty when `fit`
   starts. A second `fit` on the same object reads the first run's
@@ -166,7 +159,7 @@ some tens of lines off.
   (`chromosome.py:97-116`). (MED, S)
 - [ ] `callback_func`, `exit_condition` and the `min_population_size`
   stop (`algorithms/base.py:480-486`, `:497-524`) have no
-  Python test; the no-improvement stop runs only by accident. In
+  Python test; the no-improvement stop has one since 0.7.11. In
   Rust the `min_population_size` stop and the stalled-mean stop
   (`algorithm.rs:213-219`, `:401-406`) have none either. (MED, M)
 - [ ] `load_fit_result` (`utils.py:79-94`) on an empty or missing

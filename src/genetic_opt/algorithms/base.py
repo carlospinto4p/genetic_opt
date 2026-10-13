@@ -315,7 +315,8 @@ class GeneticAlgorithm(ABC):
         Method applied to the improvement dict after each fit step.
         If this condition is met, the fit process will stop.
         By default, will get the mean key of the improvements
-        and check if it is 0.
+        and check if it is 0. The first generation has no improvement
+        to check, so it never meets the condition.
         Replace this method with `GeneticAlgorithm.no_exit_condition`
         to avoid this default behavior.
         """
@@ -493,10 +494,8 @@ class GeneticAlgorithm(ABC):
                     f"iteration {n_generation} - Metrics:"
                     f"\n\t{log_format(self.metrics[-1])}"
                 )
-                logger.info(
-                    f"improvement:\n"
-                    f"{log_format(self._get_iteration_improvement())}"
-                )
+                if improvement := self._get_iteration_improvement():
+                    logger.info(f"improvement:\n{log_format(improvement)}")
                 logger.info(
                     f"measuring this generation took "
                     f"{format_seconds(self.metrics[-1].fitting_seconds)}"
@@ -845,8 +844,9 @@ class GeneticAlgorithm(ABC):
         Get the improvement between iterations.
         Will get the list of metrics `self.metrics` and return the
         differences for each metrics key between the latest two metrics.
-        :return: dictionary with the same keys as the numeric values of
-            `self.metrics`:
+        :return: an empty dictionary for the first generation, which has
+            none before it. After it, a dictionary with the same keys as
+            the numeric values of `self.metrics`:
             - best_score: difference of the values of the best scores of the
                 last two populations.
             - mean: difference of the means of the scores.
@@ -868,25 +868,12 @@ class GeneticAlgorithm(ABC):
             "fitting_seconds",
         ]
         if len(self.metrics) < 2:
-            return {
-                "best_score": self.metrics[-1].best["score"].value,
-                **{
-                    k: v
-                    for k, v in self.metrics[-1].__dict__.items()
-                    if k in diff_keys
-                },
-            }
+            return {}
+        previous, last = self.metrics[-2:]
         iteration_improvement = {
-            "best_score": self.metrics[-1].best["score"].value
-            - self.metrics[-2].best["score"].value,
-            **{
-                k: new_v - prev_v
-                for (k, new_v), prev_v in zip(
-                    self.metrics[-1].__dict__.items(),
-                    self.metrics[-2].__dict__.values(),
-                )
-                if k in diff_keys
-            },
+            "best_score": last.best["score"].value
+            - previous.best["score"].value,
+            **{k: getattr(last, k) - getattr(previous, k) for k in diff_keys},
         }
         iteration_improvement["fitting_seconds"] = round(
             iteration_improvement["fitting_seconds"], 2

@@ -9,11 +9,13 @@ from joblib import Parallel
 from joblib.externals import cloudpickle
 
 from genetic_opt.algorithms import base as algorithms
+from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.metrics import Metric, get_space_points
+from genetic_opt.score import Score
 
 
 def test_genetic_bag():
@@ -38,6 +40,50 @@ def test_genetic_bag():
     # There are different, tied best encodes for this problem.
     # best_encoding = opt_data['result']['bests_5_encoded'][0].genes
     # assert best_encoding == [1, 1, 1, 1, 0, 1, 0, 1, 1, 1]
+
+
+class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
+    """Counts the ones of a Chromosome. Its first population has none."""
+
+    def __init__(self):
+        super().__init__(
+            chromosome_length=10,
+            chromosome_as_set=False,
+            decode_func=lambda chromosome: list(chromosome.genes),
+            fitness_func=lambda chromosome: Score(
+                value=sum(chromosome.genes)
+            ),
+            opt_is_min=False,
+        )
+
+    def get_init_population(self, population_size: int) -> list[list[int]]:
+        return [[0] * self.chromosome_length for _ in range(population_size)]
+
+
+def test_fit_goes_on_after_a_first_generation_with_mean_score_0():
+    result = ZeroStartAlgorithm().fit(
+        n_generations=3,
+        population_size=20,
+        mutate_prob=0.5,
+        min_population_size=0,
+        n_jobs=1,
+        plot_metrics=False,
+    )
+    assert result["metrics"][0].mean == 0
+    assert len(result["metrics"]) > 1
+
+
+def test_fit_stops_when_the_mean_score_does_not_change():
+    # Without mutations every child is all zeros too.
+    result = ZeroStartAlgorithm().fit(
+        n_generations=5,
+        population_size=20,
+        mutate_prob=0,
+        min_population_size=0,
+        n_jobs=1,
+        plot_metrics=False,
+    )
+    assert len(result["metrics"]) == 2
 
 
 def test_fit_scores_each_chromosome_once(tmp_path):

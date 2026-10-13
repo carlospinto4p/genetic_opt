@@ -59,7 +59,6 @@ Differences with the Python package:
 
 - A seed does not give the same run in both: they draw their random
   numbers differently.
-- A run does not stop when the mean score of the first generation is 0.
 - Every saved chromosome carries the seed of the run as `random_seed`.
   In the Python package a child carries the seed its `crossover_func`
   gives it: `BinaryGeneticAlgorithm` gives the seed of the run since

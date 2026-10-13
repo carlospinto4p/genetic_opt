@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.11 - 13th October 2026
+
+- Fixed `GeneticAlgorithm.fit` in
+  `src/genetic_opt/algorithms/base.py`: a run whose first population
+  has a mean score of 0 stopped at once, as if it had not improved.
+  `_get_iteration_improvement` returned the metrics of the first
+  generation under the keys of the differences. It returns an empty
+  dictionary for it now, and reads the two metrics by name.
+- `tests/unit/test_binary_algs.py`:
+  - Added `test_fit_goes_on_after_a_first_generation_with_mean_score_0`.
+  - Added `test_fit_stops_when_the_mean_score_does_not_change`.
+- `README.md`: removed this from the differences with the Rust crate.
+
 ### v0.7.10 - 13th October 2026
 
 - Fixed `GeneticAlgorithm.fit` in
