@@ -924,11 +924,15 @@ class GeneticAlgorithm(ABC):
         """
         if not self.save_path:
             return
-        # The file holds the last population only, so the earlier ones
-        # are not serialized.
+        # The file holds the last population and its metrics only, so
+        # the earlier ones are not serialized.
         n_population = len(fit_result["historial"])
         serialized_data = serialize_fit_result(
-            fit_result | {"historial": fit_result["historial"][-1:]},
+            fit_result
+            | {
+                "historial": fit_result["historial"][-1:],
+                "metrics": fit_result["metrics"][-1:],
+            },
             self.serialize_decoded_chromosome_func,
             serialize_gene_func=self.serialize_gene_func,
         )

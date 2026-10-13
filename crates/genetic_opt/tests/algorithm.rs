@@ -345,7 +345,12 @@ fn a_run_is_saved_one_file_per_generation() {
         };
         assert_eq!(saved["population_idx"], 4);
         assert_eq!(saved["config"]["note"], "test");
-        assert_eq!(saved["metrics"].as_array().unwrap().len(), 4);
+        let metrics = saved["metrics"].as_array().unwrap();
+        assert_eq!(metrics.len(), 1);
+        assert_eq!(
+            metrics[0]["best"]["score"]["value"],
+            result.metrics[3].best.score.value
+        );
         assert_eq!(saved["population"].as_array().unwrap().len(), 20);
         assert_eq!(saved["last_population"].as_array().unwrap().len(), 20);
         assert_eq!(

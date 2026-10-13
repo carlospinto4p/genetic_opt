@@ -492,7 +492,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 .map(|i| (self.problem.decode(i.chromosome.genes()), &i.score))
                 .collect(),
             fit_metrics: &fit_metrics,
-            metrics: &self.metrics,
+            metrics: &self.metrics[self.metrics.len() - 1..],
             fit_parameters,
             config: self.config.extra_config.as_ref(),
             population_idx: self.history.len(),

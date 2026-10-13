@@ -69,6 +69,7 @@ pub(crate) struct GenerationFile<'a, G: Serialize, S: Serialize> {
     /// Pairs of a decoded chromosome and its score.
     pub last_population: Vec<(S, &'a Score)>,
     pub fit_metrics: &'a FitMetrics,
+    /// The metrics of this generation alone, as a list of one.
     pub metrics: &'a [Metric<G, S>],
     pub fit_parameters: &'a FitParameters,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -40,6 +40,12 @@ package: `experiment_config.yml` and one `fit_data/fit_data_<n>` file
 per generation, as BSON or JSON. `utils.load_fit_result` reads them. It
 does not save the plot `fit_plots.jpg`.
 
+Since 0.7.0 each `fit_data_<n>` file holds the metrics of its own
+generation, in both implementations. Before, it held those of every
+generation up to its own. `utils.load_fit_result` reads both. A
+version before 0.7.0 that loads a run saved since gets the metrics of
+the last generation only.
+
 ```bash
 # Tests
 cargo test --manifest-path crates/genetic_opt/Cargo.toml

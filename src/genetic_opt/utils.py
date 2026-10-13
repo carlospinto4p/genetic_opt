@@ -87,9 +87,14 @@ def load_fit_result(
             - config: optional, custom dictionary added by the child classes.
     """
     files = get_files_inside_folder(folder_path, return_complete_path=True)
-    # Every file gives its population. The rest is read from the file
-    # of the last generation only, kept in `last_raw`.
-    generations: list[tuple[int, str, list]] = []
+    load_decoded_chromosome_func = (
+        load_decoded_chromosome_func or identity_func
+    )
+    # Every file gives its population and the metrics of its own
+    # generation: the last of its `metrics`, which are all the
+    # generations so far in a file saved before 0.7.0. The rest is read
+    # from the file of the last generation only, kept in `last_raw`.
+    generations: list[tuple[int, str, list, Metric]] = []
     last_idx, last_raw = None, None
     for file in files:
         with _refuse_malformed(file):
@@ -98,17 +103,23 @@ def load_fit_result(
             population = _load_population(
                 raw["population"], load_gene_func, remove_duplicates
             )
+            (metric,) = _load_metrics(
+                raw["metrics"][-1:],
+                load_decoded_chromosome_func,
+                load_gene_func,
+            )
             if last_idx is None or population_idx > last_idx:
                 last_idx, last_raw = population_idx, raw
-            generations.append((population_idx, file, population))
+            generations.append((population_idx, file, population, metric))
     generations.sort(key=itemgetter(0))
     with _refuse_malformed(generations[-1][1]):
         response = _load_fit_summary(
-            last_raw,
-            load_decoded_chromosome_func or identity_func,
-            load_gene_func,
+            last_raw, load_decoded_chromosome_func, load_gene_func
         )
-    response["historial"] = [population for _, _, population in generations]
+    response["metrics"] = [metric for *_, metric in generations]
+    response["historial"] = [
+        population for _, _, population, _ in generations
+    ]
     return response
 
 
@@ -141,7 +152,9 @@ def load_fit_result_file(
                 - scores: list with the 5 best Scores.
                 - result: list with the 5 best chromosomes, decoded.
                 - encoded: list with the 5 bests chromosomes.
-            - metrics: list of metrics of each generation. Keys:
+            - metrics: list of the metrics the file holds: those of its
+                own generation, or of every generation up to its own in
+                a file saved before 0.7.0. Keys:
                 - best: dictionary with keys:
                     - score: best Score of the population.
                     - result: best Chromosome of the population, decoded.
@@ -181,10 +194,16 @@ def load_fit_result_file(
                 - random_seed
             - config: optional, custom dictionary added by the child classes.
     """
+    load_decoded_chromosome_func = (
+        load_decoded_chromosome_func or identity_func
+    )
     with _refuse_malformed(file_path):
         raw = _read_fit_result_file(file_path, max_file_bytes)
         response = _load_fit_summary(
-            raw, load_decoded_chromosome_func or identity_func, load_gene_func
+            raw, load_decoded_chromosome_func, load_gene_func
+        )
+        response["metrics"] = _load_metrics(
+            raw["metrics"], load_decoded_chromosome_func, load_gene_func
         )
         response["population"] = _load_population(
             raw["population"], load_gene_func, remove_duplicates
@@ -245,14 +264,30 @@ def _load_population(
     return population
 
 
+def _load_metrics(
+    metrics: list,
+    load_decoded_chromosome_func: Callable[[Any], Any],
+    load_gene_func: Callable[[Any], Any] | None,
+) -> list[Metric]:
+    """Load metrics of a parsed fit result file."""
+    return [
+        Metric.from_dict(
+            m,
+            load_decoded_chromosome_func=load_decoded_chromosome_func,
+            load_gene_func=load_gene_func,
+        )
+        for m in metrics
+    ]
+
+
 def _load_fit_summary(
     raw: dict,
     load_decoded_chromosome_func: Callable[[Any], Any],
     load_gene_func: Callable[[Any], Any] | None,
 ) -> dict:
-    """Load a parsed fit result file, except its population."""
-    bests, fit_metrics, metrics, fit_parameters = itemgetter(
-        "bests", "fit_metrics", "metrics", "fit_parameters"
+    """Load a parsed fit result file, except its population and metrics."""
+    bests, fit_metrics, fit_parameters = itemgetter(
+        "bests", "fit_metrics", "fit_parameters"
     )(raw)
     response = {
         "bests": {
@@ -266,14 +301,6 @@ def _load_fit_summary(
             ],
         },
         "fit_metrics": fit_metrics,
-        "metrics": [
-            Metric.from_dict(
-                m,
-                load_decoded_chromosome_func=load_decoded_chromosome_func,
-                load_gene_func=load_gene_func,
-            )
-            for m in metrics
-        ],
         "fit_parameters": fit_parameters,
     }
     if config := raw.get("config"):

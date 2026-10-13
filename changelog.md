@@ -2,6 +2,41 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.0 - 13th October 2026
+
+- Each `fit_data_<n>` file holds the metrics of its own generation
+  alone, as a list of one under the same key `metrics`. Before, it
+  held those of every generation up to its own, so the files of a run
+  grew with the square of its generations. Both implementations write
+  it: `GeneticAlgorithm._save_fit_result` in
+  `src/genetic_opt/algorithms/__init__.py` and `save_generation` in
+  `crates/genetic_opt/src/algorithm.rs`.
+- `utils.load_fit_result` takes the last of the `metrics` of each
+  file, which is the metrics of that file's generation in both
+  layouts, so it loads a run saved by any version. A file with an
+  empty `metrics` is refused.
+- `utils.load_fit_result_file` returns the `metrics` the file holds:
+  one for a file saved since this version.
+- A version before this one that loads a run saved since gets the
+  metrics of the last generation only, with no error. So does
+  `downstream`'s own `load_fit_result`, which takes the metrics from
+  the last file; an item to change it is in its backlog.
+- Measured on 13th October 2026 on a machine in use, a run of 147
+  generations of 50 Chromosomes of 300 genes, three loads each. As
+  JSON it takes 15.7 MiB where it took 37.5, and loads in 0.51 to
+  0.57 seconds; the run saved by 0.6.14 loads in 1.02 to 1.08. As
+  BSON it takes 42.4 MiB where it took 98.6, and loads in 0.33 to
+  0.37 seconds; the one saved by 0.6.14 loads in 0.64 to 1.37.
+- `README.md` says which version changed the files and what an
+  earlier version reads from them.
+- Tests:
+  - `tests/unit/test_fit_save.py`:
+    `test_each_file_holds_the_metrics_of_its_generation_alone` and
+    `test_load_fit_result_reads_a_run_saved_before_0_7_0`.
+  - `crates/genetic_opt/tests/algorithm.rs`:
+    `a_run_is_saved_one_file_per_generation` expects one metric in
+    the last file, the one of the last generation.
+
 ### v0.6.14 - 13th October 2026
 
 - `utils.load_fit_result` reads the bests, the metrics, the fit

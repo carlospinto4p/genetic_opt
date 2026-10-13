@@ -21,11 +21,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `src/genetic_opt/utils.py:316-322`,
-  `crates/genetic_opt/src/save.rs:39` and `algorithm.rs:460`: each
-  `fit_data_<n>` file repeats the metrics of every earlier
-  generation, in both implementations. Changing it touches both
-  writers and the reader. (LOW, M)
 - [ ] `historial` and `_chromosome_cache`
   (`algorithms/__init__.py:198-207`, `:972-977`) and the Rust
   `history` and `scores` (`algorithm.rs:112`, `:114`) grow for the

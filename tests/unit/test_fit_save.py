@@ -6,7 +6,7 @@ from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import get_files_inside_folder, load_json, save_json
 from genetic_opt.score import Score
-from genetic_opt.utils import load_fit_result
+from genetic_opt.utils import load_fit_result, load_fit_result_file
 
 
 def decode_genes(chromosome) -> list[int]:
@@ -66,6 +66,42 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["fit_parameters"] == fit_result["fit_parameters"]
     assert len(loaded["historial"]) == saved_generations
+    assert loaded["historial"] == fit_result["historial"]
+
+
+def test_each_file_holds_the_metrics_of_its_generation_alone(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    fit_result = algorithm.fit(
+        n_generations=3, population_size=20, n_jobs=1, plot_metrics=False
+    )
+    folder = f"{algorithm.save_path}/fit_data"
+    assert len(fit_result["metrics"]) > 2
+
+    for idx, metric in enumerate(fit_result["metrics"], start=1):
+        loaded = load_fit_result_file(f"{folder}/fit_data_{idx}.json")
+        assert loaded["metrics"] == [metric]
+
+
+def test_load_fit_result_reads_a_run_saved_before_0_7_0(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    fit_result = algorithm.fit(
+        n_generations=3, population_size=20, n_jobs=1, plot_metrics=False
+    )
+    folder = f"{algorithm.save_path}/fit_data"
+    # Before 0.7.0 a file held the metrics of every generation up to
+    # its own.
+    metrics_so_far: list[dict] = []
+    for idx in range(1, len(fit_result["metrics"]) + 1):
+        raw = load_json(f"{folder}/fit_data_{idx}.json")
+        metrics_so_far += raw["metrics"]
+        save_json(
+            raw | {"metrics": list(metrics_so_far)},
+            f"{folder}/fit_data_{idx}.json",
+        )
+    assert len(metrics_so_far) > 2
+
+    loaded = load_fit_result(folder)
+    assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["historial"] == fit_result["historial"]
 
 
