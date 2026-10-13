@@ -65,8 +65,87 @@ class OnesGeneSpace(AbstractGeneSpace):
     def __len__(self) -> int:
         return 1
 
-    def select_random(self, n=None) -> int:
-        return 1
+    def select_random(self, n=None) -> int | list[int]:
+        return 1 if n is None else [1] * n
+
+
+class RangeGeneSpace(AbstractGeneSpace):
+    """Gene space of the numbers 0 to 19 that records how it is called."""
+
+    def __init__(self):
+        super().__init__(random_seed=7)
+        self.calls: list[int | None] = []
+        self.picks: list[dict] = []
+
+    def __len__(self) -> int:
+        return 20
+
+    def select_random(self, n=None):
+        self.calls.append(n)
+        return self.random_state.choice(20, size=n)
+
+    def pick(self, **kwargs) -> int:
+        self.picks.append(kwargs)
+        return 19
+
+
+def test_list_mutation_draws_its_new_genes_with_one_call():
+    size = 40
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(size=size, genes=[-1] * size)
+    chromosome.random_mutate(gene_space=gene_space, gene_mutate_prob=0.5)
+    n_mutated = sum(gene != -1 for gene in chromosome.genes)
+    assert 1 < n_mutated < size
+    assert gene_space.calls == [n_mutated]
+    assert all(type(gene) is int for gene in chromosome.genes)
+
+
+@pytest.mark.parametrize("probability, n_mutated", [(0, 0), (1, 40)])
+def test_list_mutation_with_probability_0_and_1(probability, n_mutated):
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(size=40, genes=[-1] * 40)
+    chromosome.random_mutate(
+        gene_space=gene_space, gene_mutate_prob=probability
+    )
+    assert sum(gene != -1 for gene in chromosome.genes) == n_mutated
+    assert gene_space.calls == ([n_mutated] if n_mutated else [])
+
+
+def test_set_mutation_keeps_the_size_of_the_set():
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(
+        size=8, genes=set(range(100, 108)), is_gene_set=True
+    )
+    chromosome.random_mutate(gene_space=gene_space, gene_mutate_prob=0.5)
+    assert isinstance(chromosome.genes, set)
+    assert len(chromosome.genes) == 8
+    kept = chromosome.genes & set(range(100, 108))
+    assert 0 < len(kept) < 8
+    assert chromosome.genes - kept <= set(range(20))
+
+
+def test_a_chromosome_built_from_a_gene_space_draws_with_one_call():
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(size=12, gene_space=gene_space)
+    assert gene_space.calls == [12]
+    assert len(chromosome.genes) == 12
+    assert set(chromosome.genes) <= set(range(20))
+
+
+def test_mutation_calls_another_gene_space_function_once_for_each_gene():
+    size = 40
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(size=size, genes=[-1] * size)
+    chromosome.random_mutate(
+        gene_space=gene_space,
+        gene_mutate_prob=0.5,
+        gene_space_func="pick",
+        gene_space_func_kwargs={"reason": "test"},
+    )
+    n_mutated = chromosome.genes.count(19)
+    assert 1 < n_mutated < size
+    assert gene_space.picks == [{"reason": "test"}] * n_mutated
+    assert gene_space.calls == []
 
 
 def test_mutation_differs_between_chromosomes():

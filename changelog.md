@@ -2,6 +2,34 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.9 - 13th October 2026
+
+- `src/genetic_opt/gene_collection.py`:
+  - `GeneList.random_mutate` and `GeneSet.random_mutate` decide which
+    genes mutate with one draw for the whole collection, and get the
+    new genes with one call, `gene_space.select_random(n=<count>)`,
+    instead of one call for each gene.
+  - `GeneList.select_random` and `GeneSet._complete_genes` draw the
+    genes they need with one call too.
+  - Added `_draw_genes`, which all four use. For one gene it calls
+    `select_random()` with no `n`. With a `gene_space_func` it still
+    calls that function once for each gene.
+- A gene space used this way must return `n` genes from
+  `select_random(n=<int>)`, as the docstring of `AbstractGeneSpace`
+  already says. One that returns a single gene for every `n` worked
+  before and now fails.
+- Timed on 13th October 2026, one run on a machine in use. Mutating a
+  list of 200 genes at probability 0.05: 168 microseconds before, 42
+  after. A list of 10 genes: 9 before, 13 after. A knapsack `fit` of
+  60 generations, 200 Chromosomes of 200 genes, one process: 2.3
+  seconds before, 0.9 after.
+- What a seed produces did not change with `BinaryGeneSpace` and
+  `numpy` 1.26.4: the same two runs give the same history before and
+  after. Nothing checks that for another gene space.
+- Added six tests to `tests/unit/test_binary_algs.py`: list mutation
+  with one call, with probability 0 and 1, set mutation, a Chromosome
+  built from a gene space, and mutation through a `gene_space_func`.
+
 ### v0.6.8 - 13th October 2026
 
 - `GeneticAlgorithm.fit` with no `save_path` builds its result once,

@@ -10,6 +10,35 @@ from genetic_opt.exceptions import GeneticOptException
 from genetic_opt.gene_space import GeneSpace
 
 
+def _draw_genes(
+    gene_space: GeneSpace,
+    n: int,
+    gene_space_func: str | None = None,
+    gene_space_func_kwargs: dict | None = None,
+) -> list:
+    """
+    Draw `n` genes from a GeneSpace, with one call to `select_random`
+    when no other function is asked for.
+    :param gene_space: GeneSpace object to get genes from.
+    :param n: number of genes to draw.
+    :param gene_space_func: GeneSpace function to call instead, once for
+        each gene. Default to `select_random`.
+    :param gene_space_func_kwargs: keyword arguments of `gene_space_func`.
+    :return: a list of `n` genes.
+    """
+    if n <= 0:
+        return []
+    if gene_space_func:
+        draw = getattr(gene_space, gene_space_func)
+        return [draw(**(gene_space_func_kwargs or {})) for _ in range(n)]
+    if n == 1:
+        # What `select_random(n=1)` returns is not settled: one gene in
+        # some gene spaces, a collection of one in others.
+        return [gene_space.select_random()]
+    genes = gene_space.select_random(n=n)
+    return genes.tolist() if isinstance(genes, ndarray) else list(genes)
+
+
 class GeneCollection(ABC):
     """
     Represent a collection of genes.
@@ -126,13 +155,20 @@ class GeneList(GeneCollection):
             Default to the empty set.
         :return: the transformed GeneList object.
         """
-        gene_space_func = gene_space_func or "select_random"
-        gene_space_func_kwargs = gene_space_func_kwargs or {}
+        mutates = (
+            random_state.random(len(self.genes)) < gene_mutate_prob
+        ).tolist()
+        new_genes = iter(
+            _draw_genes(
+                gene_space,
+                sum(mutates),
+                gene_space_func,
+                gene_space_func_kwargs,
+            )
+        )
         self.genes = [
-            getattr(gene_space, gene_space_func)(**gene_space_func_kwargs)
-            if random_state.random() < gene_mutate_prob
-            else gene
-            for gene in self.genes
+            next(new_genes) if gene_mutates else gene
+            for gene, gene_mutates in zip(self.genes, mutates)
         ]
         return self
 
@@ -146,8 +182,7 @@ class GeneList(GeneCollection):
             Default to the size of the GeneList.
         :return: a list of genes.
         """
-        n = n or self.size
-        return [gene_space.select_random() for _ in range(n)]
+        return _draw_genes(gene_space, n or self.size)
 
 
 class GeneSet(GeneCollection):
@@ -213,18 +248,23 @@ class GeneSet(GeneCollection):
             Default to the empty set.
         :return: the transformed GeneSet object.
         """
-        gene_space_func = gene_space_func or "select_random"
-        gene_space_func_kwargs = gene_space_func_kwargs or {}
-        new_genes = set()
-        for gene in self.genes:
-            if random_state.random() < gene_mutate_prob:
-                new_genes.add(
-                    getattr(gene_space, gene_space_func)(
-                        **gene_space_func_kwargs
-                    )
-                )
-            else:
-                new_genes.add(gene)
+        genes = list(self.genes)
+        mutates = (
+            random_state.random(len(genes)) < gene_mutate_prob
+        ).tolist()
+        new_genes = {
+            gene
+            for gene, gene_mutates in zip(genes, mutates)
+            if not gene_mutates
+        }
+        new_genes.update(
+            _draw_genes(
+                gene_space,
+                sum(mutates),
+                gene_space_func,
+                gene_space_func_kwargs,
+            )
+        )
         self.genes = self._complete_genes(
             genes=new_genes, gene_space=gene_space
         )
@@ -265,6 +305,6 @@ class GeneSet(GeneCollection):
                 f"than its `gene_space` ({len(gene_space)})"
             )
         n = n or self.size
-        while len(genes) < n:
-            genes.add(gene_space.select_random())
+        while (missing := n - len(genes)) > 0:
+            genes.update(_draw_genes(gene_space, missing))
         return genes

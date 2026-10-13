@@ -1,5 +1,27 @@
 # Backlog - Genetic-Opt
 
+### 2026.10.13 (found while batching the mutation draws, v0.6.9)
+
+- [ ] `src/genetic_opt/gene_space.py:34-38`: what
+  `AbstractGeneSpace.select_random(n=1)` returns is not stated, and
+  the two known gene spaces differ. `BinaryGeneSpace` returns an
+  array of one gene. `RuleGeneSpace` in `downstream`
+  (`src/downstream/strategy/genetic_algs/rule_space.py:82-83`) returns
+  one gene, not a list. `_draw_genes` in `gene_collection.py` avoids
+  the case by calling `select_random()` for one gene. State the
+  return for an `int` and for a tuple in the docstring and test it.
+  (LOW, S)
+- [ ] From reading, not run, and in another repository: `downstream`'s
+  `RuleGeneSpace.select_random` picks the rule class with
+  `randint(low=0, high=self.max_rules_idx)` when `n` is 2 or more
+  (`rule_space.py:90-94`) and with `randint(self.max_rules_idx + 1)`
+  for one gene (`:156`). `randint` excludes `high`, so the first
+  form never picks the last rule class. Since 0.6.9 a set
+  Chromosome missing 2 or more genes is completed through the first
+  form. `downstream` builds its Chromosomes with all their genes, so
+  this path may never run there. Check it in `downstream` and file it
+  in its backlog. (LOW, S)
+
 ### 2026.10.12 (`/scan`: security, performance, refactoring, test coverage)
 
 Read from the code by four scanners. Nothing was built and neither
@@ -21,21 +43,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `src/genetic_opt/algorithms/__init__.py:488-490` and `:787-793`:
-  `_get_fitted_data` runs after every generation and decodes the
-  whole population each time, also with no `save_path`, where every
-  result but the last is thrown away. (MED, S)
-- [ ] `src/genetic_opt/chromosome.py:97-116`: `Chromosome.id` is
-  recomputed on every call (`repr`, md5, decimal string, int: 2.9
-  microseconds for 10 genes, 13.9 for 200); `__hash__` calls it
-  once and `__eq__` twice, many times a generation. Keep it on the
-  instance and clear it in `random_mutate`. (MED, S)
-- [ ] `src/genetic_opt/gene_collection.py:114-117`, `:188-193`,
-  `:228-229` with `gene_space.py:54`: mutation and gene picking
-  loop in Python with one random draw per gene; a replacement gene
-  costs about 10 microseconds because `choice([0, 1])` builds an
-  array each call. One mask and one batched draw would do it.
-  Changes what a seed produces, as 0.2.13 did. (MED, M)
 - [ ] `src/genetic_opt/algorithms/__init__.py:934-937`:
   `Parallel(n_jobs=n_jobs)` is called every generation, also when
   no Chromosome is new, and the default `n_jobs=-2` starts worker
@@ -281,10 +288,11 @@ micro-timing run on a loaded machine and are orders of magnitude.
   are untested. `remove_duplicates` (`:192-198`),
   `load_decoded_chromosome_func` and `load_gene_func` are never
   passed. (MED, M)
-- [ ] Mutation with probability 0 and 1 is untested in both
-  implementations (`chromosome.py:133-164`,
-  `gene_collection.py:95-118`, `crates/genetic_opt/src/problem.rs:67-81`);
-  only 0.05 and 0.5 are used. (MED, S)
+- [ ] Mutation with probability 0 and 1 is untested for Python sets
+  (`GeneSet.random_mutate` in `gene_collection.py`) and in Rust
+  (`crates/genetic_opt/src/problem.rs:67-81`). Python lists have
+  `test_list_mutation_with_probability_0_and_1` since 0.6.9.
+  (MED, S)
 - [ ] No Python test runs `fit` twice with one seed and compares the
   histories, or `n_jobs=1` against `n_jobs=2`. Rust has
   `a_seed_gives_the_same_run_with_any_number_of_threads`
