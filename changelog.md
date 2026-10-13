@@ -2,6 +2,26 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.13 - 13th October 2026
+
+- Fixed a second `fit` on the same `GeneticAlgorithm`, which mixed
+  the first run into the second. Each `fit` is a new run now:
+  - `crates/genetic_opt/src/algorithm.rs`: `fit_with` clears the
+    population, the history, the metrics and the scores, and starts
+    from the seed again. The second run read the metrics of the
+    first to decide when to stop, and joined the old population to
+    the new one.
+  - `src/genetic_opt/algorithms/base.py`: `fit` clears the same, and
+    `self.random_state` starts from the seed again. `historial`,
+    `metrics` and the counts of `fit_metrics` kept growing.
+  - `README.md`: the gene space of the Python package keeps its own
+    random state, so its second run draws other genes. Listed in
+    the differences with the crate.
+- Added `a_second_fit_is_the_same_run_again` to
+  `crates/genetic_opt/tests/algorithm.rs` and
+  `test_a_second_fit_starts_a_new_run` to
+  `tests/unit/test_binary_algs.py`.
+
 ### v0.7.12 - 13th October 2026
 
 - `.claude/rules/00-rule-index.md`: regenerated with

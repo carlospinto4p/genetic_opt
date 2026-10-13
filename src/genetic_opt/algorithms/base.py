@@ -340,7 +340,10 @@ class GeneticAlgorithm(ABC):
         n_jobs: int = -2,
     ) -> dict:
         """
-        Fit the Genetic Algorithm.
+        Fit the Genetic Algorithm. Each call is a new run: it keeps no
+        population, history, metrics or scores of the run before, and
+        `self.random_state` starts from the seed again. The gene space
+        keeps its own random state, so the genes drawn differ.
         Args:
             n_generations: number of iterations to run.
             population_size: number of Chromosomes that make up each
@@ -465,6 +468,13 @@ class GeneticAlgorithm(ABC):
             "random_seed": self.random_seed,
             "n_jobs": n_jobs,
         }
+        # What an earlier run left would be mixed into this one
+        self.random_state = RandomState(seed=self.random_seed)
+        self.population = []
+        self.historial = []
+        self.metrics = []
+        self._chromosome_cache = {}
+        self._score_requests = 0
         # Save fit parameters with extra config
         if self._saver:
             self._saver.save_experiment_config(

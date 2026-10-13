@@ -26,12 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `crates/genetic_opt/src/algorithm.rs:213`:
-  `self.metrics[generation]` assumes `metrics` is empty when `fit`
-  starts. A second `fit` on the same object reads the first run's
-  metrics and mixes in the old population (lines 191, 201-203). In
-  Python `historial` and `metrics` keep growing across calls. Reset
-  the state or consume `self`. (MED, S)
 - [ ] `src/genetic_opt/chromosome.py:133-164`,
   `gene_collection.py:114-118`, `:187-196`: `random_mutate` changes
   the genes in place and returns `self` without clearing
@@ -241,3 +235,13 @@ some tens of lines off.
   get `CLAUDE.md` and `.claude/rules/`
   (`~/.claude/rules/claude-opencode-sync.md`). `downstream` has none
   either.
+
+### 2026.10.13 (found while making a second `fit` a new run, 0.7.13)
+
+- [ ] `src/genetic_opt/algorithms/save.py:73`: `FitSaver` creates the
+  folder of the run when the `GeneticAlgorithm` is built, so a second
+  `fit` on the same object writes its `fit_data_<n>` files over those
+  of the first. The Rust crate creates a folder in each `fit`
+  (`algorithm.rs`, `create_run_folder`). `downstream` writes into
+  `self.save_path` before `fit` (`rule_optimizer.py:321-326`), so the
+  first folder has to exist at once. (LOW, S)

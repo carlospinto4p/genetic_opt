@@ -383,6 +383,26 @@ def test_fit_metrics_count_the_fitness_calls():
     )
 
 
+def test_a_second_fit_starts_a_new_run():
+    genetic_bag, _ = _counting_bag()
+    fit_parameters = {
+        "n_generations": 3,
+        "population_size": 30,
+        "n_jobs": 1,
+        "plot_metrics": False,
+    }
+    genetic_bag.fit(**fit_parameters)
+    result = genetic_bag.fit(**fit_parameters)
+    generations = len(result["metrics"])
+    assert 1 < generations <= 4
+    assert len(result["historial"]) == generations
+    # 30 Chromosomes in the first population and 20 children in each
+    # later generation: 2 * int((0.7 * 30) // 2).
+    counted = result["fit_metrics"]["fitness_func_calls"]
+    assert counted["total"] == 30 + 20 * (generations - 1)
+    assert counted["processed"] <= counted["total"]
+
+
 def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
     # Two genes give 4 Chromosomes, so the first population has them all.
     genetic_bag = GeneticBag(weights=[1, 2], values=[3, 4], capacity=3)

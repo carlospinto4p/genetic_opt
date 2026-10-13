@@ -199,7 +199,8 @@ impl<P: Problem> GeneticAlgorithm<P> {
         &self.metrics
     }
 
-    /// Run the algorithm.
+    /// Run the algorithm. Each call is a new run: it starts from the seed
+    /// again and keeps nothing of the run before.
     pub fn fit(&mut self) -> Result<FitResult<P::Gene, P::Solution>>
     where
         P::Solution: Clone,
@@ -216,6 +217,13 @@ impl<P: Problem> GeneticAlgorithm<P> {
         P::Solution: Clone,
     {
         let fit_parameters = self.fit_parameters()?;
+        // What an earlier run left would be mixed into this one.
+        self.rng = Rng::seed_from_u64(self.config.random_seed);
+        self.population.clear();
+        self.history.clear();
+        self.metrics.clear();
+        self.scores.clear();
+        self.score_requests = 0;
         let pool = rayon::ThreadPoolBuilder::new()
             .num_threads(fit_parameters.n_jobs)
             .build()

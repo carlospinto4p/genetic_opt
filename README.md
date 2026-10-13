@@ -59,6 +59,9 @@ Differences with the Python package:
 
 - A seed does not give the same run in both: they draw their random
   numbers differently.
+- A second `fit` on the same object is a new run in both. In the crate
+  it is the same run again. In the Python package the gene space keeps
+  its own random state, so the genes drawn differ.
 - Every saved chromosome carries the seed of the run as `random_seed`.
   In the Python package a child carries the seed its `crossover_func`
   gives it: `BinaryGeneticAlgorithm` gives the seed of the run since

@@ -224,6 +224,38 @@ fn the_population_keeps_its_size_and_is_sorted_best_first() {
 }
 
 #[test]
+fn a_second_fit_is_the_same_run_again() {
+    let mut config = FitConfig::new(4, 30);
+    config.stop_without_improvement = false;
+    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
+    let genes = |algorithm: &GeneticAlgorithm<Knapsack>| {
+        algorithm
+            .history()
+            .iter()
+            .map(|population| {
+                population
+                    .iter()
+                    .map(|i| i.chromosome.genes().to_vec())
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
+    };
+    let first = algorithm.fit().unwrap();
+    let first_genes = genes(&algorithm);
+    let second = algorithm.fit().unwrap();
+
+    assert_eq!(second.metrics.len(), 5);
+    assert_eq!(algorithm.metrics().len(), 5);
+    assert_eq!(genes(&algorithm), first_genes);
+    let (first_calls, second_calls) = (
+        first.fit_metrics.fitness_func_calls,
+        second.fit_metrics.fitness_func_calls,
+    );
+    assert_eq!(second_calls.total, first_calls.total);
+    assert_eq!(second_calls.processed, first_calls.processed);
+}
+
+#[test]
 fn set_chromosomes_stay_sets_and_the_best_never_gets_worse() {
     let mut algorithm = GeneticAlgorithm::new(numbers(false), FitConfig::new(60, 30));
     let result = algorithm.fit().unwrap();
