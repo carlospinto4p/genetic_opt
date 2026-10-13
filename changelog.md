@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.2 - 13th October 2026
+
+- `crates/genetic_opt/src/algorithm.rs`:
+  - The scores already computed are a set of `Individual`, found by
+    its chromosome, where they were a map from a copy of the
+    chromosome. `score` moves each new chromosome into its
+    `Individual`: its genes were copied twice and are not copied now.
+  - `score` hashes a new chromosome three times where it hashed it
+    four, and one scored before once where it hashed it twice.
+  - `measure` and `summary` tell the different chromosomes apart by
+    the address of their `Individual`, which equal chromosomes share,
+    so the genes of the population are not hashed each generation.
+- Nothing was timed. The results of a run do not change.
+- Added `the_metrics_count_the_different_chromosomes` to
+  `crates/genetic_opt/tests/algorithm.rs`: `n_uniques` of each
+  generation against the different chromosomes of its population.
+- The crate's version is equal to the package's again: 0.7.1 changed
+  `pyproject.toml` alone.
+
 ### v0.7.1 - 13th October 2026
 
 - `CLAUDE.md` `## Core Rules`: removed "Update CLAUDE.md Each

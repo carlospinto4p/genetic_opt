@@ -26,12 +26,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `history` and `scores` (`algorithm.rs:112`, `:114`) grow for the
   whole run. `historial` is part of what `fit` returns, so a limit
   is an API decision. (LOW, M)
-- [ ] `crates/genetic_opt/src/algorithm.rs:345-388`: each new
-  chromosome has its genes cloned twice (lines 355, 364-365) and
-  hashed three to four times with SipHash, and `measure` hashes the
-  whole population again each generation to count the different
-  ones. Equal chromosomes already share one `Arc<Individual>` (line
-  369), so key the map by it and count by pointer. (LOW, S)
 - [ ] Small costs in the Python loop: three `logger.info` calls per
   generation build a `pformat` of the whole `Metric` even with the
   level off (`algorithms/__init__.py:468-477`);

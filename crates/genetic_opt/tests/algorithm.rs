@@ -159,6 +159,22 @@ fn each_different_chromosome_is_scored_once() {
 }
 
 #[test]
+fn the_metrics_count_the_different_chromosomes() {
+    let mut algorithm = GeneticAlgorithm::new(knapsack(), FitConfig::new(5, 50));
+    let result = algorithm.fit().unwrap();
+
+    assert_eq!(result.metrics.len(), algorithm.history().len());
+    let mut repeated = false;
+    for (metric, population) in result.metrics.iter().zip(algorithm.history()) {
+        let different: HashSet<_> = population.iter().map(|i| &i.chromosome).collect();
+        assert_eq!(metric.n_uniques, different.len());
+        repeated |= different.len() < population.len();
+    }
+    // Or the count was never asked to tell equal chromosomes apart.
+    assert!(repeated);
+}
+
+#[test]
 fn a_seed_gives_the_same_run_with_any_number_of_threads() {
     let run = |n_jobs| {
         let mut config = FitConfig::new(10, 30);

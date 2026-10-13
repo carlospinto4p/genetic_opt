@@ -1,4 +1,6 @@
+use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread::available_parallelism;
@@ -111,6 +113,37 @@ fn space_points(gene_space_size: usize, length: usize, as_set: bool) -> f64 {
 type Population<G> = Vec<Arc<Individual<G>>>;
 type Bests<P> = Vec<Best<<P as Problem>::Gene, <P as Problem>::Solution>>;
 
+/// A scored chromosome, found among the others by its chromosome. The
+/// set of them keeps each chromosome once, inside its `Individual`.
+struct Scored<G>(Arc<Individual<G>>);
+
+impl<G> Borrow<Chromosome<G>> for Scored<G> {
+    fn borrow(&self) -> &Chromosome<G> {
+        &self.0.chromosome
+    }
+}
+
+impl<G: Hash> Hash for Scored<G> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.chromosome.hash(state);
+    }
+}
+
+impl<G: PartialEq> PartialEq for Scored<G> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.chromosome == other.0.chromosome
+    }
+}
+
+impl<G: Eq> Eq for Scored<G> {}
+
+/// Where the score of a chromosome asked for is.
+enum Asked<G> {
+    Scored(Arc<Individual<G>>),
+    /// Position among the chromosomes to score.
+    New(usize),
+}
+
 /// Runs a [`Problem`]:
 ///
 /// - It starts from a random population and scores it.
@@ -128,7 +161,7 @@ pub struct GeneticAlgorithm<P: Problem> {
     population: Population<P::Gene>,
     history: Vec<Population<P::Gene>>,
     metrics: Vec<Metric<P::Gene, P::Solution>>,
-    scores: HashMap<Chromosome<P::Gene>, Arc<Individual<P::Gene>>>,
+    scores: HashSet<Scored<P::Gene>>,
     score_requests: usize,
 }
 
@@ -142,7 +175,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             population: Vec::new(),
             history: Vec::new(),
             metrics: Vec::new(),
-            scores: HashMap::new(),
+            scores: HashSet::new(),
             score_requests: 0,
         }
     }
@@ -370,20 +403,28 @@ impl<P: Problem> GeneticAlgorithm<P> {
         pool: &rayon::ThreadPool,
     ) -> Population<P::Gene> {
         self.score_requests += chromosomes.len();
-        let mut seen = HashSet::new();
-        let new: Vec<&Chromosome<P::Gene>> = chromosomes
-            .iter()
-            .filter(|c| !self.scores.contains_key(c) && seen.insert(*c))
+        let mut new: HashMap<Chromosome<P::Gene>, usize> = HashMap::new();
+        let asked: Vec<Asked<P::Gene>> = chromosomes
+            .into_iter()
+            .map(|chromosome| match self.scores.get(&chromosome) {
+                Some(scored) => Asked::Scored(Arc::clone(&scored.0)),
+                None => {
+                    let next = new.len();
+                    Asked::New(*new.entry(chromosome).or_insert(next))
+                }
+            })
             .collect();
+        let mut new: Vec<(Chromosome<P::Gene>, usize)> = new.into_iter().collect();
+        new.sort_unstable_by_key(|(_, position)| *position);
         let problem = &self.problem;
         let random_seed = self.config.random_seed;
         let scored: Vec<Arc<Individual<P::Gene>>> = pool.install(|| {
-            new.par_iter()
-                .map(|chromosome| {
+            new.into_par_iter()
+                .map(|(chromosome, _)| {
                     let start = Instant::now();
                     let score = problem.fitness(chromosome.genes());
                     Arc::new(Individual {
-                        chromosome: (*chromosome).clone(),
+                        chromosome,
                         score,
                         score_time: round2(start.elapsed().as_secs_f64()),
                         random_seed,
@@ -391,13 +432,15 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 })
                 .collect()
         });
-        for individual in scored {
-            self.scores
-                .insert(individual.chromosome.clone(), individual);
+        for individual in &scored {
+            self.scores.insert(Scored(Arc::clone(individual)));
         }
-        chromosomes
-            .iter()
-            .map(|chromosome| Arc::clone(&self.scores[chromosome]))
+        asked
+            .into_iter()
+            .map(|asked| match asked {
+                Asked::Scored(individual) => individual,
+                Asked::New(position) => Arc::clone(&scored[position]),
+            })
             .collect()
     }
 
@@ -411,10 +454,12 @@ impl<P: Problem> GeneticAlgorithm<P> {
 
     fn measure(&self, fitting_seconds: f64) -> Metric<P::Gene, P::Solution> {
         let values: Vec<f64> = self.population.iter().map(|i| i.score.value).collect();
+        // Equal chromosomes share one `Individual`, so its address tells
+        // the different ones apart.
         let n_uniques = self
             .population
             .iter()
-            .map(|i| &i.chromosome)
+            .map(Arc::as_ptr)
             .collect::<HashSet<_>>()
             .len();
         Metric {
@@ -443,7 +488,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
         let bests = self
             .population
             .iter()
-            .filter(|i| seen.insert(&i.chromosome))
+            .filter(|i| seen.insert(Arc::as_ptr(i)))
             .take(N_BESTS)
             .map(|i| self.best(i))
             .collect();
