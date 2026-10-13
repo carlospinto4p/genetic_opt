@@ -2,6 +2,28 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.14 - 13th October 2026
+
+- `utils.load_fit_result` reads the bests, the metrics, the fit
+  metrics and the fit parameters from the file of the last generation
+  only. From every other file it reads the population. Before, it
+  built all of them from every file and kept the last.
+- A malformed `bests` or `metrics` in a file that is not the last one
+  is no longer refused, since it is not read. A missing `population`
+  or `population_idx`, and a Score of a population with an unknown
+  key, are refused in every file as before.
+- `utils.load_fit_result_file` returns what it did.
+- Timed on 13th October 2026 on a machine in use, a run of 147
+  generations of 50 Chromosomes of 300 genes, three loads each: as
+  JSON (37.5 MiB) 1.62 to 1.68 seconds before and 1.20 to 1.24 after;
+  as BSON (98.6 MiB) 1.20 to 1.46 before and 0.66 to 0.86 after. The
+  rest is parsing the files, each of which repeats the metrics of
+  the generations before it.
+- `tests/unit/test_fit_save.py`:
+  `test_load_fit_result_refuses_a_score_with_an_unknown_key` puts the
+  unknown key in a population Score of each file and in a best Score
+  of the last file. It put it in a best Score of the first file.
+
 ### v0.6.13 - 13th October 2026
 
 - `test_genetic_bag` in `tests/unit/test_binary_algs.py` passes

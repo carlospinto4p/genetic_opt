@@ -138,10 +138,21 @@ def test_load_fit_result_refuses_a_malformed_file(
         load_fit_result(saved_run)
 
 
-def test_load_fit_result_refuses_a_score_with_an_unknown_key(saved_run):
-    file_path = f"{saved_run}/fit_data_1.json"
+# Of a file that is not the last one, only the population is read.
+@pytest.mark.parametrize(
+    "file_name, get_score",
+    [
+        ("fit_data_1.json", lambda raw: raw["population"][0][0]),
+        ("fit_data_2.json", lambda raw: raw["population"][0][0]),
+        ("fit_data_2.json", lambda raw: raw["bests"]["scores"][0]),
+    ],
+)
+def test_load_fit_result_refuses_a_score_with_an_unknown_key(
+    saved_run, file_name, get_score
+):
+    file_path = f"{saved_run}/{file_name}"
     raw = load_json(file_path)
-    raw["bests"]["scores"][0]["unknown"] = 1
+    get_score(raw)["unknown"] = 1
     save_json(raw, file_path)
     with pytest.raises(ValidationException, match="unknown"):
         load_fit_result(saved_run)

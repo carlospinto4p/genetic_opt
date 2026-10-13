@@ -1,4 +1,5 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from operator import itemgetter
 from os.path import getsize
 from typing import Any
@@ -86,21 +87,28 @@ def load_fit_result(
             - config: optional, custom dictionary added by the child classes.
     """
     files = get_files_inside_folder(folder_path, return_complete_path=True)
-    fit_data_list = [
-        load_fit_result_file(
-            file,
-            load_decoded_chromosome_func=load_decoded_chromosome_func,
-            load_gene_func=load_gene_func,
-            remove_duplicates=remove_duplicates,
-            max_file_bytes=max_file_bytes,
+    # Every file gives its population. The rest is read from the file
+    # of the last generation only, kept in `last_raw`.
+    generations: list[tuple[int, str, list]] = []
+    last_idx, last_raw = None, None
+    for file in files:
+        with _refuse_malformed(file):
+            raw = _read_fit_result_file(file, max_file_bytes)
+            population_idx = raw["population_idx"]
+            population = _load_population(
+                raw["population"], load_gene_func, remove_duplicates
+            )
+            if last_idx is None or population_idx > last_idx:
+                last_idx, last_raw = population_idx, raw
+            generations.append((population_idx, file, population))
+    generations.sort(key=itemgetter(0))
+    with _refuse_malformed(generations[-1][1]):
+        response = _load_fit_summary(
+            last_raw,
+            load_decoded_chromosome_func or identity_func,
+            load_gene_func,
         )
-        for file in files
-    ]
-    fit_data_list.sort(key=lambda x: x["population_idx"])
-    response: dict = fit_data_list[-1]
-    response["historial"] = [f["population"] for f in fit_data_list]
-    response.pop("population_idx")
-    response.pop("population")
+    response["historial"] = [population for _, _, population in generations]
     return response
 
 
@@ -173,20 +181,25 @@ def load_fit_result_file(
                 - random_seed
             - config: optional, custom dictionary added by the child classes.
     """
+    with _refuse_malformed(file_path):
+        raw = _read_fit_result_file(file_path, max_file_bytes)
+        response = _load_fit_summary(
+            raw, load_decoded_chromosome_func or identity_func, load_gene_func
+        )
+        response["population"] = _load_population(
+            raw["population"], load_gene_func, remove_duplicates
+        )
+        response["population_idx"] = raw["population_idx"]
+    return response
+
+
+@contextmanager
+def _refuse_malformed(file_path: str) -> Iterator[None]:
+    """Turn the raw errors of a malformed file into a refusal of it."""
     from bson.errors import BSONError
 
-    if max_file_bytes is not None and getsize(file_path) > max_file_bytes:
-        raise ValidationException(
-            f"`{file_path}` has {getsize(file_path)} bytes, more than "
-            f"{max_file_bytes = }"
-        )
     try:
-        return _load_fit_result_file(
-            file_path,
-            load_decoded_chromosome_func or identity_func,
-            load_gene_func,
-            remove_duplicates,
-        )
+        yield
     except (
         AttributeError,
         BSONError,
@@ -200,39 +213,24 @@ def load_fit_result_file(
         ) from error
 
 
-def _load_fit_result_file(
-    file_path: str,
-    load_decoded_chromosome_func: Callable[[Any], Any],
+def _read_fit_result_file(file_path: str, max_file_bytes: int | None) -> dict:
+    """Parse a fit result file, refusing one over `max_file_bytes`."""
+    if max_file_bytes is not None and getsize(file_path) > max_file_bytes:
+        raise ValidationException(
+            f"`{file_path}` has {getsize(file_path)} bytes, more than "
+            f"{max_file_bytes = }"
+        )
+    if get_file_extension(file_path) == "bson":
+        return load_bson(file_path)
+    return load_json(file_path)
+
+
+def _load_population(
+    population: list,
     load_gene_func: Callable[[Any], Any] | None,
     remove_duplicates: bool,
-) -> dict:
-    """Load a fit result file, with the raw errors of a malformed one."""
-    if get_file_extension(file_path) == "bson":
-        raw = load_bson(file_path)
-    else:
-        raw = load_json(file_path)
-    (
-        bests,
-        population,
-        population_idx,
-        fit_metrics,
-        metrics,
-        fit_parameters,
-    ) = itemgetter(
-        "bests",
-        "population",
-        "population_idx",
-        "fit_metrics",
-        "metrics",
-        "fit_parameters",
-    )(raw)
-    bests = {
-        "scores": [Score(**s) for s in bests["scores"]],
-        "result": [load_decoded_chromosome_func(d) for d in bests["result"]],
-        "encoded": [
-            Chromosome.from_dict(c, load_gene_func) for c in bests["encoded"]
-        ],
-    }
+) -> list[tuple[Score, Chromosome]]:
+    """Load the population of a parsed fit result file."""
     population = [
         (Score(**e[0]), Chromosome.from_dict(e[1], load_gene_func))
         for e in population
@@ -244,21 +242,38 @@ def _load_fit_result_file(
                 seen.add(chromosome)
                 clean_population.append((score, chromosome))
         population = clean_population
+    return population
 
-    metrics = [
-        Metric.from_dict(
-            m,
-            load_decoded_chromosome_func=load_decoded_chromosome_func,
-            load_gene_func=load_gene_func,
-        )
-        for m in metrics
-    ]
+
+def _load_fit_summary(
+    raw: dict,
+    load_decoded_chromosome_func: Callable[[Any], Any],
+    load_gene_func: Callable[[Any], Any] | None,
+) -> dict:
+    """Load a parsed fit result file, except its population."""
+    bests, fit_metrics, metrics, fit_parameters = itemgetter(
+        "bests", "fit_metrics", "metrics", "fit_parameters"
+    )(raw)
     response = {
-        "bests": bests,
-        "population": population,
-        "population_idx": population_idx,
+        "bests": {
+            "scores": [Score(**s) for s in bests["scores"]],
+            "result": [
+                load_decoded_chromosome_func(d) for d in bests["result"]
+            ],
+            "encoded": [
+                Chromosome.from_dict(c, load_gene_func)
+                for c in bests["encoded"]
+            ],
+        },
         "fit_metrics": fit_metrics,
-        "metrics": metrics,
+        "metrics": [
+            Metric.from_dict(
+                m,
+                load_decoded_chromosome_func=load_decoded_chromosome_func,
+                load_gene_func=load_gene_func,
+            )
+            for m in metrics
+        ],
         "fit_parameters": fit_parameters,
     }
     if config := raw.get("config"):

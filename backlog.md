@@ -21,11 +21,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `src/genetic_opt/utils.py:79-94` and `:200-207`:
-  `load_fit_result` parses every generation file in full, and each
-  file holds the metrics of all generations so far, so loading
-  grows with the square of the generations. Only `population` is
-  needed from every file but the last. (MED, S)
 - [ ] `src/genetic_opt/utils.py:316-322`,
   `crates/genetic_opt/src/save.rs:39` and `algorithm.rs:460`: each
   `fit_data_<n>` file repeats the metrics of every earlier
