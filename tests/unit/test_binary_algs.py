@@ -7,7 +7,7 @@ import pytest
 from joblib import Parallel
 from joblib.externals import cloudpickle
 
-from genetic_opt import algorithms
+from genetic_opt.algorithms import base as algorithms
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
 from genetic_opt.exceptions import ValidationException

@@ -1,7 +1,7 @@
 [package]
 name = "genetic_opt"
 # Kept equal to the version in the repository's `pyproject.toml`.
-version = "0.7.7"
+version = "0.7.8"
 edition = "2024"
 description = "Genetic algorithm optimizers."
 

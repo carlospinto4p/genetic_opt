@@ -21,3 +21,14 @@ def test_importing_the_package_leaves_the_save_libraries_out(module):
         text=True,
     )
     assert done.stdout.strip() == "[]"
+
+
+def test_the_algorithms_package_keeps_the_names_other_projects_import():
+    from genetic_opt import algorithms
+    from genetic_opt.algorithms.base import GeneticAlgorithm
+    from genetic_opt.chromosome import Chromosome
+    from genetic_opt.score import Score
+
+    assert algorithms.GeneticAlgorithm is GeneticAlgorithm
+    assert algorithms.Chromosome is Chromosome
+    assert algorithms.Score is Score

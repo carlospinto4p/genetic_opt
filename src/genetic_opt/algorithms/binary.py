@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any
 
-from genetic_opt.algorithms import GeneticAlgorithm
+from genetic_opt.algorithms.base import GeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.gene_space import BinaryGeneSpace, GeneSpace
 from genetic_opt.score import Score

@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.8 - 13th October 2026
+
+- Moved the `GeneticAlgorithm` class from
+  `src/genetic_opt/algorithms/__init__.py` to
+  `src/genetic_opt/algorithms/base.py`. The package file keeps the
+  names other projects import from it: `GeneticAlgorithm`,
+  `Chromosome` and `Score`.
+- Added `src/genetic_opt/algorithms/save.py` with `FitSaver`, which
+  creates the folder of a run and writes `experiment_config.yml`,
+  the files of `fit_data/` and `fit_plots.jpg`, as `save.rs` does in
+  the Rust crate. `GeneticAlgorithm` holds one when it gets a
+  `save_path`. The files are the same as before.
+- Removed from `GeneticAlgorithm` the attributes `save_as_bson`,
+  `serialize_decoded_chromosome_func` and `serialize_gene_func`,
+  which `FitSaver` holds now, and the method `_save_fit_result`.
+  `save_path` stays.
+- `tests/unit/test_imports.py`: added
+  `test_the_algorithms_package_keeps_the_names_other_projects_import`.
+
 ### v0.7.7 - 13th October 2026
 
 - Added `.claude/rules/testing-areas.md` with the measured times

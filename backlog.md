@@ -7,6 +7,11 @@ test suite was run. Two items are marked "checked by running"; every
 other one is from reading the cited lines. Timings come from one
 micro-timing run on a loaded machine and are orders of magnitude.
 
+Since 0.7.8 the `GeneticAlgorithm` class is in
+`src/genetic_opt/algorithms/base.py`. The line numbers given for it
+below were read in `algorithms/__init__.py` before the move and are
+some tens of lines off.
+
 **Security**
 
 - [ ] **[manual]** `src/genetic_opt/utils.py`: since 0.6.1
@@ -21,25 +26,19 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/algorithms/__init__.py:57-983`: the whole
-  `GeneticAlgorithm` class, about 930 lines, lives in a package
-  `__init__.py` and does evolution, validation, statistics,
-  serialization, saving and plotting. Move it to
-  `algorithms/base.py` and put saving and plotting behind a saver,
-  as `save.rs` does. (HIGH, M)
 - [ ] Bug, checked by running:
   `src/genetic_opt/gene_collection.py:208-209`:
   `GeneSet.select_random` does `genes = gene_space` when the size
   equals the size of the gene space, so the genes become the
   `BinaryGeneSpace` object instead of a set. (MED, S)
-- [ ] Bug, from reading: `src/genetic_opt/algorithms/__init__.py:428-433`
+- [ ] Bug, from reading: `src/genetic_opt/algorithms/base.py:428-433`
   turns the default `n_jobs=-2` into `cpu_count() - 1`, which is 0
   on a one-core machine and raises `ValidationException`. The Rust
   crate guards it with `.max(1)` (`algorithm.rs:234`).
   `tests/unit/test_binary_algs.py:13`, `:47` and
   `crates/genetic_opt/tests/algorithm.rs:139`, `:161` ask for 2
   jobs and fail on one core too. (MED, S)
-- [ ] `src/genetic_opt/algorithms/__init__.py:308-317` with `:831-839`:
+- [ ] `src/genetic_opt/algorithms/base.py:308-317` with `:831-839`:
   `_get_iteration_improvement` returns the raw metrics for the
   first generation and differences afterwards, under the same keys,
   so a run whose first population has mean score 0 stops at once.
@@ -65,26 +64,26 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `LOG_DATEFORMAT`, which nothing documents. A library should only
   call `logging.getLogger("genetic_opt")`
   (`~/.claude/rules/logger-format.md`). (MED, S)
-- [ ] `src/genetic_opt/algorithms/__init__.py:108-128` and `:320-336`:
+- [ ] `src/genetic_opt/algorithms/base.py:108-128` and `:320-336`:
   `__init__` takes 15 parameters and `fit` 12; `binary.py:17-22`
   lists 8 again. The Rust crate groups them as `FitConfig` and
   `SaveConfig`. Two dataclasses would replace the hand-built
   `fit_parameters` dict at lines 434-443. (MED, M)
 - [ ] The shape of the fit result is pasted into eight docstrings
-  (`algorithms/__init__.py:373-416`, `:703-746`, `:955-967`,
+  (`algorithms/base.py:373-416`, `:703-746`, `:955-967`,
   `utils.py:36-77`, `:115-157`, `:231-274`, `metrics.py:18-29`,
   `:140-151`) and has drifted: it names `self.fit_func`, which does
   not exist, and omits `min_population_size`, `n_jobs` and
   `genetic_opt_version`. A `FitResult` dataclass or TypedDict
   states it once, as the Rust `FitResult` does. (MED, M)
 - [ ] `src/genetic_opt/utils.py:97-333`: `serialize_fit_result`
-  writes `last_population` and `_save_fit_result` renames
-  `historial[-1]` to `population` (`algorithms/__init__.py:887-890`),
+  writes `last_population` and `FitSaver.save_generation` renames
+  `historial[-1]` to `population` (`algorithms/save.py`),
   but `load_fit_result_file` never reads `last_population`, so a
   loaded result has a different shape from what `fit` returns. The
   name `utils` hides that the module only reads and writes fit
   results. (MED, M)
-- [ ] `src/genetic_opt/algorithms/__init__.py:480-486` and `:511-524`:
+- [ ] `src/genetic_opt/algorithms/base.py:480-486` and `:511-524`:
   `fit` checks `hasattr(f, "__self__") and f.__self__ == self` to
   decide how to call `callback_func` and `exit_func`, and repeats
   the log-and-break block. Defaults of `lambda _: None` and
@@ -96,8 +95,8 @@ micro-timing run on a loaded machine and are orders of magnitude.
   `:163`). (MED, M)
 - [ ] Argument checks raise the base `GeneticOptException` in
   `chromosome.py:46`, `gene_collection.py:28`, `:85`, `:156`, `:225`
-  and `algorithms/__init__.py:919`, and `ValidationException` in
-  `algorithms/__init__.py:193`, `:424`, `:431` and
+  and `algorithms/base.py:919`, and `ValidationException` in
+  `algorithms/base.py:193`, `:424`, `:431` and
   `examples/binary.py:39`. Rust uses `Error::Validation` for all.
   (MED, S)
 - [ ] `src/genetic_opt/files.py:17-61`: paths are strings handled by
@@ -109,7 +108,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   bound to `AbstractGeneSpace` but is used as a class annotation
   everywhere. Annotate with the class, or rename it. (MED, S)
 - [ ] Code with no caller in this repo (check `downstream` first):
-  `get_best` and `get_bests` (`algorithms/__init__.py:541-565`),
+  `get_best` and `get_bests` (`algorithms/base.py:541-565`),
   which also pick the bests differently from `_get_fitted_data`;
   `gene_space_func` and `gene_space_func_kwargs`
   (`chromosome.py:137-138`, `gene_collection.py:112-115`,
@@ -123,15 +122,15 @@ micro-timing run on a loaded machine and are orders of magnitude.
   (`gene_space.py:53-54`); `score_time` is annotated `int` and
   holds a float (`chromosome.py:62`); `Metric.best` is a dict where
   Rust has a `Best` struct (`metrics.py:32`); the number of bests
-  is a literal `5` (`algorithms/__init__.py:752`) where Rust has
+  is a literal `5` (`algorithms/base.py:752`) where Rust has
   `N_BESTS`; `files.py:151` names a parameter `path` over
   `os.path`. Across the two implementations: `historial` and
   `history`, `opt_is_min` and `minimize`, `GeneticBag` and
   `Knapsack`, `fitness_func` stored as `algo_fitness_func`. Two
-  docstring styles in `algorithms/__init__.py`. (LOW, M)
+  docstring styles in `algorithms/base.py`. (LOW, M)
 - [ ] Stale comments: the 2024 TODO at `utils.py:17` (the functions
   are tested now); notes from 2023 and 2024 at
-  `algorithms/__init__.py:55-56`, `:186-187`, `:658-661`;
+  `algorithms/base.py:55-56`, `:186-187`, `:658-661`;
   `examples/__init__.py:4` refers to a `core` module that does not
   exist; `metrics.py:50`, `:53` say `from_dict` where `to_dict`
   makes the dict; commented-out assertions on a key the code no
@@ -159,7 +158,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   bug filed above. Rust has `set_chromosomes_stay_sets...`
   (`tests/algorithm.rs:201`). (HIGH, M)
 - [ ] `opt_is_min=True` is used by no Python test, so the ascending
-  sort at `algorithms/__init__.py:945-948` never runs. Rust has
+  sort at `algorithms/base.py:945-948` never runs. Rust has
   `minimize_keeps_the_lowest_scores`. (HIGH, S)
 - [ ] `tests/unit/test_binary_algs.py:50`:
   `len(calls) == len(set(calls))` holds for an empty file, so the
@@ -170,7 +169,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   checked. The run has at most 4 files, so the ordering of `fit_data_10` after `fit_data_2`
   that `utils.py:89` handles never runs. (MED, S)
 - [ ] Python error paths with no test: the three
-  `ValidationException` cases (`algorithms/__init__.py:423-433`,
+  `ValidationException` cases (`algorithms/base.py:423-433`,
   `:192-196`) and `examples/binary.py:38-41`; `InvariantException`
   from `mutation_invariant` and `crossover_invariant` (`:255-259`,
   `:272-276`); the construction errors in `chromosome.py:45-50` and
@@ -178,7 +177,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   that is not a Chromosome, which raises `AttributeError`
   (`chromosome.py:97-116`). (MED, S)
 - [ ] `callback_func`, `exit_condition` and the `min_population_size`
-  stop (`algorithms/__init__.py:480-486`, `:497-524`) have no
+  stop (`algorithms/base.py:480-486`, `:497-524`) have no
   Python test; the no-improvement stop runs only by accident. In
   Rust the `min_population_size` stop and the stalled-mean stop
   (`algorithm.rs:213-219`, `:401-406`) have none either. (MED, M)
@@ -228,7 +227,7 @@ micro-timing run on a loaded machine and are orders of magnitude.
   the knapsack test does not assert the number of generations
   (`tests/unit/test_binary_algs.py:21`); `get_best` and `get_bests`;
   `experiment_config()` and `extra_config`; the empty-population
-  error (`algorithms/__init__.py:918-919`) and `n_generations=0`;
+  error (`algorithms/base.py:918-919`) and `n_generations=0`;
   the four-panel plot (`plots.py:67-69`, `:86-100`); a `Score` with
   `extra_metrics` saved and loaded; `files.py` on missing and
   corrupt files; `format_seconds` at 0, 60, 3600 and 86400 seconds

@@ -125,7 +125,8 @@ def test_runs_started_in_the_same_second_get_a_folder_each(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(
-        "genetic_opt.algorithms.now_for_file_path", lambda: "20261012_101500"
+        "genetic_opt.algorithms.save.now_for_file_path",
+        lambda: "20261012_101500",
     )
     first, second = ones_algorithm(tmp_path), ones_algorithm(tmp_path)
     assert first.save_path == f"{tmp_path}/ones/20261012_101500"
