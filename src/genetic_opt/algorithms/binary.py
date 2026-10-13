@@ -68,11 +68,22 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         :param c2: second chromosome.
         :return: a tuple of chromosomes.
         """
-        cut_position = self.random_state.randint(
-            1, self.chromosome_length - 1
+        # A cut needs a gene on each side, and `randint` leaves its upper
+        # bound out. With one gene the children are copies of the parents.
+        cut_position = (
+            self.random_state.randint(1, self.chromosome_length)
+            if self.chromosome_length > 1
+            else self.chromosome_length
         )
         genes_1 = c1.genes[:cut_position] + c2.genes[cut_position:]
         genes_2 = c2.genes[:cut_position] + c1.genes[cut_position:]
-        cr1 = Chromosome(size=self.chromosome_length, genes=genes_1)
-        cr2 = Chromosome(size=self.chromosome_length, genes=genes_2)
+        cr1, cr2 = (
+            Chromosome(
+                size=self.chromosome_length,
+                genes=genes,
+                is_gene_set=self.chromosome_as_set,
+                random_seed=self.random_seed,
+            )
+            for genes in (genes_1, genes_2)
+        )
         return cr1, cr2

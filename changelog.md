@@ -2,6 +2,29 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.6 - 13th October 2026
+
+- Fixed `BinaryGeneticAlgorithm.crossover_func` in
+  `src/genetic_opt/algorithms/binary.py`:
+  - The cut can fall before the last gene. It never did, because
+    `randint` leaves its upper bound out: with 5 genes the cut was
+    1, 2 or 3 and is now 1 to 4, as in the Rust
+    `single_point_crossover`.
+  - Chromosomes of 2 genes are crossed, where the call raised
+    `ValueError: low >= high`. With 1 gene the children are copies
+    of the parents.
+  - The children carry the seed of the run as `random_seed`, where
+    they carried 442, and `is_gene_set` from the algorithm.
+- A seed gives another run than before 0.7.6, since the cuts are
+  drawn from one more position.
+- `tests/unit/test_binary_algs.py`:
+  - `test_crossover_cuts_at_every_position_between_two_genes`.
+  - `test_crossover_of_two_genes_swaps_the_second_one`.
+  - `test_crossover_of_one_gene_returns_the_same_genes`.
+  - `test_crossover_children_carry_the_seed_of_the_run`.
+- `README.md`: the note on `random_seed` says what the Python
+  package does.
+
 ### v0.7.5 - 13th October 2026
 
 - `.claude/rules/testing.md`: added the section "Measured times",

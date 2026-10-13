@@ -31,15 +31,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
   out needs a cargo feature around `SaveConfig` and `save.rs`.
 **Refactoring**
 
-- [ ] Bug, checked by running:
-  `src/genetic_opt/algorithms/binary.py:57` calls
-  `randint(1, self.chromosome_length - 1)`, whose upper bound is
-  excluded. For length 5 the cut is only ever 1, 2 or 3, and for
-  length 2 it raises `ValueError: low >= high`. The Rust
-  `single_point_crossover` uses `1..length`
-  (`crates/genetic_opt/src/problem.rs:124`). Lines 60-61 build the
-  children without `is_gene_set` or `random_seed`. Fix with a
-  regression test; it changes what a seed produces. (HIGH, S)
 - [ ] `src/genetic_opt/algorithms/__init__.py:57-983`: the whole
   `GeneticAlgorithm` class, about 930 lines, lives in a package
   `__init__.py` and does evolution, validation, statistics,
