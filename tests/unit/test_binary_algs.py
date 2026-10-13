@@ -428,14 +428,18 @@ def test_fit_metrics_count_the_fitness_calls():
 
 
 def test_a_second_fit_starts_a_new_run():
-    genetic_bag, _ = _counting_bag()
+    genetic_bag, calls = _counting_bag()
     fit_parameters = {
         "n_generations": 3,
         "population_size": 30,
         "n_jobs": 1,
         "plot_metrics": False,
     }
-    genetic_bag.fit(**fit_parameters)
+    first = genetic_bag.fit(**fit_parameters)
+    first_calls = len(calls)
+    assert first["fit_metrics"]["fitness_func_calls"]["processed"] == (
+        first_calls
+    )
     result = genetic_bag.fit(**fit_parameters)
     generations = len(result["metrics"])
     assert 1 < generations <= 4
@@ -444,7 +448,9 @@ def test_a_second_fit_starts_a_new_run():
     # later generation: 2 * int((0.7 * 30) // 2).
     counted = result["fit_metrics"]["fitness_func_calls"]
     assert counted["total"] == 30 + 20 * (generations - 1)
-    assert counted["processed"] <= counted["total"]
+    # A Chromosome the first run scored is not scored again.
+    assert len(calls) == len(set(calls))
+    assert counted["processed"] == len(calls) - first_calls
 
 
 def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):

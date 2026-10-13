@@ -208,6 +208,9 @@ class GeneticAlgorithm(ABC):
         self._chromosome_cache: dict[str, tuple[Score, float]] = {}
         # Number of Chromosomes that needed a score
         self._score_requests: int = 0
+        # Scores an earlier run left in the cache, which the counts of
+        # this run leave out
+        self._scores_before_run: int = 0
 
         # Some logging
         logger.info(
@@ -342,9 +345,11 @@ class GeneticAlgorithm(ABC):
     ) -> dict:
         """
         Fit the Genetic Algorithm. Each call is a new run: it keeps no
-        population, history, metrics or scores of the run before, and
+        population, history or metrics of the run before, and
         `self.random_state` starts from the seed again. The gene space
-        keeps its own random state, so the genes drawn differ.
+        keeps its own random state, so the genes drawn differ. The
+        scores are kept, so a Chromosome met again is not scored again
+        and the fitness function must not change between the runs.
         Args:
             n_generations: number of iterations to run.
             population_size: number of Chromosomes that make up each
@@ -474,7 +479,8 @@ class GeneticAlgorithm(ABC):
         self.population = []
         self.historial = []
         self.metrics = []
-        self._chromosome_cache = {}
+        # The scores stay: scoring is the costly part of a run
+        self._scores_before_run = len(self._chromosome_cache)
         self._score_requests = 0
         # Save fit parameters with extra config
         if self._saver:
@@ -797,7 +803,7 @@ class GeneticAlgorithm(ABC):
             - config: optional, custom dictionary added by the child classes.
         """
         requests = self._score_requests
-        processed = len(self._chromosome_cache)
+        processed = len(self._chromosome_cache) - self._scores_before_run
         space_points = get_space_points(
             gene_space_size=len(self.gene_space),
             chromosome_length=self.chromosome_length,

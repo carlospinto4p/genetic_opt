@@ -163,6 +163,8 @@ pub struct GeneticAlgorithm<P: Problem> {
     metrics: Vec<Metric<P::Gene, P::Solution>>,
     scores: HashSet<Scored<P::Gene>>,
     score_requests: usize,
+    /// Chromosomes scored by the current run.
+    scored: usize,
 }
 
 impl<P: Problem> GeneticAlgorithm<P> {
@@ -177,6 +179,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             metrics: Vec::new(),
             scores: HashSet::new(),
             score_requests: 0,
+            scored: 0,
         }
     }
 
@@ -200,7 +203,8 @@ impl<P: Problem> GeneticAlgorithm<P> {
     }
 
     /// Run the algorithm. Each call is a new run: it starts from the seed
-    /// again and keeps nothing of the run before.
+    /// again and keeps only the scores of the run before, so a chromosome
+    /// met again is not scored again.
     pub fn fit(&mut self) -> Result<FitResult<P::Gene, P::Solution>>
     where
         P::Solution: Clone,
@@ -222,8 +226,9 @@ impl<P: Problem> GeneticAlgorithm<P> {
         self.population.clear();
         self.history.clear();
         self.metrics.clear();
-        self.scores.clear();
+        // The scores stay: scoring is the costly part of a run.
         self.score_requests = 0;
+        self.scored = 0;
         let pool = rayon::ThreadPoolBuilder::new()
             .num_threads(fit_parameters.n_jobs)
             .build()
@@ -440,6 +445,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 })
                 .collect()
         });
+        self.scored += scored.len();
         for individual in &scored {
             self.scores.insert(Scored(Arc::clone(individual)));
         }
@@ -502,7 +508,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             .take(N_BESTS)
             .map(|i| self.best(i))
             .collect();
-        let processed = self.scores.len();
+        let processed = self.scored;
         let space_points = space_points(
             self.problem.gene_space_size(),
             self.problem.chromosome_length(),

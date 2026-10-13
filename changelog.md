@@ -2,6 +2,23 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.8.1 - 13th October 2026
+
+- A second `fit` on the same `GeneticAlgorithm` keeps the scores of
+  the first, so a chromosome met again is not scored again. Since
+  0.7.13 it cleared them, and scoring is the costly part of a run.
+  `fitness_func_calls.processed` still counts the current run only:
+  the times the fitness function ran in it.
+  - `crates/genetic_opt/src/algorithm.rs`: `GeneticAlgorithm` counts
+    the chromosomes each run scores.
+  - `src/genetic_opt/algorithms/base.py`: `fit` notes how many scores
+    the cache held when the run started.
+- The tests `a_second_fit_is_the_same_run_again`
+  (`crates/genetic_opt/tests/algorithm.rs`) and
+  `test_a_second_fit_starts_a_new_run`
+  (`tests/unit/test_binary_algs.py`) check that nothing is scored
+  twice.
+
 ### v0.8.0 - 13th October 2026
 
 - `Chromosome.random_mutate` in `src/genetic_opt/chromosome.py`

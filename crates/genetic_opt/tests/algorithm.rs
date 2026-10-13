@@ -252,7 +252,10 @@ fn a_second_fit_is_the_same_run_again() {
         second.fit_metrics.fitness_func_calls,
     );
     assert_eq!(second_calls.total, first_calls.total);
-    assert_eq!(second_calls.processed, first_calls.processed);
+    // Every chromosome of the second run was scored by the first.
+    assert!(first_calls.processed > 0);
+    assert_eq!(second_calls.processed, 0);
+    assert_eq!(second_calls.cached, second_calls.total);
 }
 
 #[test]
