@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.12 - 13th October 2026
+
+- `.claude/rules/00-rule-index.md`: regenerated with
+  `programme.merge.rule_index`, so it lists the path-scoped
+  `testing-areas` rule added in v0.7.7.
+
+
 ### v0.7.11 - 13th October 2026
 
 - Fixed `GeneticAlgorithm.fit` in
