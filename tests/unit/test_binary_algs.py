@@ -174,6 +174,15 @@ def test_set_mutation_keeps_the_size_of_the_set():
     assert chromosome.genes - kept <= set(range(20))
 
 
+def test_a_set_as_large_as_its_gene_space_holds_every_gene():
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(size=20, gene_space=gene_space, is_gene_set=True)
+    assert isinstance(chromosome.genes, set)
+    assert chromosome.genes == set(range(20))
+    chromosome.random_mutate(gene_space=gene_space, gene_mutate_prob=0.5)
+    assert chromosome.genes == set(range(20))
+
+
 def test_a_chromosome_built_from_a_gene_space_draws_with_one_call():
     gene_space = RangeGeneSpace()
     chromosome = Chromosome(size=12, gene_space=gene_space)

@@ -26,11 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] Bug, checked by running:
-  `src/genetic_opt/gene_collection.py:208-209`:
-  `GeneSet.select_random` does `genes = gene_space` when the size
-  equals the size of the gene space, so the genes become the
-  `BinaryGeneSpace` object instead of a set. (MED, S)
 - [ ] Bug, from reading: `src/genetic_opt/algorithms/base.py:428-433`
   turns the default `n_jobs=-2` into `cpu_count() - 1`, which is 0
   on a one-core machine and raises `ValidationException`. The Rust
@@ -154,8 +149,8 @@ some tens of lines off.
 - [ ] Python set chromosomes have no test: every test passes
   `chromosome_as_set=False`. `GeneSet`
   (`gene_collection.py:132-230`) and the set branches of
-  `chromosome.py:54`, `:82-83`, `:106-108` never run, including the
-  bug filed above. Rust has `set_chromosomes_stay_sets...`
+  `chromosome.py:54`, `:82-83`, `:106-108` never run inside a `fit`.
+  Rust has `set_chromosomes_stay_sets...`
   (`tests/algorithm.rs:201`). (HIGH, M)
 - [ ] `opt_is_min=True` is used by no Python test, so the ascending
   sort at `algorithms/base.py:945-948` never runs. Rust has

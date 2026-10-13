@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.9 - 13th October 2026
+
+- Fixed `GeneSet.select_random` in
+  `src/genetic_opt/gene_collection.py`: a set Chromosome built from
+  a gene space of its own size got the gene space object as its
+  genes, where it now gets a set with every gene of the space.
+- `tests/unit/test_binary_algs.py`: added
+  `test_a_set_as_large_as_its_gene_space_holds_every_gene`.
+
 ### v0.7.8 - 13th October 2026
 
 - Moved the `GeneticAlgorithm` class from

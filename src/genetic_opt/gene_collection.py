@@ -280,12 +280,7 @@ class GeneSet(GeneCollection):
             Default to the size of the GeneSet.
         :return: a set of genes.
         """
-        n = n or self.size
-        genes = set()
-        if len(gene_space) == self.size:
-            genes = gene_space
-        genes = self._complete_genes(genes=genes, gene_space=gene_space, n=n)
-        return genes
+        return self._complete_genes(genes=set(), gene_space=gene_space, n=n)
 
     def _complete_genes(
         self, genes: set, gene_space: GeneSpace, n: int | None = None
