@@ -32,8 +32,8 @@ def _draw_genes(
         draw = getattr(gene_space, gene_space_func)
         return [draw(**(gene_space_func_kwargs or {})) for _ in range(n)]
     if n == 1:
-        # What `select_random(n=1)` returns is not settled: one gene in
-        # some gene spaces, a collection of one in others.
+        # `select_random(n=1)` returns a collection of one gene, but a
+        # gene space written before that was stated may return the gene.
         return [gene_space.select_random()]
     genes = gene_space.select_random(n=n)
     return genes.tolist() if isinstance(genes, ndarray) else list(genes)

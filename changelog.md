@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.6.10 - 13th October 2026
+
+- `AbstractGeneSpace.select_random` in `src/genetic_opt/gene_space.py`
+  states what it returns: one gene with no `n`, a collection of `n`
+  genes for an `int`, also for `n=1`, and a nested collection with
+  the shape `n` for a tuple. `BinaryGeneSpace` already did this.
+- `_draw_genes` in `gene_collection.py` still asks for one gene with
+  no `n`, so a gene space that returns a single gene for `n=1` keeps
+  working.
+- Added `tests/unit/test_gene_space.py`: 7 tests of the three cases
+  on `BinaryGeneSpace`.
+
 ### v0.6.9 - 13th October 2026
 
 - `src/genetic_opt/gene_collection.py`:

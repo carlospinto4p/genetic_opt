@@ -2,15 +2,6 @@
 
 ### 2026.10.13 (found while batching the mutation draws, v0.6.9)
 
-- [ ] `src/genetic_opt/gene_space.py:34-38`: what
-  `AbstractGeneSpace.select_random(n=1)` returns is not stated, and
-  the two known gene spaces differ. `BinaryGeneSpace` returns an
-  array of one gene. `RuleGeneSpace` in `downstream`
-  (`src/downstream/strategy/genetic_algs/rule_space.py:82-83`) returns
-  one gene, not a list. `_draw_genes` in `gene_collection.py` avoids
-  the case by calling `select_random()` for one gene. State the
-  return for an `int` and for a tuple in the docstring and test it.
-  (LOW, S)
 - [ ] From reading, not run, and in another repository: `downstream`'s
   `RuleGeneSpace.select_random` picks the rule class with
   `randint(low=0, high=self.max_rules_idx)` when `n` is 2 or more

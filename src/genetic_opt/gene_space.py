@@ -33,8 +33,13 @@ class AbstractGeneSpace(ABC):
     @abstractmethod
     def select_random(self, n: int | tuple[int, ...] | None = None) -> Any:
         """
-        Get a random element of the Gene Space.
-        :param n: dimensions of the output. Default to 1.
+        Get random genes of the Gene Space.
+        :param n: how many genes to return, and in what shape.
+            Default to None, which asks for one gene.
+        :return: one gene when `n` is None. A collection of `n` genes
+            when `n` is an `int`, also for `n=1`. A nested collection
+            with the shape `n` when `n` is a tuple: `n=(3, 4)` gives 3
+            collections of 4 genes each.
         """
 
 
