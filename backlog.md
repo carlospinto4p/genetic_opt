@@ -26,12 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/logs.py:26-49`, `:58`: the library calls
-  `logging.config.dictConfig` at import, adds a stdout handler and
-  sets `propagate: False`, and reads `LOG_FORMAT` and
-  `LOG_DATEFORMAT`, which nothing documents. A library should only
-  call `logging.getLogger("genetic_opt")`
-  (`~/.claude/rules/logger-format.md`). (MED, S)
 - [ ] `src/genetic_opt/algorithms/base.py:108-128` and `:320-336`:
   `__init__` takes 15 parameters and `fit` 12; `binary.py:17-22`
   lists 8 again. The Rust crate groups them as `FitConfig` and

@@ -45,15 +45,9 @@ def test_a_save_reads_the_file_size_only_when_it_is_logged(
 
     monkeypatch.setattr(files, "get_file_size", counted_get_file_size)
     set_log_level(level)
-    # The package logger does not propagate, so caplog is attached to it.
-    logger = logging.getLogger("genetic_opt")
-    logger.addHandler(caplog.handler)
-    try:
-        save_json(DATA, f"{tmp_path}/data")
-        save_bson(DATA, f"{tmp_path}/data")
-        save_yaml(DATA, f"{tmp_path}/data")
-    finally:
-        logger.removeHandler(caplog.handler)
+    save_json(DATA, f"{tmp_path}/data")
+    save_bson(DATA, f"{tmp_path}/data")
+    save_yaml(DATA, f"{tmp_path}/data")
     saved = [f"{tmp_path}/data.{e}" for e in ("json", "bson", "yml")]
     assert sizes == (saved if logged else [])
     size = get_file_size(saved[0])

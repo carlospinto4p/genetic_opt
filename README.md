@@ -10,6 +10,25 @@ methodologies in order to tackle different optimization problems.
 There is an example of optimization problem tackled with these classes
 in `examples.binary.GeneticBag`.
 
+## Logs
+
+The package writes the progress of a run to the logger `genetic_opt`
+at level `INFO` and sets up no handler. A program that wants to see it
+configures logging itself:
+
+```python
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s-%(name)s: %(message)s",
+    datefmt="%Y.%m.%d %H:%M:%S",
+)
+```
+
+Before 0.9.0 the package added a handler on the standard output when
+it was imported.
+
 ## Rust crate
 
 `crates/genetic_opt` is the same algorithm written in Rust. The Python

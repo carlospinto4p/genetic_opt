@@ -2,6 +2,24 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.9.0 - 13th October 2026
+
+- `src/genetic_opt/logs.py` no longer sets up logging when the
+  package is imported. It added a handler on the standard output to
+  the logger `genetic_opt`, set its level to `INFO` and stopped it
+  passing records to the root logger. Now `logger` is
+  `logging.getLogger("genetic_opt")` and nothing else, so a program
+  that wants the progress of a run configures logging itself.
+  - Removed `get_app_logger`, `LOG_FORMAT` and `LOG_DATEFORMAT`, and
+    with them the environment variables `LOG_FORMAT` and
+    `LOG_DATEFORMAT`, which the package read and nothing documented.
+- `README.md`: added the section "Logs", with how to see the progress
+  of a run.
+- Added `test_the_package_leaves_logging_to_the_application` to
+  `tests/unit/test_functions.py`. The two tests that attached `caplog`
+  to the package logger by hand (there and in
+  `tests/unit/test_files.py`) read it through the root logger.
+
 ### v0.8.1 - 13th October 2026
 
 - A second `fit` on the same `GeneticAlgorithm` keeps the scores of

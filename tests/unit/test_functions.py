@@ -79,14 +79,16 @@ def test_exception_message_includes_the_processing_object():
 
 
 def test_exception_is_not_logged(caplog):
-    # The package logger does not propagate, so caplog is attached to it.
-    logger = logging.getLogger("genetic_opt")
-    logger.addHandler(caplog.handler)
-    try:
+    with caplog.at_level(logging.DEBUG, logger="genetic_opt"):
         GeneticOptException("bad size", {"size": 3})
-    finally:
-        logger.removeHandler(caplog.handler)
     assert caplog.records == []
+
+
+def test_the_package_leaves_logging_to_the_application():
+    logger = logging.getLogger("genetic_opt")
+    assert logger.handlers == []
+    assert logger.propagate
+    assert logger.level == logging.NOTSET
 
 
 def test_construction_errors_name_the_sizes_and_nothing_else():
