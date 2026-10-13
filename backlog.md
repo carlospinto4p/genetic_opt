@@ -26,13 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] Bug, from reading: `src/genetic_opt/algorithms/base.py:428-433`
-  turns the default `n_jobs=-2` into `cpu_count() - 1`, which is 0
-  on a one-core machine and raises `ValidationException`. The Rust
-  crate guards it with `.max(1)` (`algorithm.rs:234`).
-  `tests/unit/test_binary_algs.py:13`, `:47` and
-  `crates/genetic_opt/tests/algorithm.rs:139`, `:161` ask for 2
-  jobs and fail on one core too. (MED, S)
 - [ ] `src/genetic_opt/algorithms/base.py:308-317` with `:831-839`:
   `_get_iteration_improvement` returns the raw metrics for the
   first generation and differences afterwards, under the same keys,

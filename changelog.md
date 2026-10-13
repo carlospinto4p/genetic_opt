@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.10 - 13th October 2026
+
+- Fixed `GeneticAlgorithm.fit` in
+  `src/genetic_opt/algorithms/base.py`: a negative `n_jobs` that
+  leaves no core gives one job. The default, -2, raised
+  `ValidationException` on a machine with one core. The Rust crate
+  already did this for its default.
+- `tests/unit/test_binary_algs.py`:
+  - Added `test_fit_uses_one_job_when_fewer_are_left`.
+  - Added `test_fit_refuses_no_jobs_and_more_jobs_than_cores`.
+  - `test_fit_scores_each_chromosome_once` asks for two jobs or for
+    the one that a machine with one core allows.
+- `crates/genetic_opt/tests/algorithm.rs`: the two tests that asked
+  for two threads do the same, through `two_jobs`.
+
 ### v0.7.9 - 13th October 2026
 
 - Fixed `GeneSet.select_random` in

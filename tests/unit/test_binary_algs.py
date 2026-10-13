@@ -2,6 +2,7 @@ import gc
 import logging
 import pickle
 import weakref
+from os import cpu_count
 
 import pytest
 from joblib import Parallel
@@ -56,8 +57,12 @@ def test_fit_scores_each_chromosome_once(tmp_path):
         return fit_bag(chromosome)
 
     genetic_bag.algo_fitness_func = logged_fit_bag
+    # Two jobs, or the one that a machine with one core allows.
     genetic_bag.fit(
-        n_generations=5, population_size=50, n_jobs=2, plot_metrics=False
+        n_generations=5,
+        population_size=50,
+        n_jobs=min(2, cpu_count()),
+        plot_metrics=False,
     )
     calls = calls_log.read_text().splitlines()
     assert len(calls) == len(set(calls))
@@ -405,6 +410,28 @@ def test_fit_refuses_parameters_out_of_range(parameters):
     fit_parameters = {"n_generations": 5, "population_size": 30, "n_jobs": 1}
     with pytest.raises(ValidationException):
         genetic_bag.fit(**(fit_parameters | parameters))
+    assert not calls
+
+
+@pytest.mark.parametrize(
+    "cores, parameters", [(1, {}), (1, {"n_jobs": -1}), (2, {"n_jobs": -4})]
+)
+def test_fit_uses_one_job_when_fewer_are_left(monkeypatch, cores, parameters):
+    # Without `n_jobs` it is -2: every core but one.
+    monkeypatch.setattr(algorithms, "cpu_count", lambda: cores)
+    genetic_bag, _ = _counting_bag()
+    result = genetic_bag.fit(
+        n_generations=2, population_size=20, plot_metrics=False, **parameters
+    )
+    assert result["fit_parameters"]["n_jobs"] == 1
+
+
+@pytest.mark.parametrize("n_jobs", [0, 3])
+def test_fit_refuses_no_jobs_and_more_jobs_than_cores(monkeypatch, n_jobs):
+    monkeypatch.setattr(algorithms, "cpu_count", lambda: 2)
+    genetic_bag, calls = _counting_bag()
+    with pytest.raises(ValidationException, match="n_jobs"):
+        genetic_bag.fit(n_generations=2, population_size=20, n_jobs=n_jobs)
     assert not calls
 
 

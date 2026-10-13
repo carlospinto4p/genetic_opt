@@ -1,11 +1,17 @@
 use std::collections::{BTreeSet, HashSet};
 use std::fs::{File, read_dir};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::thread::available_parallelism;
 
 use genetic_opt::problems::Knapsack;
 use genetic_opt::{
     Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score,
 };
+
+/// Two threads, or the one that a machine with one core allows.
+fn two_jobs() -> usize {
+    available_parallelism().map_or(1, |n| n.get()).min(2)
+}
 
 fn knapsack() -> Knapsack {
     Knapsack::new(
@@ -136,7 +142,7 @@ fn each_different_chromosome_is_scored_once() {
         fitness_calls: AtomicUsize::new(0),
     };
     let mut config = FitConfig::new(5, 50);
-    config.n_jobs = Some(2);
+    config.n_jobs = Some(two_jobs());
     let mut algorithm = GeneticAlgorithm::new(problem, config);
     let result = algorithm.fit().unwrap();
 
@@ -193,7 +199,7 @@ fn a_seed_gives_the_same_run_with_any_number_of_threads() {
             })
             .collect::<Vec<_>>()
     };
-    assert_eq!(run(1), run(2));
+    assert_eq!(run(1), run(two_jobs()));
 }
 
 #[test]

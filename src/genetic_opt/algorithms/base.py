@@ -372,7 +372,8 @@ class GeneticAlgorithm(ABC):
                 For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
             n_jobs: number of jobs to use to parallelize the evaluation of
                 each element of the population.
-                Default to -2 (all cpus except one).
+                Default to -2 (all cpus except one). A negative number
+                that leaves no cpu gives one job.
                 With more than one job the fitness function is sent to
                 the worker processes. A bound method, or a function that
                 uses `self`, takes the whole algorithm with it: its
@@ -447,7 +448,8 @@ class GeneticAlgorithm(ABC):
             )
         # Validate n_jobs
         if n_jobs < 0:
-            n_jobs = cpu_count() + n_jobs + 1
+            # A negative number leaves cores out, down to one job
+            n_jobs = max(cpu_count() + n_jobs + 1, 1)
         if n_jobs <= 0 or n_jobs > cpu_count():
             raise ValidationException(
                 f"{n_jobs = } received is not valid! {cpu_count() = }"
