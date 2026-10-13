@@ -19,16 +19,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
   personal name and a personal email address, published as package
   metadata with every wheel. Decide whether that is wanted.
 
-**Performance**
-
-- [ ] **[manual]** Two small costs in the Rust crate are left from
-  the item closed in 0.7.4, and each needs a decision. With saving
-  on, `decode` runs one by one over the population while the thread
-  pool is idle (`save_generation` in `algorithm.rs`): running it on
-  the pool needs `Problem::Solution` to be `Send`, a new bound on a
-  public trait. `bson` and `serde_norway` are needed only when
-  saving (`Cargo.toml`, 89 crates in the lock file): leaving them
-  out needs a cargo feature around `SaveConfig` and `save.rs`.
 **Refactoring**
 
 - [ ] `src/genetic_opt/algorithms/__init__.py:57-983`: the whole
