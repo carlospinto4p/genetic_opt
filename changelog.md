@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.7.5 - 13th October 2026
+
+- `.claude/rules/testing.md`: added the section "Measured times",
+  with one run of each suite and of a `cargo build` from nothing,
+  dated 13th October 2026. The Python unit suite takes 5.2 seconds
+  and the Rust build 12.7.
+
 ### v0.7.4 - 13th October 2026
 
 - `crates/genetic_opt/src/metrics.rs`:

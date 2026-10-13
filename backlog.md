@@ -29,10 +29,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
   public trait. `bson` and `serde_norway` are needed only when
   saving (`Cargo.toml`, 89 crates in the lock file): leaving them
   out needs a cargo feature around `SaveConfig` and `save.rs`.
-- [ ] The repo records no wall-clock time for the Python suite, the
-  Rust suite or a cargo build. Run `pytest --durations=10` and
-  `cargo test` once and write the date beside the result. (LOW, S)
-
 **Refactoring**
 
 - [ ] Bug, checked by running:
