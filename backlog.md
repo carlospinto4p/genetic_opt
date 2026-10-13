@@ -21,11 +21,6 @@ micro-timing run on a loaded machine and are orders of magnitude.
 
 **Performance**
 
-- [ ] `historial` and `_chromosome_cache`
-  (`algorithms/__init__.py:198-207`, `:972-977`) and the Rust
-  `history` and `scores` (`algorithm.rs:112`, `:114`) grow for the
-  whole run. `historial` is part of what `fit` returns, so a limit
-  is an API decision. (LOW, M)
 - [ ] Small costs in the Rust crate: `median` copies and sorts
   scores that are already sorted and `variance` recomputes the mean
   (`metrics.rs:64-76`); with saving on, `decode` runs one by one
