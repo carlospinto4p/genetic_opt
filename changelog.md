@@ -2,6 +2,33 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.0 - 14th October 2026
+
+- Rust crate `crates/genetic_opt`:
+  - `Error` has a variant for each failure that was sent as text:
+    `ThreadPool` when the scoring threads can not start, which was
+    `Validation`, and `Json`, `Yaml` and `Bson` in place of
+    `Serialization(String)`. Each one keeps the error it comes from.
+  - Renamed the public module `problems` to `examples`, as in the
+    Python package. It differed from the private module `problem` by
+    one letter. `Knapsack` is now `genetic_opt::examples::Knapsack`.
+- Python type hints and names:
+  - `BinaryGeneSpace.select_random` is annotated as returning a numpy
+    integer or array, and takes a tuple of any length.
+  - `Chromosome.score_time` is annotated `float`.
+  - `N_BESTS` in `algorithms/base.py` names the number of bests a
+    `FitResult` reports, as in the crate.
+  - `files.py` no longer imports `os.path`, which the parameter `path`
+    of `save_current_figure` hid.
+  - The docstrings of `algorithms/base.py` use `:param:` throughout.
+- Removed stale comments: three notes and TODOs from 2021 to 2024 in
+  `algorithms/base.py`, a 2024 TODO in `fit_result_io.py`, a `core`
+  module named in `examples/__init__.py`, `from_dict` written for
+  `to_dict` in `Metric.from_dict`, and commented-out assertions in
+  `tests/unit/test_binary_algs.py`.
+- Added `tests/unit/test_versions.py`: fails when the crate's version
+  in `Cargo.toml` or `Cargo.lock` differs from `pyproject.toml`.
+
 ### v0.16.0 - 14th October 2026
 
 - Removed code that nothing in this repository or in `downstream` calls:

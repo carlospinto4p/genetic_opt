@@ -74,11 +74,11 @@ dependency. `roadmap.md` has the reasons.
 
 A problem implements the trait `Problem` (its genes, its fitness
 function, its crossover) and `GeneticAlgorithm` runs it. The fitness
-function runs on several threads at once. `problems::Knapsack` is the
+function runs on several threads at once. `examples::Knapsack` is the
 example, the same problem as `examples.binary.GeneticBag`:
 
 ```rust
-use genetic_opt::problems::Knapsack;
+use genetic_opt::examples::Knapsack;
 use genetic_opt::{FitConfig, GeneticAlgorithm};
 
 let knapsack = Knapsack::new(

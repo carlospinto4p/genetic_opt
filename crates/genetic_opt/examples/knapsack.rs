@@ -6,7 +6,7 @@
 use std::env::args;
 use std::error::Error;
 
-use genetic_opt::problems::Knapsack;
+use genetic_opt::examples::Knapsack;
 use genetic_opt::{FitConfig, GeneticAlgorithm, SaveConfig, SaveFormat};
 
 fn main() -> Result<(), Box<dyn Error>> {

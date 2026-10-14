@@ -49,10 +49,10 @@ class Metric:
     ) -> Metric:
         """
         Get a Metric object from a serialized object, created by the method
-            `from_dict` of this class.
+            `to_dict` of this class.
         Args:
             d: Metric dictionary, as returned by the method
-                `from_dict` of this class.
+                `to_dict` of this class.
             load_decoded_chromosome_func: Function to load serialized
                 Chromosomes. It is the identity function by default.
             load_gene_func: Function to load each Gene.

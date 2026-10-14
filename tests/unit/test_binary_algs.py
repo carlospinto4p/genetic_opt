@@ -40,9 +40,8 @@ def test_genetic_bag():
     assert best_score == 309
     best_bag = opt_data["bests"]["result"][0]
     assert best_bag == [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
-    # There are different, tied best encodes for this problem.
-    # best_encoding = opt_data['result']['bests_5_encoded'][0].genes
-    # assert best_encoding == [1, 1, 1, 1, 0, 1, 0, 1, 1, 1]
+    # There are different, tied best encodes for this problem, so only
+    # the decoded bag is asserted.
 
 
 class ZeroStartAlgorithm(BinaryGeneticAlgorithm):

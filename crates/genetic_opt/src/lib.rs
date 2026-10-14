@@ -1,7 +1,7 @@
 //! Genetic algorithm optimizers.
 //!
 //! Describe an optimization problem by implementing [`Problem`], then run
-//! it with [`GeneticAlgorithm`]. [`problems::Knapsack`] is a worked example.
+//! it with [`GeneticAlgorithm`]. [`examples::Knapsack`] is a worked example.
 //!
 //! A run can be saved to a folder, one file per generation, in the layout
 //! of the Python package `genetic_opt`, whose
@@ -10,10 +10,10 @@
 mod algorithm;
 mod chromosome;
 mod error;
+pub mod examples;
 mod format;
 mod metrics;
 mod problem;
-pub mod problems;
 mod save;
 mod score;
 

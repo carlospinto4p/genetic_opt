@@ -26,32 +26,20 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] Types and names: `BinaryGeneSpace.select_random` is annotated
-  `-> int` and returns an array for a tuple `n`
-  (`gene_space.py:53-54`); `score_time` is annotated `int` and
-  holds a float (`chromosome.py:62`); `Metric.best` is a dict where
-  Rust has a `Best` struct (`metrics.py:32`); the number of bests
-  is a literal `5` (`algorithms/base.py:752`) where Rust has
-  `N_BESTS`; `files.py:151` names a parameter `path` over
-  `os.path`. Across the two implementations: `historial` and
-  `history`, `opt_is_min` and `minimize`, `GeneticBag` and
-  `Knapsack`, `fitness_func` stored as `algo_fitness_func`. Two
-  docstring styles in `algorithms/base.py`. (LOW, M)
-- [ ] Stale comments: the 2024 TODO at `fit_result_io.py:25` (the functions
-  are tested now); notes from 2023 and 2024 at
-  `algorithms/base.py:55-56`, `:186-187`, `:658-661`;
-  `examples/__init__.py:4` refers to a `core` module that does not
-  exist; `metrics.py:50`, `:53` say `from_dict` where `to_dict`
-  makes the dict; commented-out assertions on a key the code no
-  longer produces at `tests/unit/test_binary_algs.py:24-26`. (LOW, S)
-- [ ] Rust, small: a thread pool build failure is reported as
-  `Error::Validation` (`algorithm.rs:172`); `save.rs:67`, `:82`,
-  `:88` turn serializer errors into strings; `fit_parameters()`
-  copies seven fields one by one (`algorithm.rs:255-264`); the
-  modules `problem` and `problems` differ by one letter
-  (`lib.rs:15-16`); the crate version is kept equal to
-  `pyproject.toml:3` by hand and nothing checks it
-  (`Cargo.toml:3-4`). (LOW, S)
+- [ ] **[manual]** Decide whether to rename the Python names that
+  differ from the crate. Each one breaks `downstream`, so the rest of
+  this item was done in 0.17.0 and these were left:
+  - `GeneticAlgorithm.historial` (Rust `history`), also the
+    `historial` key of a `FitResult` and of `load_fit_result`.
+    `downstream` reads it in `rule_optimizer.py:367`, `:457`, `:492`,
+    `:516`, `utils.py:111` and two tests.
+  - The argument `opt_is_min` (Rust `Problem::minimize`), passed in
+    `rule_optimizer.py:313`.
+  - `fitness_func` stored as `algo_fitness_func`, which
+    `test_rule_optimizer.py:26` calls.
+  - `Metric.best`, a dict where Rust has a `Best` struct;
+    `test_utils.py:43-44` reads `m.best["score"]`.
+  - `GeneticBag` (Rust `Knapsack`), which `downstream` does not use.
 
 **Test coverage**
 

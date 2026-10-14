@@ -96,8 +96,7 @@ pub(crate) fn write_experiment_config(
         fit_parameters,
         experiment_config,
     };
-    serde_norway::to_writer(BufWriter::new(file), &config)
-        .map_err(|e| Error::Serialization(e.to_string()))
+    Ok(serde_norway::to_writer(BufWriter::new(file), &config)?)
 }
 
 pub(crate) fn write_generation<G: Serialize, S: Serialize>(
@@ -111,14 +110,11 @@ pub(crate) fn write_generation<G: Serialize, S: Serialize>(
     match format {
         SaveFormat::Json => {
             let file = File::create(folder.join(format!("{name}.json")))?;
-            serde_json::to_writer(BufWriter::new(file), generation)
-                .map_err(|e| Error::Serialization(e.to_string()))
+            Ok(serde_json::to_writer(BufWriter::new(file), generation)?)
         }
         SaveFormat::Bson => {
             let file = File::create(folder.join(format!("{name}.bson")))?;
-            bson::serialize_to_document(generation)
-                .and_then(|document| document.to_writer(BufWriter::new(file)))
-                .map_err(|e| Error::Serialization(e.to_string()))
+            Ok(bson::serialize_to_document(generation)?.to_writer(BufWriter::new(file))?)
         }
     }
 }

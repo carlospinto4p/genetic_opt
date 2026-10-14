@@ -231,8 +231,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
         self.scored = 0;
         let pool = rayon::ThreadPoolBuilder::new()
             .num_threads(fit_parameters.n_jobs)
-            .build()
-            .map_err(|e| Error::Validation(e.to_string()))?;
+            .build()?;
         let save_folder = match &self.config.save {
             Some(save) => Some(create_run_folder(save)?),
             None => None,

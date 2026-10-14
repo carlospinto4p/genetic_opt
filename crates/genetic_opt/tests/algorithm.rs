@@ -3,7 +3,7 @@ use std::fs::{File, read_dir};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread::available_parallelism;
 
-use genetic_opt::problems::Knapsack;
+use genetic_opt::examples::Knapsack;
 use genetic_opt::{
     Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score,
 };

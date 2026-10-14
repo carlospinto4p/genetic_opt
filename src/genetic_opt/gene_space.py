@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from numpy import integer, ndarray
 from numpy.random import RandomState
 
 
@@ -49,5 +50,7 @@ class BinaryGeneSpace(AbstractGeneSpace):
     def __len__(self) -> int:
         return 2
 
-    def select_random(self, n: int | tuple[int] | None = None) -> int:
+    def select_random(
+        self, n: int | tuple[int, ...] | None = None
+    ) -> integer | ndarray:
         return self.random_state.choice([0, 1], size=n)

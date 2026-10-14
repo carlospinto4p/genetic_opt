@@ -18,7 +18,6 @@ from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
 
 
-# TODO 2024.03.03 Pending to test the functions of this script!
 def load_fit_result(
     folder_path: str,
     load_decoded_chromosome_func: Callable[[Any], Any] | None = None,

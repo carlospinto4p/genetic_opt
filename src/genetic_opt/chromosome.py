@@ -47,7 +47,7 @@ class Chromosome:
         )
 
         self.score: Score | None = None
-        self.score_time: int = 0
+        self.score_time: float = 0
         self.random_seed: int = random_seed
         # Built on first use: `GeneticAlgorithm` passes its own state to
         # `random_mutate`, so most Chromosomes never need one.

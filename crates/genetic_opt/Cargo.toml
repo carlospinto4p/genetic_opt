@@ -1,7 +1,8 @@
 [package]
 name = "genetic_opt"
-# Kept equal to the version in the repository's `pyproject.toml`.
-version = "0.16.0"
+# Kept equal to the version in the repository's `pyproject.toml`, which
+# `tests/unit/test_versions.py` checks.
+version = "0.17.0"
 edition = "2024"
 description = "Genetic algorithm optimizers."
 

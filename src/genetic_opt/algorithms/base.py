@@ -31,6 +31,9 @@ from genetic_opt.metrics import (
 )
 from genetic_opt.score import Score
 
+# Number of best Chromosomes a `FitResult` reports
+N_BESTS = 5
+
 
 def _score_chromosome(
     fitness_func: Callable[[Chromosome], Score], chromosome: Chromosome
@@ -46,8 +49,6 @@ def _score_chromosome(
     return score, chromosome.score_time
 
 
-# TODO 2024.02.13 Add pickle checkpoints?
-#  I could use joblib for this one as well
 class GeneticAlgorithm(ABC):
     """
     Genetic algorithm base class.
@@ -121,36 +122,36 @@ class GeneticAlgorithm(ABC):
     ):
         """
         Initialize the GeneticAlgorithm base class.
-        Args:
-            gene_space: GeneSpace object. Set of possible genes inside
-                a chromosome.
-            chromosome_length: A chromosome is a collection of genes that
-                encodes a determined problem state.
-            chromosome_as_set: Whether to set the chromosome as a set or as
-                a list, depending on the chromosome nature.
-            decode_func: Function that receives the genotype (chromosome)
-                and returns the phenotype (original problem representation).
-            fitness_func: Function to value each chromosome (genotype)
-                returning a Score object.
-                Will be stored internally as `algo_fitness_func`.
-            opt_is_min: whether the optimum fitness value is the minimum
-                (True) or the maximum (False) of the `fitness_func`.
-            experiment_name: Genetic algorithm experiment name.
-                Default to the class name. With `save` it names a
-                folder inside `save.path`, so it can not be an absolute
-                path or hold `..`.
-            random_seed: Random seed to handle internal methods.
-            extra_config: Additional dictionary that will be returned
-                by the `fit` method, as a new key named `config`.
-            save: Where and how to save each run. Nothing is saved
-                without it. The folder of the run is created at once,
-                and `self.save_path` holds it.
-            mutation_invariant: Optional function to check if the Chromosome
-                that will mutate and the mutation result share the same
-                invariant property.
-            crossover_invariant: Optional function to check if the Chromosomes
-                that will be crossed and their recombined result share the
-                same invariant property.
+        :param gene_space: GeneSpace object. Set of possible genes inside
+            a chromosome.
+        :param chromosome_length: A chromosome is a collection of genes
+            that encodes a determined problem state.
+        :param chromosome_as_set: Whether to set the chromosome as a set
+            or as a list, depending on the chromosome nature.
+        :param decode_func: Function that receives the genotype
+            (chromosome) and returns the phenotype (original problem
+            representation).
+        :param fitness_func: Function to value each chromosome (genotype)
+            returning a Score object.
+            Will be stored internally as `algo_fitness_func`.
+        :param opt_is_min: whether the optimum fitness value is the
+            minimum (True) or the maximum (False) of the `fitness_func`.
+        :param experiment_name: Genetic algorithm experiment name.
+            Default to the class name. With `save` it names a folder
+            inside `save.path`, so it can not be an absolute path or
+            hold `..`.
+        :param random_seed: Random seed to handle internal methods.
+        :param extra_config: Additional dictionary that will be returned
+            by the `fit` method, as a new key named `config`.
+        :param save: Where and how to save each run. Nothing is saved
+            without it. The folder of the run is created at once, and
+            `self.save_path` holds it.
+        :param mutation_invariant: Optional function to check if the
+            Chromosome that will mutate and the mutation result share the
+            same invariant property.
+        :param crossover_invariant: Optional function to check if the
+            Chromosomes that will be crossed and their recombined result
+            share the same invariant property.
         """
         self.gene_space: AbstractGeneSpace = gene_space
         self.chromosome_length: int = chromosome_length
@@ -159,12 +160,8 @@ class GeneticAlgorithm(ABC):
         self.algo_fitness_func: Callable[[Chromosome], Score] = fitness_func
         self.opt_is_min: bool = opt_is_min
         self.experiment_name: str = experiment_name or self.__class__.__name__
-        # 2021.11.22 random seed results variations may indicate that
-        #  optimization is not enough well done.
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
-        # TODO 2024.07.30 I could get the times of these checks and add them
-        #   in the fit time metrics. This is not important at all at this point.
         self.mutation_invariant = mutation_invariant
         self.crossover_invariant = crossover_invariant
 
@@ -205,21 +202,17 @@ class GeneticAlgorithm(ABC):
     ) -> tuple[Chromosome, Chromosome]:
         """
         Realizes a cross between two Chromosomes. Also called `recombination`.
-        Args:
-            c1: first Chromosome.
-            c2: second Chromosome.
-        Returns:
-            a tuple of Chromosomes.
+        :param c1: first Chromosome.
+        :param c2: second Chromosome.
+        :return: a tuple of Chromosomes.
         """
 
     def mutate(self, chromosome: Chromosome, prob: float) -> Chromosome:
         """
         Mutate a chromosome.
-        Args:
-            chromosome: Chromosome to mutate.
-            prob: probability to gen mutation.
-        Returns:
-            a new Chromosome, that could have mutated or not. The one
+        :param chromosome: Chromosome to mutate.
+        :param prob: probability to gen mutation.
+        :return: a new Chromosome, that could have mutated or not. The one
             received is not changed.
         """
         return chromosome.random_mutate(
@@ -233,11 +226,11 @@ class GeneticAlgorithm(ABC):
     ) -> tuple[Chromosome, Chromosome]:
         """
         Inner function to recombine tuples of Chromosomes.
-        Args:
-            c1: first Chromosome.
-            c2: second Chromosome.
-        Returns:
-            a tuple of Chromosomes.
+        :param c1: first Chromosome.
+        :param c2: second Chromosome.
+        :return: a tuple of Chromosomes.
+        :raises InvariantException: when `crossover_invariant` is false
+            for the result.
         """
         crossover = self.crossover_func(c1, c2)
         if self.crossover_invariant and not self.crossover_invariant(
@@ -251,11 +244,11 @@ class GeneticAlgorithm(ABC):
     def _mutate(self, chromosome: Chromosome, prob: float) -> Chromosome:
         """
         Inner function to manage mutated Chromosomes.
-        Args:
-            chromosome: Chromosome to mutate.
-            prob: probability to gen mutation.
-        Returns:
-            a Chromosome that could have mutated or not. Inner managed.
+        :param chromosome: Chromosome to mutate.
+        :param prob: probability to gen mutation.
+        :return: a Chromosome that could have mutated or not.
+        :raises InvariantException: when `mutation_invariant` is false
+            for the result.
         """
         mutation = self.mutate(chromosome, prob)
         if self.mutation_invariant and not self.mutation_invariant(
@@ -327,30 +320,30 @@ class GeneticAlgorithm(ABC):
         keeps its own random state, so the genes drawn differ. The
         scores are kept, so a Chromosome met again is not scored again
         and the fitness function must not change between the runs.
-        Args:
-            config: the parameters of the run.
-            exit_condition: function which takes the self GeneticAlgorithm
-                instance and return True if the exit condition is met.
-                If so, the training will end before reaching
-                all `n_generations`.
-            plot_metrics: whether to save a metrics plot after finishing the
-                training.
-            other_metrics_to_plot: dictionary with schema:
-                - <metric name>: function
-                where the functions are applied to the best Chromosome of each
-                population.
-                This parameter only applies if `plot_metrics` is True.
-            callback_func: function that receives the `GeneticAlgorithm`
-                instance as input and is called after measuring each generation
-                and before checking the exit conditions.
-                This can be used to create graphics about the training or
-                even saving checkpoints for the training.
-                Default to the method `default_fit_callback`.
-            iter_func: function to keep track of the iterations.
-                For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
-
-        Returns:
-            a `FitResult`. It is empty with a negative `n_generations`.
+        :param config: the parameters of the run.
+        :param exit_condition: function which takes the self
+            GeneticAlgorithm instance and return True if the exit
+            condition is met. If so, the training will end before
+            reaching all `n_generations`.
+        :param plot_metrics: whether to save a metrics plot after
+            finishing the training.
+        :param other_metrics_to_plot: dictionary with schema:
+            - <metric name>: function
+            where the functions are applied to the best Chromosome of
+            each population.
+            This parameter only applies if `plot_metrics` is True.
+        :param callback_func: function that receives the
+            `GeneticAlgorithm` instance as input and is called after
+            measuring each generation and before checking the exit
+            conditions. This can be used to create graphics about the
+            training or even saving checkpoints for the training.
+            Default to the method `default_fit_callback`.
+        :param iter_func: function to keep track of the iterations.
+            For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
+        :return: a `FitResult`. It is empty with a negative
+            `n_generations`.
+        :raises ValidationException: when a value of `config` is not
+            valid.
         """
         # Default parameters
         iter_func = iter_func or identity_func
@@ -583,10 +576,6 @@ class GeneticAlgorithm(ABC):
         :return: None.
         """
         init_time = time()
-        # 2023.07.22 between this time measurement I could
-        #   put all of this in a function called `self.tournament_selection`.
-        #   Not needed: I only have this implemented and I don't think
-        #   I will implement another method for now.
         population_length = len(self.population)
         # Ensure that the crossover population is even
         n_crossovers = 2 * int((crossovers_prop * population_length) // 2)
@@ -634,7 +623,7 @@ class GeneticAlgorithm(ABC):
         # Get the bests (unique) chromosomes
         bests = []
         for chromosome in self.population:
-            if len(bests) < 5 and chromosome not in bests:
+            if len(bests) < N_BESTS and chromosome not in bests:
                 bests.append(chromosome)
         raw_fit_time = round(sum(m.fitting_seconds for m in self.metrics), 2)
         summary: FitResult = {

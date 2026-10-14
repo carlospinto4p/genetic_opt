@@ -3,7 +3,6 @@
 from json import dump as dump_json
 from json import load as load_json_fun
 from logging import INFO
-from os import path
 from pathlib import Path
 from typing import Any
 
@@ -78,8 +77,8 @@ def get_file_size(file_path: str) -> str | None:
     Get the size of a file, as a formatted string.
     If the file does not exist, will return None.
     """
-    if path.exists(file_path):
-        return format_bytes(path.getsize(file_path))
+    if (file := Path(file_path)).exists():
+        return format_bytes(file.stat().st_size)
 
 
 def get_files_inside_folder(
