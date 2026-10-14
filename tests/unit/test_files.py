@@ -7,8 +7,6 @@ from genetic_opt import files
 from genetic_opt.files import (
     create_new_folder,
     ensure_file_extension,
-    ensure_folder_format,
-    get_file_extension,
     get_files_inside_folder,
     load_bson,
     load_json,
@@ -120,12 +118,8 @@ def test_get_files_inside_folder_of_empty_folder(tmp_path):
     assert get_files_inside_folder(str(tmp_path)) == []
 
 
-@pytest.mark.parametrize(
-    "file_path, extension",
-    [("data.bson", "bson"), ("folder/data.tar.gz", "gz"), ("data", "")],
-)
-def test_get_file_extension(file_path, extension):
-    assert get_file_extension(file_path) == extension
+def test_get_files_inside_folder_of_missing_folder(tmp_path):
+    assert get_files_inside_folder(f"{tmp_path}/missing") == []
 
 
 @pytest.mark.parametrize(
@@ -134,12 +128,14 @@ def test_get_file_extension(file_path, extension):
         ("data", "json", "data.json"),
         ("data.json", ".json", "data.json"),
         ("data.yml", "json", "data.yml.json"),
+        ("run.v2/data", "json", "run.v2/data.json"),
+        ("run.json/data", "json", "run.json/data.json"),
     ],
 )
 def test_ensure_file_extension(file_path, extension, expected):
     assert ensure_file_extension(file_path, extension) == expected
 
 
-def test_ensure_folder_format_removes_last_slash():
-    assert ensure_folder_format("a/b/") == "a/b"
-    assert ensure_folder_format("a/b") == "a/b"
+def test_a_bson_file_in_a_folder_with_a_dot_is_saved_and_loaded(tmp_path):
+    save_bson(DATA, f"{tmp_path}/run.v2/data")
+    assert load_bson(f"{tmp_path}/run.v2/data.bson") == DATA

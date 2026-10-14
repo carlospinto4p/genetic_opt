@@ -3,7 +3,8 @@
 from json import dump as dump_json
 from json import load as load_json_fun
 from logging import INFO
-from os import makedirs, mkdir, path, walk
+from os import path
+from pathlib import Path
 from typing import Any
 
 from genetic_opt.functions import format_bytes
@@ -35,17 +36,19 @@ def create_new_folder(folder: str) -> str:
     :param folder: folder path.
     :return: path of the folder created.
     """
-    folder = ensure_folder_format(normalize_path(folder))
-    ensure_folder_exists(get_container_folder(folder))
-    new_folder, attempt = folder, 1
+    folder_path = Path(folder)
+    ensure_folder_exists(folder_path.parent)
+    new_folder, attempt = folder_path, 1
     while True:
         try:
-            mkdir(new_folder)
+            new_folder.mkdir()
         except FileExistsError:
             attempt += 1
-            new_folder = f"{folder}_{attempt}"
+            new_folder = folder_path.with_name(
+                f"{folder_path.name}_{attempt}"
+            )
         else:
-            return new_folder
+            return str(new_folder)
 
 
 def ensure_file_extension(file_path: str, file_extension: str) -> str:
@@ -55,44 +58,19 @@ def ensure_file_extension(file_path: str, file_extension: str) -> str:
     :param file_extension: extension to set.
     :return: file path with the extension received.
     """
-    extension_ = get_file_extension(file_path)
     file_extension = file_extension.removeprefix(".")
-    if extension_ != file_extension:
+    if Path(file_path).suffix != f".{file_extension}":
         file_path = f"{file_path}.{file_extension}"
-    return normalize_path(file_path)
+    return file_path
 
 
-def ensure_folder_exists(folder: str) -> None:
+def ensure_folder_exists(folder: str | Path) -> None:
     """
     Create needed folders to make the received path exists.
     :param folder: folder path.
     :return: None.
     """
-    if folder:
-        makedirs(folder, exist_ok=True)
-
-
-def ensure_folder_format(folder_path: str) -> str:
-    """Ensure input path does not end with '/'."""
-    folder_path = folder_path.removesuffix("/")
-    return folder_path
-
-
-def get_container_folder(file_path: str) -> str:
-    """Get the container folder of the received file path."""
-    return ensure_folder_format(
-        "/".join(normalize_path(file_path).split("/")[:-1])
-    )
-
-
-def get_file_extension(file_path: str) -> str:
-    """
-    Get the file extension of the file received, without the dot.
-    If no file extension is detected, will return an empty string.
-    """
-    if "." not in file_path:
-        return ""
-    return normalize_path(file_path.split(".")[-1])
+    Path(folder).mkdir(parents=True, exist_ok=True)
 
 
 def get_file_size(file_path: str) -> str | None:
@@ -121,20 +99,13 @@ def get_files_inside_folder(
     :return: a sorted list of file paths. If `return_complete_path` is False
         (default) will return a sorted list of file names.
     """
-    folder = ensure_folder_format(folder)
-    if recursive:
-        files_inside = [
-            f"{root}/{f}".replace("\\", "/").removeprefix(f"{folder}/")
-            for root, _, files in walk(folder)
-            for f in files
-        ]
-    else:
-        if files_inside := [files for _, _, files in walk(folder)]:
-            files_inside = files_inside[0]
-    if not len(files_inside):
-        return []
-    if return_complete_path:
-        files_inside = [f"{folder}/{f}" for f in files_inside]
+    folder_path = Path(folder)
+    found = folder_path.rglob("*") if recursive else folder_path.glob("*")
+    files_inside = [
+        str(p if return_complete_path else p.relative_to(folder_path))
+        for p in found
+        if p.is_file()
+    ]
     if ignore_shortcuts:
         files_inside = [f for f in files_inside if not f.endswith(".lnk")]
     files_inside.sort()
@@ -165,16 +136,11 @@ def load_json(json_path: str, **kwargs) -> Any:
         return load_json_fun(file, **kwargs)
 
 
-def normalize_path(p: str, /) -> str:
-    """Normalize a path, using slashes as separators."""
-    return p.replace("\\", "/")
-
-
 def save_bson(data, file_path: str) -> None:
     """Save a .bson file."""
     import bson
 
-    ensure_folder_exists(get_container_folder(file_path))
+    ensure_folder_exists(Path(file_path).parent)
     file_path = ensure_file_extension(file_path, "bson")
     bson_data = bson.BSON.encode(data)
     with open(file_path, "wb") as file:
@@ -202,7 +168,7 @@ def save_current_figure(
     """
     import matplotlib.pyplot as plt
 
-    ensure_folder_exists(get_container_folder(path))
+    ensure_folder_exists(Path(path).parent)
     file_path = ensure_file_extension(path, extension)
     plt.savefig(file_path, bbox_inches="tight")
     _log_saved("image", file_path)
@@ -221,7 +187,7 @@ def save_json(data, file_path: str, **kwargs) -> None:
     :param kwargs: Optional arguments to pass to the function `json.dump`.
     :return: None.
     """
-    ensure_folder_exists(get_container_folder(file_path))
+    ensure_folder_exists(Path(file_path).parent)
     file_path = ensure_file_extension(file_path, "json")
     with open(file_path, "w") as file:
         dump_json(data, file, **kwargs)
@@ -255,7 +221,7 @@ def save_yaml(
         def ignore_aliases(self, data: Any) -> bool:
             return True
 
-    ensure_folder_exists(get_container_folder(file_path))
+    ensure_folder_exists(Path(file_path).parent)
     file_path = ensure_file_extension(file_path, "yml")
     text = dump_yaml(
         data,

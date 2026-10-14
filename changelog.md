@@ -2,6 +2,27 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.14.0 - 14th October 2026
+
+- `src/genetic_opt/files.py` handles paths with `pathlib.Path`:
+  - Removed `ensure_folder_format`, `get_container_folder`,
+    `get_file_extension` and `normalize_path`. `get_file_extension`
+    split on the last dot of the whole path, so `"run.v2/data"` gave
+    `"v2/data"`. Nothing in `downstream` imports them; it has its own
+    copies in `downstream.files`.
+  - `ensure_file_extension` compares `Path.suffix`, and returns the
+    path as given instead of turning backslashes into slashes.
+  - `get_files_inside_folder` lists the folder with `Path.glob`. Its
+    non-recursive branch walked the whole tree to keep the first
+    entry.
+- `src/genetic_opt/algorithms/save.py` and
+  `src/genetic_opt/fit_result_io.py` use `Path` in place of the
+  removed functions. An experiment name written with backslashes is
+  still refused when it leaves the save path.
+- `tests/unit/test_files.py`: removed the tests of the removed
+  functions; added a missing folder, two folders with a dot in
+  `ensure_file_extension`, and a BSON file saved in a folder with a dot.
+
 ### v0.13.3 - 14th October 2026
 
 - Every argument check raises `ValidationException`, as the Rust crate

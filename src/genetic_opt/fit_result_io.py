@@ -2,16 +2,12 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from operator import itemgetter
 from os.path import getsize
+from pathlib import Path
 from typing import Any
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.files import (
-    get_file_extension,
-    get_files_inside_folder,
-    load_bson,
-    load_json,
-)
+from genetic_opt.files import get_files_inside_folder, load_bson, load_json
 from genetic_opt.fit_result import (
     FitResult,
     FitResultFile,
@@ -163,7 +159,7 @@ def _read_fit_result_file(file_path: str, max_file_bytes: int | None) -> dict:
             f"`{file_path}` has {getsize(file_path)} bytes, more than "
             f"{max_file_bytes = }"
         )
-    if get_file_extension(file_path) == "bson":
+    if Path(file_path).suffix == ".bson":
         return load_bson(file_path)
     return load_json(file_path)
 

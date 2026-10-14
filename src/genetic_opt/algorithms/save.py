@@ -1,7 +1,7 @@
 """Genetic Opt submodule that saves a run to a folder."""
 
 from collections.abc import Callable
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 from genetic_opt.algorithms.config import SaveConfig
 from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
@@ -9,8 +9,6 @@ from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import (
     create_new_folder,
-    ensure_folder_format,
-    normalize_path,
     save_bson,
     save_current_figure,
     save_json,
@@ -41,7 +39,8 @@ class FitSaver:
         :raises ValidationException: when `experiment_name` is not a
             path inside `save.path`.
         """
-        name_path = PurePosixPath(normalize_path(experiment_name))
+        # A Windows path is checked too, whatever the system.
+        name_path = PurePosixPath(experiment_name.replace("\\", "/"))
         if name_path.is_absolute() or ".." in name_path.parts:
             raise ValidationException(
                 f"experiment_name = {experiment_name!r} must be "
@@ -49,8 +48,7 @@ class FitSaver:
             )
         self.save: SaveConfig = save
         self.folder: str = create_new_folder(
-            f"{ensure_folder_format(save.path)}/"
-            f"{experiment_name}/{now_for_file_path()}"
+            str(Path(save.path) / experiment_name / now_for_file_path())
         )
 
     def save_experiment_config(

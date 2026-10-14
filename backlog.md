@@ -26,11 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/files.py:17-61`: paths are strings handled by
-  `ensure_folder_format`, `get_container_folder`,
-  `get_file_extension` and `normalize_path`. `get_file_extension`
-  splits on the last dot of the whole path, so `"run.v2/data"`
-  gives `"v2/data"`. `pathlib.Path` replaces all four. (MED, M)
 - [ ] `src/genetic_opt/gene_space.py:11`: `GeneSpace` is a `TypeVar`
   bound to `AbstractGeneSpace` but is used as a class annotation
   everywhere. Annotate with the class, or rename it. (MED, S)
