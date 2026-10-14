@@ -15,11 +15,7 @@ from genetic_opt import __version__
 from genetic_opt.algorithms.config import FitConfig, SaveConfig
 from genetic_opt.algorithms.save import FitSaver
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.exceptions import (
-    GeneticOptException,
-    InvariantException,
-    ValidationException,
-)
+from genetic_opt.exceptions import InvariantException, ValidationException
 from genetic_opt.fit_result import FitParameters, FitResult
 from genetic_opt.functions import (
     format_seconds,
@@ -759,7 +755,7 @@ class GeneticAlgorithm(ABC):
         :return: None.
         """
         if not self.population:
-            raise GeneticOptException("Tried to sort an empty population")
+            raise ValidationException("Tried to sort an empty population")
 
         iter_func = iter_func or identity_func
         # Get the Chromosomes never scored before, one of each.

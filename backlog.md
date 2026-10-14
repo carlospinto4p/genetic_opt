@@ -26,12 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] Argument checks raise the base `GeneticOptException` in
-  `chromosome.py:46`, `gene_collection.py:28`, `:85`, `:156`, `:225`
-  and `algorithms/base.py:919`, and `ValidationException` in
-  `algorithms/base.py:193`, `:424`, `:431` and
-  `examples/binary.py:39`. Rust uses `Error::Validation` for all.
-  (MED, S)
 - [ ] `src/genetic_opt/files.py:17-61`: paths are strings handled by
   `ensure_folder_format`, `get_container_folder`,
   `get_file_extension` and `normalize_path`. `get_file_extension`

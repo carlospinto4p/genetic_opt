@@ -93,18 +93,18 @@ def test_the_package_leaves_logging_to_the_application():
 
 
 def test_construction_errors_name_the_sizes_and_nothing_else():
-    with pytest.raises(GeneticOptException) as no_genes:
+    with pytest.raises(ValidationException) as no_genes:
         Chromosome(size=3)
     assert no_genes.value.processing_object is None
 
-    with pytest.raises(GeneticOptException) as wrong_size:
+    with pytest.raises(ValidationException) as wrong_size:
         Chromosome(size=2, genes=[1, 0, 1])
     assert wrong_size.value.processing_object is None
     assert wrong_size.value.message == (
         "Chromosome size (2) must match the length of the genes (3)"
     )
 
-    with pytest.raises(GeneticOptException) as small_space:
+    with pytest.raises(ValidationException) as small_space:
         Chromosome(size=3, gene_space=BinaryGeneSpace(), is_gene_set=True)
     assert small_space.value.processing_object is None
     assert small_space.value.message == (
@@ -114,7 +114,7 @@ def test_construction_errors_name_the_sizes_and_nothing_else():
 
 @pytest.mark.parametrize("is_gene_set", [False, True])
 def test_a_chromosome_needs_genes_or_a_gene_space(is_gene_set):
-    with pytest.raises(GeneticOptException) as no_genes:
+    with pytest.raises(ValidationException) as no_genes:
         Chromosome(size=3, genes=np.array([]), is_gene_set=is_gene_set)
     assert no_genes.value.message == (
         "Chromosome must be initialized with the `genes` parameter "

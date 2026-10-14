@@ -7,7 +7,7 @@ from copy import copy
 from numpy import ndarray
 from numpy.random import RandomState
 
-from genetic_opt.exceptions import GeneticOptException
+from genetic_opt.exceptions import ValidationException
 from genetic_opt.gene_space import GeneSpace
 
 
@@ -48,10 +48,10 @@ def _check_genes_or_gene_space(
     them from.
     :param genes: genes received, already turned from a numpy array.
     :param gene_space: GeneSpace object received.
-    :raises GeneticOptException: when both are empty.
+    :raises ValidationException: when both are empty.
     """
     if not (genes or gene_space):
-        raise GeneticOptException(
+        raise ValidationException(
             "Chromosome must be initialized with the `genes` "
             "parameter or using a `gene_space`"
         )
@@ -71,7 +71,7 @@ class GeneCollection(ABC):
         :param genes: collection of genes. Properties: Sized and Iterable.
         """
         if len(genes) != size:
-            raise GeneticOptException(
+            raise ValidationException(
                 f"Chromosome size ({size}) must match the length of "
                 f"the genes ({len(genes)})"
             )
@@ -307,7 +307,7 @@ class GeneSet(GeneCollection):
         :return: a set of genes of size `n`.
         """
         if len(gene_space) < self.size:
-            raise GeneticOptException(
+            raise ValidationException(
                 f"Chromosome received a `size` ({self.size}) greater "
                 f"than its `gene_space` ({len(gene_space)})"
             )

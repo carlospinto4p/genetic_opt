@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.13.3 - 14th October 2026
+
+- Every argument check raises `ValidationException`, as the Rust crate
+  returns `Error::Validation` for all of them. Four raised the base
+  `GeneticOptException`: in `src/genetic_opt/gene_collection.py`, no
+  genes and no gene space, a size that does not match the genes, and a
+  set larger than its gene space; in `src/genetic_opt/algorithms/base.py`,
+  sorting an empty population. Code that catches `GeneticOptException`
+  still catches them, since `ValidationException` is a subclass. The
+  message now starts with `ValidationException:`.
+- `tests/unit/test_functions.py`: the construction tests expect
+  `ValidationException`.
+
 ### v0.13.2 - 14th October 2026
 
 - The check that a chromosome gets genes or a gene space is written
