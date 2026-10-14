@@ -122,6 +122,13 @@ def test_a_chromosome_needs_genes_or_a_gene_space(is_gene_set):
     )
 
 
+@pytest.mark.parametrize("other", [None, "[1, 0, 1]", [1, 0, 1]])
+def test_a_chromosome_differs_from_what_is_not_a_chromosome(other):
+    chromosome = Chromosome(size=3, genes=[1, 0, 1])
+    assert chromosome != other
+    assert (chromosome == other) is False
+
+
 @pytest.mark.parametrize("is_gene_set", [False, True])
 def test_chromosome_genes_and_size_follow_its_gene_collection(is_gene_set):
     chromosome = Chromosome(

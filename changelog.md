@@ -2,6 +2,30 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.3 - 14th October 2026
+
+- Fixed `Chromosome.__eq__` in `chromosome.py`: comparing a Chromosome
+  with something that is not one raised `AttributeError`. It now
+  returns `NotImplemented`, so `chromosome != None` is true.
+- Added tests for paths that had none:
+  - `tests/unit/test_binary_algs.py`:
+    `test_a_broken_invariant_stops_the_run` for a false
+    `mutation_invariant` and `crossover_invariant`;
+    `test_the_bag_refuses_weights_and_values_of_different_lengths`;
+    a `min_population_size` above `population_size` in
+    `test_fit_refuses_parameters_out_of_range`.
+  - `tests/unit/test_fit_save.py`:
+    `test_load_fit_result_orders_the_generations_by_number`, a run of
+    11 saved generations, where `fit_data_10` is listed before
+    `fit_data_2`.
+  - `tests/unit/test_functions.py`:
+    `test_a_chromosome_differs_from_what_is_not_a_chromosome`.
+- Updated `tests/unit/test_binary_algs.py`:
+  `test_fit_scores_each_chromosome_once` now checks that the logged
+  calls match the `processed` count of `fit_metrics`.
+- Updated `tests/unit/test_fit_save.py`: the save and load test now
+  compares `fit_metrics` too.
+
 ### v0.17.2 - 14th October 2026
 
 - Fixed `GeneticAlgorithm.init_population` in `algorithms/base.py`: a

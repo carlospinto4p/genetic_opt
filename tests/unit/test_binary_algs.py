@@ -14,7 +14,7 @@ from genetic_opt.algorithms.base import GeneticAlgorithm
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
-from genetic_opt.exceptions import ValidationException
+from genetic_opt.exceptions import InvariantException, ValidationException
 from genetic_opt.fit_result import FitResult
 from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.metrics import Metric, get_space_points
@@ -204,14 +204,18 @@ def test_fit_scores_each_chromosome_once(tmp_path):
 
     genetic_bag.algo_fitness_func = logged_fit_bag
     # Two jobs, or the one that a machine with one core allows.
-    genetic_bag.fit(
+    result = genetic_bag.fit(
         FitConfig(
             n_generations=5, population_size=50, n_jobs=min(2, cpu_count())
         ),
         plot_metrics=False,
     )
     calls = calls_log.read_text().splitlines()
+    assert calls
     assert len(calls) == len(set(calls))
+    assert (
+        len(calls) == result["fit_metrics"]["fitness_func_calls"]["processed"]
+    )
 
 
 def test_crossover_cuts_at_every_position_between_two_genes():
@@ -422,6 +426,29 @@ def test_the_mutation_invariant_gets_the_chromosome_before_and_after():
     ((before, after),) = pairs
     assert before == [0] * size
     assert 0 < sum(after) < size
+
+
+@pytest.mark.parametrize(
+    "invariant", ["mutation_invariant", "crossover_invariant"]
+)
+def test_a_broken_invariant_stops_the_run(invariant):
+    genetic_bag, _ = _counting_bag()
+    setattr(genetic_bag, invariant, lambda *_: False)
+    with pytest.raises(InvariantException, match="mutated to"):
+        genetic_bag.fit(
+            FitConfig(
+                n_generations=3,
+                population_size=30,
+                mutate_prob=0.5,
+                n_jobs=1,
+            ),
+            plot_metrics=False,
+        )
+
+
+def test_the_bag_refuses_weights_and_values_of_different_lengths():
+    with pytest.raises(ValidationException, match="must be the same"):
+        GeneticBag(weights=[1, 2], values=[3], capacity=3)
 
 
 def test_fit_without_a_save_path_decodes_the_population_once():
@@ -635,6 +662,7 @@ def test_get_space_points_counts_lists_and_sets():
         {"crossovers_prop": 1.5},
         {"besties_prop": -0.1},
         {"mutate_prob": float("nan")},
+        {"min_population_size": 31},
     ],
 )
 def test_fit_refuses_parameters_out_of_range(parameters):

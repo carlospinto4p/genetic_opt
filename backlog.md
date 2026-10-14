@@ -43,22 +43,6 @@ some tens of lines off.
 
 **Test coverage**
 
-- [ ] `tests/unit/test_binary_algs.py:50`:
-  `len(calls) == len(set(calls))` holds for an empty file, so the
-  test passes if the logging wrapper is never called. Add
-  `assert calls`. (MED, S)
-- [ ] `tests/unit/test_fit_save.py`: since 0.6.3 the loaded history is
-  compared with the one `fit` returns, but `fit_metrics` is not
-  checked. The run has at most 4 files, so the ordering of `fit_data_10` after `fit_data_2`
-  that `fit_result_io.py:79` handles never runs. (MED, S)
-- [ ] Python error paths with no test: the three
-  `ValidationException` cases (`algorithms/base.py:423-433`,
-  `:192-196`) and `examples/binary.py:38-41`; `InvariantException`
-  from `mutation_invariant` and `crossover_invariant` (`:255-259`,
-  `:272-276`); the construction errors in `chromosome.py:45-50` and
-  `gene_collection.py:27-29`, `:84-92`; `__eq__` against something
-  that is not a Chromosome, which raises `AttributeError`
-  (`chromosome.py:97-116`). (MED, S)
 - [ ] The `min_population_size` stop of `fit` in
   `algorithms/base.py` has no Python test; the no-improvement stop
   has one since 0.7.11, and `callback_func` and `exit_condition`

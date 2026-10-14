@@ -80,10 +80,40 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert loaded["bests"]["encoded"] == fit_result["bests"]["encoded"]
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["fit_parameters"] == fit_result["fit_parameters"]
+    assert loaded["fit_metrics"] == fit_result["fit_metrics"]
     assert len(loaded["historial"]) == saved_generations
     assert loaded["historial"] == fit_result["historial"]
     assert loaded["last_population"] == fit_result["last_population"]
     assert set(loaded) == set(fit_result)
+
+
+def test_load_fit_result_orders_the_generations_by_number(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    # Without the stops, every generation is bred and saved.
+    algorithm.no_improvement_condition = lambda: False
+    fit_result = algorithm.fit(
+        FitConfig(
+            n_generations=10,
+            population_size=20,
+            min_population_size=1,
+            n_jobs=1,
+        ),
+        plot_metrics=False,
+    )
+    folder = f"{algorithm.save_path}/fit_data"
+    # The folder lists `fit_data_10` and `fit_data_11` before `fit_data_2`.
+    assert get_files_inside_folder(folder)[:3] == [
+        "fit_data_1.json",
+        "fit_data_10.json",
+        "fit_data_11.json",
+    ]
+
+    loaded = load_fit_result(folder)
+    assert len(loaded["historial"]) == 11
+    assert loaded["historial"] == fit_result["historial"]
+    assert loaded["metrics"] == fit_result["metrics"]
+    assert loaded["last_population"] == fit_result["last_population"]
+    assert loaded["fit_metrics"] == fit_result["fit_metrics"]
 
 
 def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):

@@ -108,6 +108,8 @@ class Chromosome:
         return chromosome
 
     def __eq__(self, other):
+        if not isinstance(other, Chromosome):
+            return NotImplemented
         if self.id == other.id:
             return self.genes == other.genes
         return False
