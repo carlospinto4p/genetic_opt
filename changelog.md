@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.1 - 14th October 2026
+
+- `.pre-commit-config.yaml`: a pre-push hook runs `pytest tests/unit`
+  and `cargo test`, since nothing else runs the tests on a push.
+  `pre-commit install` now installs it with the commit hook, and the
+  existing hooks run on commit only.
+
 ### v0.17.0 - 14th October 2026
 
 - Rust crate `crates/genetic_opt`:

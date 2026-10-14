@@ -43,11 +43,6 @@ some tens of lines off.
 
 **Test coverage**
 
-- [ ] Nothing runs either suite on a push: GitLab CI is disabled
-  across the fleet, and the commit hooks added in 0.4.1 run `ruff`,
-  `cargo fmt` and `cargo clippy` but no test. A pre-push hook
-  running `pytest tests/unit` and `cargo test` is the alternative.
-  (HIGH, S)
 - [ ] Python set chromosomes have no test: every test passes
   `chromosome_as_set=False`. `GeneSet`
   (`gene_collection.py:132-230`) and the set branches of
