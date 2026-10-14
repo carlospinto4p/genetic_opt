@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.2 - 14th October 2026
+
+- Fixed `GeneticAlgorithm.init_population` in `algorithms/base.py`: a
+  `fit` with `chromosome_as_set=True` raised `TypeError` when a row of
+  the first population drew one gene twice. Each Chromosome now gets
+  the gene space, and draws the genes the set lost.
+- Added to `tests/unit/test_binary_algs.py`:
+  - `NumbersAlgorithm`: picks 3 different numbers under 12, a set
+    Chromosome, as the `Numbers` problem of the crate's tests.
+  - `test_set_chromosomes_stay_sets_and_the_best_never_gets_worse`:
+    the first `fit` test with set Chromosomes.
+  - `test_minimize_keeps_the_lowest_scores`: the first test with
+    `opt_is_min=True`.
+
 ### v0.17.1 - 14th October 2026
 
 - `.pre-commit-config.yaml`: a pre-push hook runs `pytest tests/unit`

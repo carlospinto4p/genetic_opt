@@ -10,10 +10,12 @@ from joblib.externals import cloudpickle
 
 from genetic_opt.algorithms import FitConfig
 from genetic_opt.algorithms import base as algorithms
+from genetic_opt.algorithms.base import GeneticAlgorithm
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import GeneticBag
 from genetic_opt.exceptions import ValidationException
+from genetic_opt.fit_result import FitResult
 from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.metrics import Metric, get_space_points
 from genetic_opt.score import Score
@@ -60,6 +62,98 @@ class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
 
     def get_init_population(self, population_size: int) -> list[list[int]]:
         return [[0] * self.chromosome_length for _ in range(population_size)]
+
+
+class NumbersGeneSpace(AbstractGeneSpace):
+    """Gene space of the numbers 0 to 11, as Python integers."""
+
+    def __len__(self) -> int:
+        return 12
+
+    def select_random(self, n=None):
+        genes = self.random_state.randint(12, size=n)
+        return int(genes) if n is None else genes.tolist()
+
+
+class NumbersAlgorithm(GeneticAlgorithm):
+    """
+    Pick 3 different numbers under 12 with the highest sum, or the
+    lowest. A Chromosome is a set. The `Numbers` problem of the crate's
+    `tests/algorithm.rs`.
+    """
+
+    def __init__(self, opt_is_min: bool):
+        super().__init__(
+            gene_space=NumbersGeneSpace(random_seed=5),
+            chromosome_length=3,
+            chromosome_as_set=True,
+            decode_func=lambda chromosome: sum(chromosome.genes),
+            fitness_func=lambda chromosome: Score(
+                value=sum(chromosome.genes)
+            ),
+            opt_is_min=opt_is_min,
+        )
+        self.no_improvement_condition = self.no_exit_condition
+
+    def crossover_func(
+        self, c1: Chromosome, c2: Chromosome
+    ) -> tuple[Chromosome, Chromosome]:
+        """The lowest gene of one parent and the others of the other."""
+
+        def mix(first: Chromosome, second: Chromosome) -> Chromosome:
+            genes = sorted(first.genes)[:1] + sorted(second.genes)[1:]
+            return Chromosome(
+                size=self.chromosome_length,
+                genes=set(genes),
+                gene_space=self.gene_space,
+                is_gene_set=True,
+                random_seed=self.random_seed,
+            )
+
+        return mix(c1, c2), mix(c2, c1)
+
+
+def _fit_numbers(opt_is_min: bool) -> tuple[NumbersAlgorithm, FitResult]:
+    """Run `NumbersAlgorithm` for 60 generations of 30 Chromosomes."""
+    algorithm = NumbersAlgorithm(opt_is_min=opt_is_min)
+    result = algorithm.fit(
+        FitConfig(
+            n_generations=60,
+            population_size=30,
+            min_population_size=0,
+            n_jobs=1,
+        ),
+        plot_metrics=False,
+    )
+    return algorithm, result
+
+
+def test_set_chromosomes_stay_sets_and_the_best_never_gets_worse():
+    algorithm, result = _fit_numbers(opt_is_min=False)
+    bests = [metric.best["score"].value for metric in result["metrics"]]
+    assert len(bests) > 1
+    assert bests == sorted(bests)
+    assert bests[-1] == 9 + 10 + 11
+    # Every set of 3 numbers out of 12.
+    space_points = result["fit_metrics"]["fitness_func_calls"]
+    assert space_points["space_points"] == 220
+    for population in algorithm.historial:
+        for _, chromosome in population:
+            assert isinstance(chromosome.genes, set)
+            assert len(chromosome.genes) == 3
+            assert chromosome.genes <= set(range(12))
+
+
+def test_minimize_keeps_the_lowest_scores():
+    algorithm, result = _fit_numbers(opt_is_min=True)
+    bests = [metric.best["score"].value for metric in result["metrics"]]
+    assert len(bests) > 1
+    assert bests == sorted(bests, reverse=True)
+    assert bests[-1] == 0 + 1 + 2
+    assert result["bests"]["scores"][0].value == 3
+    for population in algorithm.historial:
+        scores = [score.value for score, _ in population]
+        assert scores == sorted(scores)
 
 
 def test_fit_goes_on_after_a_first_generation_with_mean_score_0():

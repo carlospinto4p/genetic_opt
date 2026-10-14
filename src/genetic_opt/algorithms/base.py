@@ -525,6 +525,8 @@ class GeneticAlgorithm(ABC):
                 Chromosome(
                     size=self.chromosome_length,
                     genes=gene_collection,
+                    # A set loses the genes drawn twice, and draws others
+                    gene_space=self.gene_space,
                     is_gene_set=self.chromosome_as_set,
                     random_seed=self.random_seed,
                 )

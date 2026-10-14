@@ -43,15 +43,6 @@ some tens of lines off.
 
 **Test coverage**
 
-- [ ] Python set chromosomes have no test: every test passes
-  `chromosome_as_set=False`. `GeneSet`
-  (`gene_collection.py:132-230`) and the set branches of
-  `chromosome.py:54`, `:82-83`, `:106-108` never run inside a `fit`.
-  Rust has `set_chromosomes_stay_sets...`
-  (`tests/algorithm.rs:201`). (HIGH, M)
-- [ ] `opt_is_min=True` is used by no Python test, so the ascending
-  sort at `algorithms/base.py:945-948` never runs. Rust has
-  `minimize_keeps_the_lowest_scores`. (HIGH, S)
 - [ ] `tests/unit/test_binary_algs.py:50`:
   `len(calls) == len(set(calls))` holds for an empty file, so the
   test passes if the logging wrapper is never called. Add
