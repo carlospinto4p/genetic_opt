@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.13.2 - 14th October 2026
+
+- The check that a chromosome gets genes or a gene space is written
+  once, in `_check_genes_or_gene_space` of
+  `src/genetic_opt/gene_collection.py`. `Chromosome`, `GeneList` and
+  `GeneSet` each had a copy of it; the one in `Chromosome` ran before
+  the other two and added nothing.
+- `src/genetic_opt/chromosome.py`: `Chromosome.genes` and
+  `Chromosome.size` are read-only properties that read the gene
+  collection. They were copies of it, set by hand after each mutation.
+- Added three tests to `tests/unit/test_functions.py`: a list and a set
+  chromosome built with no genes and no gene space give the same
+  message, and `genes` and `size` follow the gene collection after a
+  mutation, for a list and a set.
+
 ### v0.13.1 - 13th October 2026
 
 - `src/genetic_opt/algorithms/base.py`: `fit` always calls

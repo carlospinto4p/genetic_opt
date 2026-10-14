@@ -1,6 +1,7 @@
 import logging
 import re
 
+import numpy as np
 import pytest
 
 from genetic_opt.chromosome import Chromosome
@@ -109,6 +110,29 @@ def test_construction_errors_name_the_sizes_and_nothing_else():
     assert small_space.value.message == (
         "Chromosome received a `size` (3) greater than its `gene_space` (2)"
     )
+
+
+@pytest.mark.parametrize("is_gene_set", [False, True])
+def test_a_chromosome_needs_genes_or_a_gene_space(is_gene_set):
+    with pytest.raises(GeneticOptException) as no_genes:
+        Chromosome(size=3, genes=np.array([]), is_gene_set=is_gene_set)
+    assert no_genes.value.message == (
+        "Chromosome must be initialized with the `genes` parameter "
+        "or using a `gene_space`"
+    )
+
+
+@pytest.mark.parametrize("is_gene_set", [False, True])
+def test_chromosome_genes_and_size_follow_its_gene_collection(is_gene_set):
+    chromosome = Chromosome(
+        size=2, gene_space=BinaryGeneSpace(), is_gene_set=is_gene_set
+    )
+    mutated = chromosome.random_mutate(
+        gene_space=BinaryGeneSpace(), gene_mutate_prob=1.0
+    )
+    assert mutated.genes is mutated.gene_collection.genes
+    assert mutated.size == mutated.gene_collection.size == 2
+    assert chromosome.genes is chromosome.gene_collection.genes
 
 
 @pytest.mark.parametrize(

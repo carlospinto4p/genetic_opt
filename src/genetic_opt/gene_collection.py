@@ -40,6 +40,23 @@ def _draw_genes(
     return genes.tolist() if isinstance(genes, ndarray) else list(genes)
 
 
+def _check_genes_or_gene_space(
+    genes: Collection | None, gene_space: GeneSpace | None
+) -> None:
+    """
+    Check that a gene collection gets genes or a GeneSpace to draw
+    them from.
+    :param genes: genes received, already turned from a numpy array.
+    :param gene_space: GeneSpace object received.
+    :raises GeneticOptException: when both are empty.
+    """
+    if not (genes or gene_space):
+        raise GeneticOptException(
+            "Chromosome must be initialized with the `genes` "
+            "parameter or using a `gene_space`"
+        )
+
+
 class GeneCollection(ABC):
     """
     Represent a collection of genes.
@@ -122,11 +139,7 @@ class GeneList(GeneCollection):
         """
         if isinstance(genes, ndarray):
             genes = genes.tolist()
-        if not (genes or gene_space):
-            raise GeneticOptException(
-                "Chromosome must be initialized with the `genes` "
-                "parameter or using a `gene_space`"
-            )
+        _check_genes_or_gene_space(genes, gene_space)
         self.size = size
         if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)
@@ -215,11 +228,7 @@ class GeneSet(GeneCollection):
             genes = set(genes.flatten())
         if isinstance(genes, list):
             genes = set(genes)
-        if not (genes or gene_space):
-            raise GeneticOptException(
-                "Chromosome must be initialized with the `genes` "
-                "parameter or using a `gene_space`"
-            )
+        _check_genes_or_gene_space(genes, gene_space)
         self.size = size
         if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)

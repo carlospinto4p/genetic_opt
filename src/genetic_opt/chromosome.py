@@ -6,10 +6,8 @@ from hashlib import md5
 from time import time
 from typing import Any
 
-from numpy import ndarray
 from numpy.random import RandomState
 
-from genetic_opt.exceptions import GeneticOptException
 from genetic_opt.functions import identity_func
 from genetic_opt.gene_collection import GeneCollection, GeneList, GeneSet
 from genetic_opt.gene_space import GeneSpace
@@ -41,14 +39,6 @@ class Chromosome:
         :param random_seed: for experiments control.
         :param is_gene_set: whether inner genes are a list or a set.
         """
-        if isinstance(genes, ndarray):
-            pass
-        elif not (genes or gene_space):
-            raise GeneticOptException(
-                "Chromosome must be initialized with the `genes` "
-                "parameter or using a `gene_space`"
-            )
-
         self.is_gene_set = is_gene_set
 
         gene_class = GeneSet if is_gene_set else GeneList
@@ -56,8 +46,6 @@ class Chromosome:
             size=size, genes=genes, gene_space=gene_space
         )
 
-        self.size: int = self.gene_collection.size
-        self.genes: Collection = self.gene_collection.genes
         self.score: Score | None = None
         self.score_time: int = 0
         self.random_seed: int = random_seed
@@ -66,6 +54,16 @@ class Chromosome:
         self._random_state: RandomState | None = None
         # Kept after the first use: `random_mutate` builds a new Chromosome.
         self._id: int | None = None
+
+    @property
+    def size(self) -> int:
+        """Number of genes, read from `gene_collection`."""
+        return self.gene_collection.size
+
+    @property
+    def genes(self) -> Collection:
+        """Genes of this Chromosome, read from `gene_collection`."""
+        return self.gene_collection.genes
 
     @property
     def random_state(self) -> RandomState:
@@ -184,7 +182,6 @@ class Chromosome:
             gene_space_func=gene_space_func,
             gene_space_func_kwargs=gene_space_func_kwargs,
         )
-        mutated.genes = mutated.gene_collection.genes
         mutated.score, mutated.score_time = None, 0
         mutated._id = None
         return mutated

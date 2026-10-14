@@ -26,11 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] The "genes or gene_space" check is written three times
-  (`chromosome.py:43-50`, `gene_collection.py:84-87`, `:155-158`).
-  `Chromosome` keeps `genes` and `size` as copies of its gene
-  collection's and syncs them by hand (`chromosome.py:59-60`,
-  `:163`). (MED, M)
 - [ ] Argument checks raise the base `GeneticOptException` in
   `chromosome.py:46`, `gene_collection.py:28`, `:85`, `:156`, `:225`
   and `algorithms/base.py:919`, and `ValidationException` in
