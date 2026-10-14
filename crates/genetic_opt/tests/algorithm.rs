@@ -6,6 +6,7 @@ use std::thread::available_parallelism;
 use genetic_opt::examples::Knapsack;
 use genetic_opt::{
     Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score,
+    single_point_crossover,
 };
 
 /// Two threads, or the one that a machine with one core allows.
@@ -124,6 +125,73 @@ fn numbers(minimize: bool) -> Numbers {
         minimize,
         keep_mutations: true,
     }
+}
+
+/// Counts the ones of a chromosome. Its first population has none.
+struct ZeroStart;
+
+impl Problem for ZeroStart {
+    type Gene = u8;
+    type Solution = Vec<u8>;
+
+    fn chromosome_length(&self) -> usize {
+        10
+    }
+
+    fn minimize(&self) -> bool {
+        false
+    }
+
+    fn gene_space_size(&self) -> usize {
+        2
+    }
+
+    fn random_gene(&self, rng: &mut Rng) -> u8 {
+        rand::RngExt::random_range(rng, 0..2)
+    }
+
+    fn fitness(&self, genes: &[u8]) -> Score {
+        Score::new(genes.iter().map(|gene| f64::from(*gene)).sum())
+    }
+
+    fn decode(&self, genes: &[u8]) -> Vec<u8> {
+        genes.to_vec()
+    }
+
+    fn crossover(&self, first: &[u8], second: &[u8], rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
+        single_point_crossover(first, second, rng)
+    }
+
+    fn init_population(&self, population_size: usize, _rng: &mut Rng) -> Vec<Vec<u8>> {
+        vec![vec![0; 10]; population_size]
+    }
+}
+
+/// Run `ZeroStart` for up to 6 generations without mutations, so every
+/// chromosome is all zeros: 1 different one.
+fn fit_zeros(min_population_size: usize, stop_without_improvement: bool) -> Vec<usize> {
+    let mut config = FitConfig::new(5, 20);
+    config.mutate_prob = 0.0;
+    config.min_population_size = min_population_size;
+    config.stop_without_improvement = stop_without_improvement;
+    let result = GeneticAlgorithm::new(ZeroStart, config).fit().unwrap();
+    result
+        .metrics
+        .iter()
+        .map(|metric| metric.n_uniques)
+        .collect()
+}
+
+#[test]
+fn the_run_stops_below_min_population_size() {
+    assert_eq!(fit_zeros(2, false), [1]);
+    assert_eq!(fit_zeros(1, false), [1; 6]);
+    assert_eq!(fit_zeros(0, false), [1; 6]);
+}
+
+#[test]
+fn the_run_stops_when_the_mean_score_does_not_change() {
+    assert_eq!(fit_zeros(0, true), [1; 2]);
 }
 
 #[test]

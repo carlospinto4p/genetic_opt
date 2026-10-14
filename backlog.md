@@ -43,12 +43,6 @@ some tens of lines off.
 
 **Test coverage**
 
-- [ ] The `min_population_size` stop of `fit` in
-  `algorithms/base.py` has no Python test; the no-improvement stop
-  has one since 0.7.11, and `callback_func` and `exit_condition`
-  since 0.13.1. In
-  Rust the `min_population_size` stop and the stalled-mean stop
-  (`algorithm.rs:213-219`, `:401-406`) have none either. (MED, M)
 - [ ] `load_fit_result` (`fit_result_io.py:26-92`) on an empty or missing
   folder reaches `fit_data_list[-1]` and raises `IndexError`; a
   folder with another file in it and a corrupt BSON or JSON file

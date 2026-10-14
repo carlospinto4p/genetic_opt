@@ -186,6 +186,30 @@ def test_fit_stops_when_the_mean_score_does_not_change():
     assert len(result["metrics"]) == 2
 
 
+@pytest.mark.parametrize(
+    "min_population_size, generations", [(2, 1), (1, 6), (0, 6)]
+)
+def test_fit_stops_below_min_population_size(
+    min_population_size, generations
+):
+    # Without mutations every Chromosome is all zeros: 1 different one.
+    algorithm = ZeroStartAlgorithm()
+    algorithm.no_improvement_condition = algorithm.no_exit_condition
+    result = algorithm.fit(
+        FitConfig(
+            n_generations=5,
+            population_size=20,
+            mutate_prob=0,
+            min_population_size=min_population_size,
+            n_jobs=1,
+        ),
+        plot_metrics=False,
+    )
+    assert [metric.n_uniques for metric in result["metrics"]] == [1] * (
+        generations
+    )
+
+
 def test_fit_scores_each_chromosome_once(tmp_path):
     # The fitness function runs in worker processes, so the calls are
     # counted through a file.

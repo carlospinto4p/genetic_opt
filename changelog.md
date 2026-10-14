@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.4 - 14th October 2026
+
+- Added tests of the stop when a population has fewer different
+  Chromosomes than `min_population_size`, which had none:
+  - `tests/unit/test_binary_algs.py`:
+    `test_fit_stops_below_min_population_size`, at 2, 1 and 0 for a
+    population with 1 different Chromosome.
+  - `crates/genetic_opt/tests/algorithm.rs`: the `ZeroStart` problem,
+    `the_run_stops_below_min_population_size` and
+    `the_run_stops_when_the_mean_score_does_not_change`, the stalled
+    mean stop of the crate, which had no test either.
+
 ### v0.17.3 - 14th October 2026
 
 - Fixed `Chromosome.__eq__` in `chromosome.py`: comparing a Chromosome
