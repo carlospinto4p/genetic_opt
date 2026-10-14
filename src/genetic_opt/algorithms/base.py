@@ -22,7 +22,7 @@ from genetic_opt.functions import (
     identity_func,
     time_it_with_logger,
 )
-from genetic_opt.gene_space import GeneSpace
+from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.logs import log_format, logger
 from genetic_opt.metrics import (
     Metric,
@@ -101,7 +101,7 @@ class GeneticAlgorithm(ABC):
 
     def __init__(
         self,
-        gene_space: GeneSpace,
+        gene_space: AbstractGeneSpace,
         chromosome_length: int,
         chromosome_as_set: bool,
         decode_func: Callable[[Chromosome], Any],
@@ -152,7 +152,7 @@ class GeneticAlgorithm(ABC):
                 that will be crossed and their recombined result share the
                 same invariant property.
         """
-        self.gene_space: GeneSpace = gene_space
+        self.gene_space: AbstractGeneSpace = gene_space
         self.chromosome_length: int = chromosome_length
         self.chromosome_as_set: bool = chromosome_as_set
         self.decode_func: Callable[[Chromosome], Any] = decode_func

@@ -1,11 +1,9 @@
 """Genetic Opt Gene Space submodule."""
 
 from abc import ABC, abstractmethod
-from typing import Any, TypeVar
+from typing import Any
 
 from numpy.random import RandomState
-
-GeneSpace = TypeVar("GeneSpace", bound="AbstractGeneSpace")
 
 
 class AbstractGeneSpace(ABC):

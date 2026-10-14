@@ -8,11 +8,11 @@ from numpy import ndarray
 from numpy.random import RandomState
 
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.gene_space import GeneSpace
+from genetic_opt.gene_space import AbstractGeneSpace
 
 
 def _draw_genes(
-    gene_space: GeneSpace,
+    gene_space: AbstractGeneSpace,
     n: int,
     gene_space_func: str | None = None,
     gene_space_func_kwargs: dict | None = None,
@@ -41,7 +41,7 @@ def _draw_genes(
 
 
 def _check_genes_or_gene_space(
-    genes: Collection | None, gene_space: GeneSpace | None
+    genes: Collection | None, gene_space: AbstractGeneSpace | None
 ) -> None:
     """
     Check that a gene collection gets genes or a GeneSpace to draw
@@ -81,7 +81,7 @@ class GeneCollection(ABC):
     @abstractmethod
     def random_mutate(
         self,
-        gene_space: GeneSpace,
+        gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
         random_state: RandomState,
         gene_space_func: str | None = None,
@@ -102,7 +102,7 @@ class GeneCollection(ABC):
 
     @abstractmethod
     def select_random(
-        self, gene_space: GeneSpace, n: int | None = None
+        self, gene_space: AbstractGeneSpace, n: int | None = None
     ) -> Collection:
         """
         Select a random gene collection using the input GeneSpace.
@@ -124,7 +124,7 @@ class GeneList(GeneCollection):
         self,
         size: int,
         genes: list | None = None,
-        gene_space: GeneSpace = None,
+        gene_space: AbstractGeneSpace | None = None,
     ):
         """
         Initialize the gene list.
@@ -149,7 +149,7 @@ class GeneList(GeneCollection):
 
     def random_mutate(
         self,
-        gene_space: GeneSpace,
+        gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
         random_state: RandomState,
         gene_space_func: str | None = None,
@@ -188,7 +188,7 @@ class GeneList(GeneCollection):
         return mutated
 
     def select_random(
-        self, gene_space: GeneSpace, n: int | None = None
+        self, gene_space: AbstractGeneSpace, n: int | None = None
     ) -> list:
         """
         Select a random gene list using the input GeneSpace.
@@ -211,7 +211,7 @@ class GeneSet(GeneCollection):
         self,
         size: int,
         genes: set | None = None,
-        gene_space: GeneSpace = None,
+        gene_space: AbstractGeneSpace | None = None,
     ):
         """
         Initialize the gene set.
@@ -239,7 +239,7 @@ class GeneSet(GeneCollection):
 
     def random_mutate(
         self,
-        gene_space: GeneSpace,
+        gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
         random_state: RandomState,
         gene_space_func: str | None = None,
@@ -283,7 +283,7 @@ class GeneSet(GeneCollection):
         return mutated
 
     def select_random(
-        self, gene_space: GeneSpace, n: int | None = None
+        self, gene_space: AbstractGeneSpace, n: int | None = None
     ) -> set:
         """
         Select a random gene set using the input GeneSpace.
@@ -295,7 +295,7 @@ class GeneSet(GeneCollection):
         return self._complete_genes(genes=set(), gene_space=gene_space, n=n)
 
     def _complete_genes(
-        self, genes: set, gene_space: GeneSpace, n: int | None = None
+        self, genes: set, gene_space: AbstractGeneSpace, n: int | None = None
     ) -> set:
         """
         Return a set of genes built adding new genes to the genes received.

@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.15.0 - 14th October 2026
+
+- Removed `GeneSpace` from `src/genetic_opt/gene_space.py`. It was a
+  `TypeVar` bound to `AbstractGeneSpace`, used as the annotation of a
+  gene space everywhere, which a type checker does not read as "any
+  gene space". The annotations name `AbstractGeneSpace` in
+  `chromosome.py`, `gene_collection.py`, `algorithms/base.py` and
+  `algorithms/binary.py`, and an argument that defaults to `None` is
+  annotated `AbstractGeneSpace | None`. `downstream` imports only
+  `AbstractGeneSpace`.
+
 ### v0.14.0 - 14th October 2026
 
 - `src/genetic_opt/files.py` handles paths with `pathlib.Path`:

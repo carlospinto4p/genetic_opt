@@ -26,9 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] `src/genetic_opt/gene_space.py:11`: `GeneSpace` is a `TypeVar`
-  bound to `AbstractGeneSpace` but is used as a class annotation
-  everywhere. Annotate with the class, or rename it. (MED, S)
 - [ ] Code with no caller in this repo (check `downstream` first):
   `get_best` and `get_bests` (`algorithms/base.py:541-565`),
   which also pick the bests differently from `_get_fitted_data`;

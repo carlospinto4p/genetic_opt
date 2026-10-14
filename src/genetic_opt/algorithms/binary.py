@@ -3,7 +3,7 @@ from typing import Any
 
 from genetic_opt.algorithms.base import GeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.gene_space import BinaryGeneSpace, GeneSpace
+from genetic_opt.gene_space import AbstractGeneSpace, BinaryGeneSpace
 from genetic_opt.score import Score
 
 
@@ -44,7 +44,7 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         :param gene_space_random_seed: random seed for the Gene Space.
         :param kwargs: Keyword Arguments for the GeneticAlgorithm class.
         """
-        gene_space: GeneSpace = BinaryGeneSpace(
+        gene_space: AbstractGeneSpace = BinaryGeneSpace(
             random_seed=gene_space_random_seed
         )
         super().__init__(

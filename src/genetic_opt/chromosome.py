@@ -10,7 +10,7 @@ from numpy.random import RandomState
 
 from genetic_opt.functions import identity_func
 from genetic_opt.gene_collection import GeneCollection, GeneList, GeneSet
-from genetic_opt.gene_space import GeneSpace
+from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.score import Score
 
 
@@ -24,7 +24,7 @@ class Chromosome:
         self,
         size: int,
         genes: Collection | None = None,
-        gene_space: GeneSpace = None,
+        gene_space: AbstractGeneSpace | None = None,
         random_seed: int = 442,
         is_gene_set: bool = False,
     ):
@@ -149,7 +149,7 @@ class Chromosome:
 
     def random_mutate(
         self,
-        gene_space: GeneSpace,
+        gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
         gene_space_func: str | None = None,
         gene_space_func_kwargs: dict | None = None,
