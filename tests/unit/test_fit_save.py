@@ -268,6 +268,70 @@ def test_load_fit_result_refuses_a_score_with_an_unknown_key(
         load_fit_result(saved_run)
 
 
+@pytest.mark.parametrize("folder_name", ["empty", "missing"])
+def test_load_fit_result_refuses_a_folder_without_files(
+    tmp_path, folder_name
+):
+    (tmp_path / "empty").mkdir()
+    with pytest.raises(ValidationException, match="no fit result file"):
+        load_fit_result(str(tmp_path / folder_name))
+
+
+def test_load_fit_result_refuses_a_folder_with_another_file(saved_run):
+    with open(f"{saved_run}/notes.txt", "w") as file:
+        file.write("a note")
+    with pytest.raises(ValidationException, match="notes.txt"):
+        load_fit_result(saved_run)
+
+
+def test_load_fit_result_applies_the_load_functions(saved_run):
+    loaded = load_fit_result(
+        saved_run, load_decoded_chromosome_func=tuple, load_gene_func=str
+    )
+    plain = load_fit_result(saved_run)
+    assert loaded["bests"]["result"] == [
+        tuple(result) for result in plain["bests"]["result"]
+    ]
+    assert [decoded for decoded, _ in loaded["last_population"]] == [
+        tuple(decoded) for decoded, _ in plain["last_population"]
+    ]
+    for metric, plain_metric in zip(loaded["metrics"], plain["metrics"]):
+        assert metric.best["result"] == tuple(plain_metric.best["result"])
+        assert metric.best["encoded"].genes == [
+            str(gene) for gene in plain_metric.best["encoded"].genes
+        ]
+    chromosomes = [
+        chromosome
+        for population in loaded["historial"]
+        for _, chromosome in population
+    ] + loaded["bests"]["encoded"]
+    assert chromosomes
+    assert all(
+        gene in ("0", "1")
+        for chromosome in chromosomes
+        for gene in chromosome.genes
+    )
+
+
+def test_load_fit_result_removes_duplicates_when_asked(saved_run):
+    # The second Chromosome of the first population becomes the first.
+    file_path = f"{saved_run}/fit_data_1.json"
+    raw = load_json(file_path)
+    raw["population"][1] = raw["population"][0]
+    save_json(raw, file_path)
+    plain = load_fit_result(saved_run)
+    loaded = load_fit_result(saved_run, remove_duplicates=True)
+    for population, plain_population in zip(
+        loaded["historial"], plain["historial"], strict=True
+    ):
+        # The first of each Chromosome, in the order they were saved.
+        first_seen: dict = {}
+        for score, chromosome in plain_population:
+            first_seen.setdefault(chromosome, score)
+        assert population == [(s, c) for c, s in first_seen.items()]
+    assert len(loaded["historial"][0]) < len(plain["historial"][0])
+
+
 def test_load_fit_result_refuses_a_file_over_the_size_limit(saved_run):
     assert load_fit_result(saved_run, max_file_bytes=10**9)["bests"]
     with pytest.raises(ValidationException, match="max_file_bytes"):

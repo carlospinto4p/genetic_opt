@@ -43,12 +43,6 @@ some tens of lines off.
 
 **Test coverage**
 
-- [ ] `load_fit_result` (`fit_result_io.py:26-92`) on an empty or missing
-  folder reaches `fit_data_list[-1]` and raises `IndexError`; a
-  folder with another file in it and a corrupt BSON or JSON file
-  are untested. `remove_duplicates` (`:192-198`),
-  `load_decoded_chromosome_func` and `load_gene_func` are never
-  passed. (MED, M)
 - [ ] Mutation with probability 0 and 1 is untested for Python sets
   (`GeneSet.random_mutate` in `gene_collection.py`) and in Rust
   (`crates/genetic_opt/src/problem.rs:67-81`). Python lists have

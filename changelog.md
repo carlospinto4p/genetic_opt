@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.5 - 14th October 2026
+
+- Fixed `load_fit_result` in `fit_result_io.py`: a missing or empty
+  folder raised `IndexError`. It now raises `ValidationException`.
+- Added tests to `tests/unit/test_fit_save.py`:
+  - `test_load_fit_result_refuses_a_folder_without_files`, for an
+    empty folder and a missing one.
+  - `test_load_fit_result_refuses_a_folder_with_another_file`: a file
+    that is not a saved generation is refused by name.
+  - `test_load_fit_result_applies_the_load_functions`, for
+    `load_decoded_chromosome_func` and `load_gene_func`.
+  - `test_load_fit_result_removes_duplicates_when_asked`.
+
 ### v0.17.4 - 14th October 2026
 
 - Added tests of the stop when a population has fewer different

@@ -39,8 +39,9 @@ def load_fit_result(
         max_file_bytes: size over which a file is refused without being
             read. No limit by default.
     Raises:
-        ValidationException: a file is larger than `max_file_bytes`, or
-            its content is not the one of a fit result file.
+        ValidationException: the folder is missing or empty, a file is
+            larger than `max_file_bytes`, or its content is not the one
+            of a fit result file.
     Returns:
         a `FitResult`, with the keys `GeneticAlgorithm.fit` returns.
         `fit_metrics`, `fit_parameters` and `config` are as the files
@@ -71,6 +72,8 @@ def load_fit_result(
             if last_idx is None or population_idx > last_idx:
                 last_idx, last_raw = population_idx, raw
             generations.append((population_idx, file, population, metric))
+    if not generations:
+        raise ValidationException(f"`{folder_path}` has no fit result file")
     generations.sort(key=itemgetter(0))
     with _refuse_malformed(generations[-1][1]):
         response = _load_fit_summary(
