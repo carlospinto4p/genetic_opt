@@ -151,8 +151,6 @@ class Chromosome:
         self,
         gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
-        gene_space_func: str | None = None,
-        gene_space_func_kwargs: dict | None = None,
         random_state: RandomState = None,
     ) -> Chromosome:
         """
@@ -162,10 +160,6 @@ class Chromosome:
         :param gene_space: GeneSpace object to get new genes from.
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
-        :param gene_space_func: GeneSpace function to call for replacement.
-            Default to `select_random`.
-        :param gene_space_func_kwargs: GeneSpace function keyword arguments.
-            Default to the empty set.
         :param random_state: numpy RandomState object that decides which
             genes mutate. Default to the one of this Chromosome, which
             gives the same draws to every Chromosome sharing its seed.
@@ -179,8 +173,6 @@ class Chromosome:
             gene_space=gene_space,
             gene_mutate_prob=gene_mutate_prob,
             random_state=random_state,
-            gene_space_func=gene_space_func,
-            gene_space_func_kwargs=gene_space_func_kwargs,
         )
         mutated.score, mutated.score_time = None, 0
         mutated._id = None

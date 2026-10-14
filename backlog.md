@@ -26,16 +26,6 @@ some tens of lines off.
 
 **Refactoring**
 
-- [ ] Code with no caller in this repo (check `downstream` first):
-  `get_best` and `get_bests` (`algorithms/base.py:541-565`),
-  which also pick the bests differently from `_get_fitted_data`;
-  `gene_space_func` and `gene_space_func_kwargs`
-  (`chromosome.py:137-138`, `gene_collection.py:112-115`,
-  `:185-191`); the `.lnk` filter in `files.py:77`, `:104-105`. The
-  non-recursive branch of `get_files_inside_folder`
-  (`files.py:98-99`) walks the whole tree to keep one entry. In
-  `functions.py:43-45` the `only_hours` padding is undone by
-  `int()`. (LOW, S)
 - [ ] Types and names: `BinaryGeneSpace.select_random` is annotated
   `-> int` and returns an array for a tuple `n`
   (`gene_space.py:53-54`); `score_time` is annotated `int` and
@@ -145,7 +135,7 @@ some tens of lines off.
   `experiment_config.yml` and `fit_plots.jpg`
   are checked for existence only (`tests/unit/test_fit_save.py:35-38`);
   the knapsack test does not assert the number of generations
-  (`tests/unit/test_binary_algs.py:21`); `get_best` and `get_bests`;
+  (`tests/unit/test_binary_algs.py:21`);
   `experiment_config()` and `extra_config`; the empty-population
   error (`algorithms/base.py:918-919`) and `n_generations=0`;
   the four-panel plot (`plots.py:67-69`, `:86-100`); a `Score` with

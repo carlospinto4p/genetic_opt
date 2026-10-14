@@ -86,7 +86,6 @@ def get_files_inside_folder(
     folder: str,
     recursive: bool = False,
     return_complete_path: bool = False,
-    ignore_shortcuts: bool = True,
 ) -> list[str]:
     """
     Get all the files inside the received folder.
@@ -94,22 +93,16 @@ def get_files_inside_folder(
     :param recursive: whether to return files inside folders as well.
     :param return_complete_path: whether to append the received folder path to
         the files found inside. Default to False.
-    :param ignore_shortcuts: whether to ignore files ending with `.lnk` in
-        the response. Default to True.
     :return: a sorted list of file paths. If `return_complete_path` is False
         (default) will return a sorted list of file names.
     """
     folder_path = Path(folder)
     found = folder_path.rglob("*") if recursive else folder_path.glob("*")
-    files_inside = [
+    return sorted(
         str(p if return_complete_path else p.relative_to(folder_path))
         for p in found
         if p.is_file()
-    ]
-    if ignore_shortcuts:
-        files_inside = [f for f in files_inside if not f.endswith(".lnk")]
-    files_inside.sort()
-    return files_inside
+    )
 
 
 def load_bson(bson_path: str) -> Any:

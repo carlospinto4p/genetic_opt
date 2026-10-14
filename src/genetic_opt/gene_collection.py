@@ -11,27 +11,15 @@ from genetic_opt.exceptions import ValidationException
 from genetic_opt.gene_space import AbstractGeneSpace
 
 
-def _draw_genes(
-    gene_space: AbstractGeneSpace,
-    n: int,
-    gene_space_func: str | None = None,
-    gene_space_func_kwargs: dict | None = None,
-) -> list:
+def _draw_genes(gene_space: AbstractGeneSpace, n: int) -> list:
     """
-    Draw `n` genes from a GeneSpace, with one call to `select_random`
-    when no other function is asked for.
+    Draw `n` genes from a GeneSpace, with one call to `select_random`.
     :param gene_space: GeneSpace object to get genes from.
     :param n: number of genes to draw.
-    :param gene_space_func: GeneSpace function to call instead, once for
-        each gene. Default to `select_random`.
-    :param gene_space_func_kwargs: keyword arguments of `gene_space_func`.
     :return: a list of `n` genes.
     """
     if n <= 0:
         return []
-    if gene_space_func:
-        draw = getattr(gene_space, gene_space_func)
-        return [draw(**(gene_space_func_kwargs or {})) for _ in range(n)]
     if n == 1:
         # `select_random(n=1)` returns a collection of one gene, but a
         # gene space written before that was stated may return the gene.
@@ -84,8 +72,6 @@ class GeneCollection(ABC):
         gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
         random_state: RandomState,
-        gene_space_func: str | None = None,
-        gene_space_func_kwargs: dict | None = None,
     ) -> GeneCollection:
         """
         Get a Gene Collection with a part of the genes of this one
@@ -95,8 +81,6 @@ class GeneCollection(ABC):
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
         :param random_state: numpy RandomState object to handle randomness.
-        :param gene_space_func: GeneSpace function to call for replacement.
-        :param gene_space_func_kwargs: GeneSpace function keyword arguments.
         :return: a new GeneCollection object with the mutated genes.
         """
 
@@ -152,8 +136,6 @@ class GeneList(GeneCollection):
         gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
         random_state: RandomState,
-        gene_space_func: str | None = None,
-        gene_space_func_kwargs: dict | None = None,
     ) -> GeneList:
         """
         Get a Gene List with a part of the genes of this one replaced
@@ -163,23 +145,12 @@ class GeneList(GeneCollection):
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
         :param random_state: numpy RandomState object to handle randomness.
-        :param gene_space_func: GeneSpace function to call for replacement.
-            Default to `select_random`.
-        :param gene_space_func_kwargs: GeneSpace function keyword arguments.
-            Default to the empty set.
         :return: a new GeneList object with the mutated genes.
         """
         mutates = (
             random_state.random(len(self.genes)) < gene_mutate_prob
         ).tolist()
-        new_genes = iter(
-            _draw_genes(
-                gene_space,
-                sum(mutates),
-                gene_space_func,
-                gene_space_func_kwargs,
-            )
-        )
+        new_genes = iter(_draw_genes(gene_space, sum(mutates)))
         mutated = copy(self)
         mutated.genes = [
             next(new_genes) if gene_mutates else gene
@@ -242,8 +213,6 @@ class GeneSet(GeneCollection):
         gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
         random_state: RandomState,
-        gene_space_func: str | None = None,
-        gene_space_func_kwargs: dict | None = None,
     ) -> GeneSet:
         """
         Get a Gene Set with a part of the genes of this one replaced
@@ -253,10 +222,6 @@ class GeneSet(GeneCollection):
         :param gene_mutate_prob: probability (between 0 and 1) for each
             gene to mutate.
         :param random_state: numpy RandomState object to handle randomness.
-        :param gene_space_func: GeneSpace function to call for replacement.
-            Default to `select_random`.
-        :param gene_space_func_kwargs: GeneSpace function keyword arguments.
-            Default to the empty set.
         :return: a new GeneSet object with the mutated genes.
         """
         genes = list(self.genes)
@@ -268,14 +233,7 @@ class GeneSet(GeneCollection):
             for gene, gene_mutates in zip(genes, mutates)
             if not gene_mutates
         }
-        new_genes.update(
-            _draw_genes(
-                gene_space,
-                sum(mutates),
-                gene_space_func,
-                gene_space_func_kwargs,
-            )
-        )
+        new_genes.update(_draw_genes(gene_space, sum(mutates)))
         mutated = copy(self)
         mutated.genes = self._complete_genes(
             genes=new_genes, gene_space=gene_space

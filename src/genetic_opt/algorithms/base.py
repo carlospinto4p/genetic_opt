@@ -492,32 +492,6 @@ class GeneticAlgorithm(ABC):
                 )
         return chromosome.score
 
-    def get_best(self, population_idx: int = -1) -> tuple[Score, Any]:
-        """
-        Get the best Chromosome, decoded.
-        :param population_idx: index of the populations historial.
-            Default: -1 (last population).
-        :return: a tuple of (Score, decoded Chromosome).
-        """
-        score, chromosome = self.historial[population_idx][0]
-        return score, self.decode_func(chromosome)
-
-    def get_bests(
-        self, population_idx: int = -1, return_bests: int = 5
-    ) -> list[tuple[Score, Any]]:
-        """
-        Get the bests Chromosomes, decoded.
-        :param population_idx: index of the populations historial.
-            Default: -1 (last population)
-        :param return_bests: number of decoded Chromosomes to return.
-        :return: a list of tuples of (Score, decoded Chromosome)
-        """
-        bests = self.historial[population_idx][:return_bests]
-        return [
-            (score, self.decode_func(chromosome))
-            for score, chromosome in bests
-        ]
-
     def get_init_population(self, population_size: int) -> list[list[Any]]:
         """
         Initializes the first population of the algorithm.

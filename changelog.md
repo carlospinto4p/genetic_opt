@@ -2,6 +2,24 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.16.0 - 14th October 2026
+
+- Removed code that nothing in this repository or in `downstream` calls:
+  - `GeneticAlgorithm.get_best` and `GeneticAlgorithm.get_bests` in
+    `src/genetic_opt/algorithms/base.py`. They picked the bests from
+    the order of a population, not the way `fit` picks them.
+  - The `gene_space_func` and `gene_space_func_kwargs` arguments of
+    `Chromosome.random_mutate`, `GeneCollection.random_mutate`,
+    `GeneList.random_mutate` and `GeneSet.random_mutate`. A mutation
+    always draws its genes with `select_random`.
+  - The `ignore_shortcuts` argument of `get_files_inside_folder` in
+    `src/genetic_opt/files.py`, which left out files ending in `.lnk`.
+  - In `format_seconds` with `only_hours=True`, the padding of the
+    hours to two digits, which `int()` removed again. The text is the
+    same as before.
+- `tests/unit/test_binary_algs.py`: removed the test of
+  `gene_space_func` and the `pick` method of its gene space.
+
 ### v0.15.0 - 14th October 2026
 
 - Removed `GeneSpace` from `src/genetic_opt/gene_space.py`. It was a

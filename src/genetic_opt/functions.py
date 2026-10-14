@@ -40,8 +40,6 @@ def format_seconds(seconds: float, only_hours: bool = False) -> str:
     f_seconds = str(int(seconds)).rjust(2, "0")
     f_minutes = str(int(minutes)).rjust(2, "0")
     if only_hours:
-        if hours < 100:
-            hours = str(int(hours)).rjust(2, "0")
         return f"{int(hours)}:{f_minutes}:{f_seconds}"
     days, hours = divmod(hours, 24)
     time_ = f"{seconds:.2f} seconds"
