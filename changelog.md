@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.15 - 15th October 2026
+
+- Fixed the crate panicking in `measure` when a `Problem`'s
+  `init_population` returns no chromosomes. `first_chromosomes` now
+  returns an `Error::Validation`, as the Python package refuses an
+  empty population. Added the case to
+  `chromosomes_the_problem_cannot_hold_are_refused` in
+  `crates/genetic_opt/tests/algorithm.rs`; its `FirstGenes` problem now
+  takes the whole first population.
+
 ### v0.17.14 - 15th October 2026
 
 - Regenerated `.claude/rules/00-rule-index.md`: the `testing-areas`

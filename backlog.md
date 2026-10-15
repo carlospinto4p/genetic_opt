@@ -41,14 +41,6 @@ some tens of lines off.
     `test_utils.py:43-44` reads `m.best["score"]`.
   - `GeneticBag` (Rust `Knapsack`), which `downstream` does not use.
 
-### 2026.10.15 (found while testing the Rust validation errors, 0.17.6)
-
-- [ ] `crates/genetic_opt/src/algorithm.rs`: a `Problem` whose
-  `init_population` returns no chromosomes makes `measure` panic on
-  `self.population[0]`. Python refuses an empty population with an
-  error (`algorithms/base.py`, the empty-population error); the crate
-  could return `Error::Validation` from `first_chromosomes`. (LOW, S)
-
 ### 2026.10.15 (found while covering the small test gaps, 0.17.7)
 
 - [ ] `format_seconds` gives "1 day, 0.00 seconds" for 86400 seconds,

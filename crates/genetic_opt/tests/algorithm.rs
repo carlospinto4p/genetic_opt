@@ -150,9 +150,9 @@ fn numbers_config() -> FitConfig {
 }
 
 /// A chromosome of 3 genes out of `gene_space_size`, whose first
-/// population is `first_genes` again and again.
+/// population is `first_population`, whatever size is asked.
 struct FirstGenes {
-    first_genes: Vec<u8>,
+    first_population: Vec<Vec<u8>>,
     as_set: bool,
     gene_space_size: usize,
 }
@@ -193,8 +193,8 @@ impl Problem for FirstGenes {
         (first.to_vec(), second.to_vec())
     }
 
-    fn init_population(&self, population_size: usize, _rng: &mut Rng) -> Vec<Vec<u8>> {
-        vec![self.first_genes.clone(); population_size]
+    fn init_population(&self, _population_size: usize, _rng: &mut Rng) -> Vec<Vec<u8>> {
+        self.first_population.clone()
     }
 }
 
@@ -591,15 +591,16 @@ fn a_broken_invariant_stops_the_run() {
 
 #[test]
 fn chromosomes_the_problem_cannot_hold_are_refused() {
-    for (first_genes, as_set, gene_space_size, refused) in [
+    for (first_population, as_set, gene_space_size, refused) in [
         // A list of 2 genes.
-        (vec![1, 2], false, 12, "a chromosome has 2 genes"),
+        (vec![vec![1, 2]; 5], false, 12, "a chromosome has 2 genes"),
         // A set with a gene twice keeps 2.
-        (vec![1, 1, 2], true, 12, "a chromosome has 2 genes"),
-        (vec![0, 1, 2], true, 2, "a set of 3 genes"),
+        (vec![vec![1, 1, 2]; 5], true, 12, "a chromosome has 2 genes"),
+        (vec![vec![0, 1, 2]; 5], true, 2, "a set of 3 genes"),
+        (vec![], false, 12, "init_population returned no chromosomes"),
     ] {
         let problem = FirstGenes {
-            first_genes,
+            first_population,
             as_set,
             gene_space_size,
         };

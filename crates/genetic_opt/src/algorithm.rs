@@ -353,8 +353,15 @@ impl<P: Problem> GeneticAlgorithm<P> {
     }
 
     fn first_chromosomes(&mut self) -> Result<Vec<Chromosome<P::Gene>>> {
-        self.problem
-            .init_population(self.config.population_size, &mut self.rng)
+        let first = self
+            .problem
+            .init_population(self.config.population_size, &mut self.rng);
+        if first.is_empty() {
+            return Err(Error::Validation(
+                "init_population returned no chromosomes".into(),
+            ));
+        }
+        first
             .into_iter()
             .map(|genes| self.chromosome(genes))
             .collect()
