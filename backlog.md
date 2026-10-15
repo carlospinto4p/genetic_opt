@@ -41,13 +41,6 @@ some tens of lines off.
     `test_utils.py:43-44` reads `m.best["score"]`.
   - `GeneticBag` (Rust `Knapsack`), which `downstream` does not use.
 
-### 2026.10.13 (found while writing the `FitResult` types, 0.10.0)
-
-- [ ] `src/genetic_opt/algorithms/base.py`: `fit` with a negative
-  `n_generations` runs no generation and returns an empty dictionary,
-  which is not a `FitResult`. Refuse it with a
-  `ValidationException`, as a `population_size` below 1 is. (LOW, S)
-
 ### 2026.10.15 (found while testing the Rust validation errors, 0.17.6)
 
 - [ ] `crates/genetic_opt/src/algorithm.rs`, `breed`: the

@@ -796,6 +796,7 @@ def test_get_space_points_counts_lists_and_sets():
 @pytest.mark.parametrize(
     "parameters",
     [
+        {"n_generations": -1},
         {"population_size": 0, "min_population_size": 0},
         {"crossovers_prop": 1.5},
         {"besties_prop": -0.1},

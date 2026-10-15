@@ -341,8 +341,7 @@ class GeneticAlgorithm(ABC):
             Default to the method `default_fit_callback`.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
-        :return: a `FitResult`. It is empty with a negative
-            `n_generations`.
+        :return: a `FitResult`.
         :raises ValidationException: when a value of `config` is not
             valid.
         """
@@ -357,6 +356,10 @@ class GeneticAlgorithm(ABC):
         n_generations = config.n_generations
         population_size = config.population_size
         min_population_size = config.min_population_size
+        if n_generations < 0:
+            raise ValidationException(
+                f"{n_generations = } must not be negative"
+            )
         if population_size < 1:
             raise ValidationException(f"{population_size = } is not valid!")
         for name in ("crossovers_prop", "besties_prop", "mutate_prob"):
@@ -457,11 +460,11 @@ class GeneticAlgorithm(ABC):
                 break
         # With nothing to save, the result is built once, when the run
         # ends: it decodes the whole population.
-        if not self._saver and n_generations >= 0:
+        if not self._saver:
             fit_result = self._get_fitted_data(
                 fit_parameters=fit_parameters, n_jobs=n_jobs
             )
-        if self._saver and plot_metrics and fit_result:
+        if self._saver and plot_metrics:
             self._saver.save_plots(fit_result, other_metrics_to_plot)
         return fit_result
 

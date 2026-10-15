@@ -10,7 +10,7 @@ class FitConfig:
     """
     The parameters of a run, given to `GeneticAlgorithm.fit`.
     :param n_generations: number of generations to breed after the
-        first population.
+        first population, 0 or more.
     :param population_size: number of Chromosomes that make up each
         population.
     :param crossovers_prop: proportion of the population that is crossed

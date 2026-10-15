@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.12 - 15th October 2026
+
+- Fixed `GeneticAlgorithm.fit` returning an empty dictionary, which is
+  not a `FitResult`, when `n_generations` is negative. It now raises a
+  `ValidationException` before scoring anything, as a `population_size`
+  below 1 does. Added the case to
+  `test_fit_refuses_parameters_out_of_range` in
+  `tests/unit/test_binary_algs.py`.
+
 ### v0.17.11 - 15th October 2026
 
 - Fixed a second `fit` on the same `GeneticAlgorithm` writing its
