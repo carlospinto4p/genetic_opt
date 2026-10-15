@@ -21,9 +21,8 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="session")
-def knapsack_example() -> str:
-    """Build the knapsack example of the crate once; return its path."""
+def _build_example(name: str) -> str:
+    """Build an example program of the crate; return its path."""
     built = subprocess.run(
         [
             "cargo",
@@ -32,7 +31,7 @@ def knapsack_example() -> str:
             "--manifest-path",
             str(CRATE_MANIFEST),
             "--example",
-            "knapsack",
+            name,
             "--message-format=json",
         ],
         check=True,
@@ -44,9 +43,21 @@ def knapsack_example() -> str:
         message["executable"]
         for message in map(json.loads, built.stdout.splitlines())
         if message.get("reason") == "compiler-artifact"
-        and message["target"]["name"] == "knapsack"
+        and message["target"]["name"] == name
     )
     return executable
+
+
+@pytest.fixture(scope="session")
+def knapsack_example() -> str:
+    """Build the knapsack example of the crate once; return its path."""
+    return _build_example("knapsack")
+
+
+@pytest.fixture(scope="session")
+def numbers_example() -> str:
+    """Build the numbers example of the crate once; return its path."""
+    return _build_example("numbers")
 
 
 @pytest.mark.parametrize("extension", ["bson", "json"])
@@ -73,3 +84,35 @@ def test_python_loads_a_run_saved_by_the_rust_crate(
     assert best_score == Score(value=309.0)
     assert best_chromosome.score == Score(value=309.0)
     assert len(best_chromosome.genes) == 10
+
+
+@pytest.mark.parametrize("extension", ["bson", "json"])
+def test_python_loads_sets_and_named_scores_saved_by_the_rust_crate(
+    tmp_path, extension, numbers_example
+):
+    subprocess.run([numbers_example, str(tmp_path), extension], check=True)
+    (run_folder,) = (tmp_path / "Numbers").iterdir()
+
+    loaded = load_fit_result(str(run_folder / "fit_data"))
+    best = Score(value=30.0, name="sum", extra_metrics={"largest": 11})
+    assert loaded["bests"]["scores"][0] == best
+    assert loaded["bests"]["result"][0] == [9, 10, 11]
+    best_encoded = loaded["bests"]["encoded"][0]
+    assert best_encoded.is_gene_set
+    assert best_encoded.genes == {9, 10, 11}
+    assert loaded["metrics"][-1].best["score"] == best
+    best_score, best_chromosome = loaded["historial"][-1][0]
+    assert best_score == best
+    assert best_chromosome.score == best
+    assert best_chromosome.is_gene_set
+    assert best_chromosome.genes == {9, 10, 11}
+
+
+def test_the_rust_example_saves_bson_when_no_format_is_given(
+    tmp_path, knapsack_example
+):
+    subprocess.run([knapsack_example, str(tmp_path)], check=True)
+    (run_folder,) = (tmp_path / "Knapsack").iterdir()
+    files = get_files_inside_folder(str(run_folder / "fit_data"))
+    assert files
+    assert all(file.endswith(".bson") for file in files)

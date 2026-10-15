@@ -41,41 +41,6 @@ some tens of lines off.
     `test_utils.py:43-44` reads `m.best["score"]`.
   - `GeneticBag` (Rust `Knapsack`), which `downstream` does not use.
 
-**Test coverage**
-
-- [ ] `single_point_crossover` (`crates/genetic_opt/src/problem.rs:115-129`)
-  is reached only through `Knapsack`; its short-input branch and
-  inputs of different lengths are untested. `Knapsack::decode` and
-  `fitness` (`problems.rs:56-86`) and `decode_bag`
-  (`examples/binary.py:43-68`) have no test with a known input,
-  only the final 309, and nothing compares the two. (MED, S)
-- [ ] No set chromosome (`is_gene_set: true`) and no `Score` with
-  `name` or `extra_metrics` is ever written by Rust and loaded by
-  Python (`chromosome.rs:56-66`, `score.rs:7-10`); both layout
-  tests use the list knapsack. (MED, M)
-- [ ] Python, small gaps: `tests/unit/test_functions.py:66` asserts the
-  exact text "took 0.00 seconds" and fails after a 5 ms pause;
-  `experiment_config.yml` and `fit_plots.jpg`
-  are checked for existence only (`tests/unit/test_fit_save.py:35-38`);
-  the knapsack test does not assert the number of generations
-  (`tests/unit/test_binary_algs.py:21`);
-  `experiment_config()` and `extra_config`; the empty-population
-  error (`algorithms/base.py:918-919`) and `n_generations=0`;
-  the four-panel plot (`plots.py:67-69`, `:86-100`); a `Score` with
-  `extra_metrics` saved and loaded; `files.py` on missing and
-  corrupt files; `format_seconds` at 0, 60, 3600 and 86400 seconds
-  (the last gives "1 day, 0.00 seconds", also in `format.rs`) and
-  the "Yi" case of `format_bytes`; and `logs.py`. (LOW, M)
-- [ ] Rust, small gaps: the set and minimise tests
-  (`tests/algorithm.rs:201-238`) assert "never gets worse" but not
-  the known optimum (30 and 3); `Chromosome::new` sorting and
-  removing duplicates for a set (`chromosome.rs:16-22`); the
-  failure paths of `save.rs:55-91` and a `Problem::experiment_config`
-  that returns a value; `population()`, `metrics()`,
-  `FitResult.fit_parameters` and the `FitConfig::new` defaults; the
-  default-to-BSON branch of `examples/knapsack.rs:20-23`; the
-  `Display` text of the errors (`error.rs:6-14`). (LOW, S)
-
 ### 2026.10.12 (found while registering the project in `programme`)
 
 - [ ] `numpy` is held below 2.0 (`pyproject.toml:9`) and 1.26.4 has
@@ -125,3 +90,13 @@ some tens of lines off.
   `self.population[0]`. Python refuses an empty population with an
   error (`algorithms/base.py`, the empty-population error); the crate
   could return `Error::Validation` from `first_chromosomes`. (LOW, S)
+
+### 2026.10.15 (found while covering the small test gaps, 0.17.7)
+
+- [ ] `format_seconds` gives "1 day, 0.00 seconds" for 86400 seconds,
+  in both `src/genetic_opt/functions.py` and
+  `crates/genetic_opt/src/format.rs`: a whole number of days falls
+  through to the seconds text. Decide the text ("1 day" or
+  "1 day, 0:00:00 hours") and write it in both, with a test in
+  `tests/unit/test_functions.py` and in `format.rs`. Left untested in
+  0.17.7 so the odd text is not fixed in place by a test. (LOW, S)

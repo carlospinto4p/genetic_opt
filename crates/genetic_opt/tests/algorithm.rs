@@ -7,7 +7,7 @@ use rand::SeedableRng;
 
 use genetic_opt::examples::Knapsack;
 use genetic_opt::{
-    Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score,
+    Chromosome, Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score,
     single_point_crossover,
 };
 
@@ -125,6 +125,10 @@ impl Problem for Numbers {
     fn crossover_invariant(&self, _parents: (&[u8], &[u8]), _children: (&[u8], &[u8])) -> bool {
         self.keep_crossovers
     }
+
+    fn experiment_config(&self) -> Option<serde_json::Value> {
+        Some(serde_json::json!({"numbers": NUMBERS, "picked": PICKED}))
+    }
 }
 
 fn numbers(minimize: bool) -> Numbers {
@@ -133,6 +137,16 @@ fn numbers(minimize: bool) -> Numbers {
         keep_mutations: true,
         keep_crossovers: true,
     }
+}
+
+/// 60 generations of 30 sets. Neither of the early stops is on: such a
+/// population keeps fewer than 10 different sets, and its mean score
+/// stops changing, before its best reaches the optimum.
+fn numbers_config() -> FitConfig {
+    let mut config = FitConfig::new(60, 30);
+    config.min_population_size = 0;
+    config.stop_without_improvement = false;
+    config
 }
 
 /// A chromosome of 3 genes out of `gene_space_size`, whose first
@@ -426,10 +440,11 @@ fn a_second_fit_is_the_same_run_again() {
 
 #[test]
 fn set_chromosomes_stay_sets_and_the_best_never_gets_worse() {
-    let mut algorithm = GeneticAlgorithm::new(numbers(false), FitConfig::new(60, 30));
+    let mut algorithm = GeneticAlgorithm::new(numbers(false), numbers_config());
     let result = algorithm.fit().unwrap();
 
     assert!(result.metrics.len() > 1);
+    assert_eq!(result.bests[0].result, 9 + 10 + 11);
     // Every set of 3 numbers out of 12.
     assert_eq!(result.fit_metrics.fitness_func_calls.space_points, 220.0);
     assert!(
@@ -447,10 +462,12 @@ fn set_chromosomes_stay_sets_and_the_best_never_gets_worse() {
 
 #[test]
 fn minimize_keeps_the_lowest_scores() {
-    let mut algorithm = GeneticAlgorithm::new(numbers(true), FitConfig::new(60, 30));
+    let mut algorithm = GeneticAlgorithm::new(numbers(true), numbers_config());
     let result = algorithm.fit().unwrap();
 
     assert!(result.metrics.len() > 1);
+    // 0 + 1 + 2.
+    assert_eq!(result.bests[0].result, 3);
     assert!(
         result
             .metrics
@@ -464,6 +481,68 @@ fn minimize_keeps_the_lowest_scores() {
                 .all(|pair| pair[0].score.value <= pair[1].score.value)
         );
     }
+}
+
+#[test]
+fn a_set_chromosome_is_sorted_without_repeated_genes() {
+    let set = Chromosome::new(vec![3, 1, 3, 2], true);
+    assert_eq!(set.genes(), [1, 2, 3]);
+    assert!(set.is_gene_set());
+    assert_eq!(set, Chromosome::new(vec![2, 3, 1], true));
+
+    let list = Chromosome::new(vec![3, 1, 3, 2], false);
+    assert_eq!(list.genes(), [3, 1, 3, 2]);
+    assert!(!list.is_gene_set());
+}
+
+#[test]
+fn fit_config_new_sets_the_defaults() {
+    let config = FitConfig::new(7, 40);
+    assert_eq!((config.n_generations, config.population_size), (7, 40));
+    assert_eq!(config.crossovers_prop, 0.7);
+    assert_eq!(config.besties_prop, 0.6);
+    assert_eq!(config.mutate_prob, 0.05);
+    assert_eq!(config.min_population_size, 10);
+    assert!(config.stop_without_improvement);
+    assert_eq!(config.n_jobs, None);
+    assert_eq!(config.random_seed, 442);
+    assert!(config.extra_config.is_none());
+    assert!(config.save.is_none());
+}
+
+#[test]
+fn the_algorithm_shows_the_last_population_and_the_metrics_of_the_run() {
+    let mut config = FitConfig::new(4, 30);
+    config.n_jobs = Some(1);
+    config.random_seed = 9;
+    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
+    assert!(algorithm.population().is_empty());
+    assert!(algorithm.metrics().is_empty());
+    let result = algorithm.fit().unwrap();
+
+    assert_eq!(algorithm.population(), algorithm.history().last().unwrap());
+    assert_eq!(
+        serde_json::to_value(algorithm.metrics()).unwrap(),
+        serde_json::to_value(&result.metrics).unwrap()
+    );
+    let parameters = &result.fit_parameters;
+    assert_eq!(parameters.n_generations, 4);
+    assert_eq!(parameters.population_size, 30);
+    assert_eq!(parameters.crossovers_prop, 0.7);
+    assert_eq!(parameters.besties_prop, 0.6);
+    assert_eq!(parameters.mutate_prob, 0.05);
+    assert_eq!(parameters.min_population_size, 10);
+    assert_eq!(parameters.random_seed, 9);
+    assert_eq!(parameters.n_jobs, 1);
+}
+
+#[test]
+fn n_jobs_none_is_every_core_but_one() {
+    let cores = available_parallelism().map_or(1, |n| n.get());
+    let result = GeneticAlgorithm::new(knapsack(), FitConfig::new(1, 20))
+        .fit()
+        .unwrap();
+    assert_eq!(result.fit_parameters.n_jobs, (cores - 1).max(1));
 }
 
 #[test]
@@ -572,6 +651,83 @@ fn knapsack_sums_do_not_overflow() {
     assert_eq!(valuable.fitness(&[1, 1]).value, 2.0 * f64::from(u32::MAX));
 }
 
+/// The same bags are decoded in `tests/unit/test_binary_algs.py`,
+/// `KNOWN_BAGS`.
+#[test]
+fn knapsack_decodes_known_bags() {
+    let bags: [([u8; 10], [u8; 10], f64); 4] = [
+        ([0; 10], [0; 10], 0.0),
+        (
+            [1, 1, 1, 1, 0, 1, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, 0, 0, 0, 0],
+            309.0,
+        ),
+        ([1; 10], [1, 1, 1, 1, 0, 0, 0, 0, 0, 0], 266.0),
+        (
+            [0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+            84.0,
+        ),
+    ];
+    for (genes, decoded, value) in bags {
+        assert_eq!(knapsack().decode(&genes), decoded);
+        assert_eq!(knapsack().fitness(&genes).value, value);
+    }
+}
+
+#[test]
+fn knapsack_takes_nothing_after_the_first_object_that_does_not_fit() {
+    let bag = Knapsack::new(vec![5, 10, 1], vec![1, 1, 1], 12).unwrap();
+    assert_eq!(bag.decode(&[1, 1, 1]), vec![1, 0, 0]);
+}
+
+#[test]
+fn single_point_crossover_cuts_at_every_position_between_two_genes() {
+    let mut rng = Rng::seed_from_u64(1);
+    let mut cuts = BTreeSet::new();
+    for _ in 0..200 {
+        let (first, second) = single_point_crossover(&[0; 5], &[1; 5], &mut rng);
+        let cut = first.iter().position(|gene| *gene == 1).unwrap();
+        assert_eq!(first, [vec![0; cut], vec![1; 5 - cut]].concat());
+        assert_eq!(second, [vec![1; cut], vec![0; 5 - cut]].concat());
+        cuts.insert(cut);
+    }
+    assert_eq!(cuts, BTreeSet::from([1, 2, 3, 4]));
+}
+
+#[test]
+fn single_point_crossover_of_fewer_than_two_genes_returns_the_parents() {
+    let mut rng = Rng::seed_from_u64(1);
+    assert_eq!(
+        single_point_crossover(&[0], &[1], &mut rng),
+        (vec![0], vec![1])
+    );
+    assert_eq!(
+        single_point_crossover::<u8>(&[], &[], &mut rng),
+        (vec![], vec![])
+    );
+    // The shorter parent sets the length.
+    assert_eq!(
+        single_point_crossover(&[0], &[1, 1, 1], &mut rng),
+        (vec![0], vec![1, 1, 1])
+    );
+}
+
+#[test]
+fn single_point_crossover_of_different_lengths_cuts_within_the_shorter() {
+    let mut rng = Rng::seed_from_u64(1);
+    let mut cuts = BTreeSet::new();
+    for _ in 0..200 {
+        let (first, second) = single_point_crossover(&[0; 3], &[1; 5], &mut rng);
+        let cut = first.iter().position(|gene| *gene == 1).unwrap();
+        // Each child keeps the tail, and so the length, of the other parent.
+        assert_eq!(first, [vec![0; cut], vec![1; 5 - cut]].concat());
+        assert_eq!(second, [vec![1; cut], vec![0; 3 - cut]].concat());
+        cuts.insert(cut);
+    }
+    assert_eq!(cuts, BTreeSet::from([1, 2]));
+}
+
 #[test]
 fn a_run_is_saved_one_file_per_generation() {
     for (format, extension) in [(SaveFormat::Json, "json"), (SaveFormat::Bson, "bson")] {
@@ -655,6 +811,31 @@ fn two_runs_with_one_name_get_a_folder_each() {
         assert_eq!(run_folder.parent().unwrap(), folder.path().join("bag"));
         assert!(run_folder.join("experiment_config.yml").is_file());
     }
+}
+
+#[test]
+fn the_experiment_config_of_the_problem_is_saved() {
+    let folder = tempfile::tempdir().unwrap();
+    let config = saving_config(folder.path(), "numbers");
+    let result = GeneticAlgorithm::new(numbers(false), config).fit().unwrap();
+
+    let file = File::open(result.save_folder.unwrap().join("experiment_config.yml")).unwrap();
+    let saved: serde_json::Value = serde_norway::from_reader(file).unwrap();
+    assert_eq!(
+        saved["experiment_config"],
+        serde_json::json!({"numbers": 12, "picked": 3})
+    );
+    assert_eq!(saved["fit_parameters"]["population_size"], 20);
+}
+
+#[test]
+fn a_save_path_that_cannot_be_created_stops_the_run() {
+    let folder = tempfile::tempdir().unwrap();
+    let file = folder.path().join("a_file");
+    File::create(&file).unwrap();
+
+    let error = fit_error(knapsack(), saving_config(&file, "bag"));
+    assert!(matches!(error, Error::Io(_)), "{error:?}");
 }
 
 #[test]

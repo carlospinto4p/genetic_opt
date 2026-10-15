@@ -2,6 +2,47 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.7 - 15th October 2026
+
+- Added `crates/genetic_opt/examples/numbers.rs`: picks 3 different
+  numbers under 12 with the highest sum. Its chromosomes are sets and
+  its scores have a name and extra metrics, so a run it saves has the
+  parts of the layout the knapsack example leaves out. The README names
+  it.
+- Added tests to `tests/integration/test_rust_layout.py`:
+  - `test_python_loads_sets_and_named_scores_saved_by_the_rust_crate`,
+    on a run of the `numbers` example saved as BSON and as JSON.
+  - `test_the_rust_example_saves_bson_when_no_format_is_given`.
+- Added tests to `crates/genetic_opt/tests/algorithm.rs`:
+  - `knapsack_decodes_known_bags`, with the same four bags as
+    `KNOWN_BAGS` in `tests/unit/test_binary_algs.py`, and
+    `knapsack_takes_nothing_after_the_first_object_that_does_not_fit`.
+  - `single_point_crossover` on every cut, on fewer than two genes and
+    on parents of different lengths.
+  - The set and minimise runs now assert the optimum, 30 and 3. They
+    run with `min_population_size` 0 and without the stalled-mean
+    stop, which ended them at 28 before.
+  - `Chromosome::new` on a set, the `FitConfig::new` defaults,
+    `population()`, `metrics()`, `fit_parameters`, `n_jobs: None`, a
+    `Problem::experiment_config` that is saved, and a save path that
+    cannot be created.
+- Added `each_error_names_its_kind` to `crates/genetic_opt/src/error.rs`.
+- Added Python unit tests:
+  - `test_binary_algs.py`: the bag decoding and scoring known bags, the
+    generations of the knapsack run, an empty first population and a
+    run of 0 generations.
+  - `test_fit_save.py`: the content of `experiment_config.yml`, the
+    `extra_config` in each saved generation, that `fit_plots.jpg` is a
+    JPEG, and the panels of the plot with and without other keys.
+    `count_ones` now gives extra metrics, so every save and load test
+    carries them.
+  - `test_files.py`: missing and corrupt JSON and BSON files, and
+    `get_file_size` of a missing file.
+  - `test_functions.py`: `format_seconds` at 0, 60 and 3600 seconds,
+    the `YiB` case of `format_bytes`, and `log_format`.
+- Fixed `test_time_it_with_logger_logs_and_returns`: it asserted
+  "took 0.00 seconds" and failed when the call took 5 ms or more.
+
 ### v0.17.6 - 15th October 2026
 
 - Fixed `median` in `crates/genetic_opt/src/metrics.rs`: with no values

@@ -1,5 +1,7 @@
+import json
 import logging
 
+import bson
 import pytest
 import yaml
 
@@ -7,6 +9,7 @@ from genetic_opt import files
 from genetic_opt.files import (
     create_new_folder,
     ensure_file_extension,
+    get_file_size,
     get_files_inside_folder,
     load_bson,
     load_json,
@@ -139,3 +142,29 @@ def test_ensure_file_extension(file_path, extension, expected):
 def test_a_bson_file_in_a_folder_with_a_dot_is_saved_and_loaded(tmp_path):
     save_bson(DATA, f"{tmp_path}/run.v2/data")
     assert load_bson(f"{tmp_path}/run.v2/data.bson") == DATA
+
+
+@pytest.mark.parametrize("load", [load_json, load_bson])
+def test_loading_a_missing_file_raises(tmp_path, load):
+    with pytest.raises(FileNotFoundError):
+        load(f"{tmp_path}/missing")
+
+
+def test_loading_a_corrupt_json_file_raises(tmp_path):
+    (tmp_path / "data.json").write_text('{"name": ')
+    with pytest.raises(json.JSONDecodeError):
+        load_json(f"{tmp_path}/data.json")
+
+
+def test_loading_a_corrupt_bson_file_raises(tmp_path):
+    save_bson(DATA, f"{tmp_path}/data")
+    content = (tmp_path / "data.bson").read_bytes()
+    (tmp_path / "data.bson").write_bytes(content[:-3])
+    with pytest.raises(bson.errors.InvalidBSON):
+        load_bson(f"{tmp_path}/data.bson")
+
+
+def test_get_file_size_of_a_missing_file_is_none(tmp_path):
+    assert get_file_size(f"{tmp_path}/missing") is None
+    save_json(DATA, f"{tmp_path}/data")
+    assert get_file_size(f"{tmp_path}/data.json").endswith(" B")

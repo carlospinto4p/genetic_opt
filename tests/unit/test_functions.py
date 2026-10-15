@@ -18,6 +18,7 @@ from genetic_opt.functions import (
     time_it_with_logger,
 )
 from genetic_opt.gene_space import BinaryGeneSpace
+from genetic_opt.logs import log_format
 
 
 def test_identity_func_returns_its_input():
@@ -28,8 +29,11 @@ def test_identity_func_returns_its_input():
 @pytest.mark.parametrize(
     "seconds, expected",
     [
+        (0, "0.00 seconds"),
         (12.345, "12.35 seconds"),
+        (60, "1:00 minutes"),
         (75, "1:15 minutes"),
+        (3_600, "1:00:00 hours"),
         (3_725, "1:02:05 hours"),
         (90_000, "1 day, 1:00:00 hours"),
         (200_000, "2 days, 7:33:20 hours"),
@@ -45,7 +49,14 @@ def test_format_seconds_only_hours():
 
 @pytest.mark.parametrize(
     "num_bytes, expected",
-    [(512, "512.0 B"), (1536, "1.5 KiB"), (3 * 1024**3, "3.0 GiB")],
+    [
+        (512, "512.0 B"),
+        (1536, "1.5 KiB"),
+        (-2048, "-2.0 KiB"),
+        (3 * 1024**3, "3.0 GiB"),
+        (1024**8, "1.0 YiB"),
+        (2048 * 1024**8, "2048.0 YiB"),
+    ],
 )
 def test_format_bytes(num_bytes, expected):
     assert format_bytes(num_bytes) == expected
@@ -64,10 +75,18 @@ def test_time_it_with_logger_logs_and_returns(caplog):
 
     with caplog.at_level(logging.INFO, logger="test_time_it"):
         assert double(4) == 8
-    assert [r.message for r in caplog.records] == [
-        "`double` started...",
-        "`double` took 0.00 seconds",
-    ]
+    started, took = [r.message for r in caplog.records]
+    assert started == "`double` started..."
+    # The time is whatever the call took on this machine.
+    assert re.fullmatch(r"`double` took \d+\.\d\d seconds", took)
+
+
+def test_log_format_keeps_the_order_of_the_keys():
+    assert log_format({"b": 1, "a": [1, 2]}) == "{'b': 1, 'a': [1, 2]}"
+
+
+def test_log_format_indents_the_lines_it_wraps():
+    assert log_format({"b": 1, "a": 2}, width=1) == "{  'b': 1,\n   'a': 2}"
 
 
 def test_exception_message_includes_the_processing_object():

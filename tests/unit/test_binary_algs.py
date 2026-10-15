@@ -44,6 +44,8 @@ def test_genetic_bag():
     assert best_bag == [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
     # There are different, tied best encodes for this problem, so only
     # the decoded bag is asserted.
+    # The mean score stops changing long before the 100 generations.
+    assert len(opt_data["metrics"]) == 9
 
 
 class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
@@ -62,6 +64,34 @@ class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
 
     def get_init_population(self, population_size: int) -> list[list[int]]:
         return [[0] * self.chromosome_length for _ in range(population_size)]
+
+
+class EmptyStartAlgorithm(ZeroStartAlgorithm):
+    """Its first population has no Chromosomes."""
+
+    def get_init_population(self, population_size: int) -> list[list[int]]:
+        return []
+
+
+def test_fit_refuses_a_first_population_without_chromosomes():
+    with pytest.raises(ValidationException, match="empty population"):
+        EmptyStartAlgorithm().fit(
+            FitConfig(n_generations=3, population_size=20, n_jobs=1),
+            plot_metrics=False,
+        )
+
+
+def test_fit_with_0_generations_scores_the_first_population_only():
+    algorithm = ZeroStartAlgorithm()
+    result = algorithm.fit(
+        FitConfig(n_generations=0, population_size=20, n_jobs=1),
+        plot_metrics=False,
+    )
+    assert len(result["metrics"]) == 1
+    assert len(algorithm.historial) == 1
+    assert result["fit_parameters"]["n_generations"] == 0
+    assert result["bests"]["scores"] == [Score(value=0)]
+    assert len(result["last_population"]) == 20
 
 
 class NumbersGeneSpace(AbstractGeneSpace):
@@ -494,6 +524,36 @@ def test_a_broken_invariant_stops_the_run(invariant):
 def test_the_bag_refuses_weights_and_values_of_different_lengths():
     with pytest.raises(ValidationException, match="must be the same"):
         GeneticBag(weights=[1, 2], values=[3], capacity=3)
+
+
+# The same bags are decoded in `crates/genetic_opt/tests/algorithm.rs`,
+# `knapsack_decodes_known_bags`.
+KNOWN_BAGS = [
+    ([0] * 10, [0] * 10, 0),
+    ([1, 1, 1, 1, 0, 1, 0, 0, 0, 0], [1, 1, 1, 1, 0, 1, 0, 0, 0, 0], 309),
+    ([1] * 10, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0], 266),
+    ([0, 0, 0, 0, 0, 0, 0, 1, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0], 84),
+]
+
+
+@pytest.mark.parametrize("genes, decoded, value", KNOWN_BAGS)
+def test_the_bag_decodes_and_scores_known_bags(genes, decoded, value):
+    genetic_bag = GeneticBag(
+        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+        capacity=165,
+    )
+    chromosome = Chromosome(size=10, genes=genes)
+    assert genetic_bag.decode_func(chromosome) == decoded
+    assert genetic_bag.algo_fitness_func(chromosome).value == value
+
+
+def test_the_bag_takes_nothing_after_the_first_object_that_does_not_fit():
+    genetic_bag = GeneticBag(
+        weights=[5, 10, 1], values=[1, 1, 1], capacity=12
+    )
+    chromosome = Chromosome(size=3, genes=[1, 1, 1])
+    assert genetic_bag.decode_func(chromosome) == [1, 0, 0]
 
 
 def test_fit_without_a_save_path_decodes_the_population_once():

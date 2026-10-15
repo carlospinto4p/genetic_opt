@@ -1,9 +1,12 @@
 from os.path import exists
 
+import matplotlib.pyplot as plt
 import pytest
+import yaml
 
 from genetic_opt.algorithms import FitConfig, SaveConfig
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
+from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import get_files_inside_folder, load_json, save_json
 from genetic_opt.fit_result import (
@@ -24,11 +27,20 @@ def decode_genes(chromosome) -> list[int]:
 
 
 def count_ones(chromosome) -> Score:
-    return Score(value=float(sum(decode_genes(chromosome))), name="ones")
+    genes = decode_genes(chromosome)
+    # The extra metrics go through every save and load of a Score.
+    return Score(
+        value=float(sum(genes)),
+        name="ones",
+        extra_metrics={"zeros": genes.count(0), "first": genes[:2]},
+    )
 
 
 def ones_algorithm(
-    save_path, experiment_name: str = "ones", save_as_bson: bool = True
+    save_path,
+    experiment_name: str = "ones",
+    save_as_bson: bool = True,
+    **kwargs,
 ) -> BinaryGeneticAlgorithm:
     return BinaryGeneticAlgorithm(
         chromosome_length=12,
@@ -43,6 +55,7 @@ def ones_algorithm(
             as_bson=save_as_bson,
             serialize_gene_func=int,
         ),
+        **kwargs,
     )
 
 
@@ -176,6 +189,100 @@ def test_load_fit_result_reads_a_run_saved_before_0_7_0(tmp_path):
     loaded = load_fit_result(folder)
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["historial"] == fit_result["historial"]
+
+
+def test_the_saved_scores_keep_their_name_and_extra_metrics(saved_run):
+    best = load_fit_result(saved_run)["bests"]["scores"][0]
+    assert best.name == "ones"
+    assert best.extra_metrics["zeros"] == 12 - best.value
+    assert len(best.extra_metrics["first"]) == 2
+
+
+@pytest.mark.parametrize("save_as_bson", [True, False])
+def test_experiment_config_yml_holds_the_parameters_and_the_config(
+    tmp_path, save_as_bson
+):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=save_as_bson)
+    algorithm.experiment_config = lambda: {"note": "ones", "length": 12}
+    fit_result = algorithm.fit(
+        FitConfig(n_generations=1, population_size=20, n_jobs=1),
+        plot_metrics=False,
+    )
+    with open(f"{algorithm.save_path}/experiment_config.yml") as file:
+        saved = yaml.safe_load(file)
+    assert saved == {
+        "fit_parameters": fit_result["fit_parameters"],
+        "experiment_config": {"note": "ones", "length": 12},
+    }
+
+
+def test_experiment_config_yml_leaves_out_an_empty_config(saved_run):
+    with open(f"{saved_run}/../experiment_config.yml") as file:
+        assert list(yaml.safe_load(file)) == ["fit_parameters"]
+
+
+def test_the_extra_config_is_returned_and_saved_with_each_generation(
+    tmp_path,
+):
+    extra_config = {"note": "ones", "weights": [1, 2]}
+    algorithm = ones_algorithm(
+        tmp_path, save_as_bson=False, extra_config=extra_config
+    )
+    fit_result = algorithm.fit(
+        FitConfig(n_generations=2, population_size=20, n_jobs=1),
+        plot_metrics=False,
+    )
+    folder = f"{algorithm.save_path}/fit_data"
+    assert fit_result["config"] == extra_config
+    assert load_fit_result(folder)["config"] == extra_config
+    for file in get_files_inside_folder(folder, return_complete_path=True):
+        assert load_json(file)["config"] == extra_config
+
+
+def test_fit_saves_the_plot_as_a_jpeg(tmp_path):
+    algorithm = ones_algorithm(tmp_path)
+    algorithm.fit(FitConfig(n_generations=1, population_size=20, n_jobs=1))
+    with open(f"{algorithm.save_path}/fit_plots.jpg", "rb") as file:
+        # Every JPEG file starts with these bytes.
+        assert file.read(3) == b"\xff\xd8\xff"
+
+
+@pytest.mark.parametrize(
+    "other_keys, titles",
+    [
+        (
+            None,
+            ["Summary", "Uniques in populations", "Fit times - Seconds"],
+        ),
+        (
+            {"first gene": lambda chromosome: chromosome.genes[0]},
+            [
+                "Summary",
+                "Other scores - Bests in each population",
+                "Uniques in populations",
+                "Fit times - Seconds",
+            ],
+        ),
+    ],
+)
+def test_the_plot_has_a_panel_for_the_other_keys_when_given(
+    saved_run, other_keys, titles
+):
+    loaded = load_fit_result(saved_run)
+    plot_genetic_algo_metrics(
+        loaded["metrics"], loaded["fit_metrics"], other_keys=other_keys
+    )
+    figure = plt.gcf()
+    try:
+        assert [axes.get_title() for axes in figure.axes] == titles
+        assert figure.get_suptitle() == "Genetic Algorithm Metrics - Ones"
+        if other_keys:
+            legend = figure.axes[1].get_legend()
+            assert [t.get_text() for t in legend.get_texts()] == [
+                "first gene"
+            ]
+    finally:
+        plt.close(figure)
 
 
 def test_fit_saves_the_plot_when_the_run_ends(tmp_path):

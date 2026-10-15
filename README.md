@@ -110,6 +110,10 @@ cargo run --manifest-path crates/genetic_opt/Cargo.toml \
     --example knapsack -- <folder> bson
 ```
 
+The `numbers` example picks 3 different numbers under 12 with the
+highest sum. Its chromosomes are sets and its scores have a name and
+extra metrics. It takes the same arguments.
+
 Differences with the Python package:
 
 - A seed does not give the same run in both: they draw their random
