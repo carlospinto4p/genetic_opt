@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.8 - 15th October 2026
+
+- Raised the `numpy` bound in `pyproject.toml` from `<2.0.0` to
+  `<3.0.0`; `uv.lock` now has 2.5.4. 1.26.4 had no built wheel for
+  Python 3.14, so every new environment compiled it for about 3
+  minutes. `RandomState` gives the same numbers in numpy 2, so a seeded
+  run gives the same result. Removed the note on that from `CLAUDE.md`.
+- Fixed `_draw_genes` in `src/genetic_opt/gene_collection.py`: a gene
+  drawn alone stayed a numpy scalar, which numpy 2 prints as
+  `np.int64(1)`. A Chromosome holding one got another `id` than the
+  same genes as `int`, so it was not found equal to them. The gene is
+  now a plain Python value, as the genes drawn together already were.
+- Added `test_a_gene_drawn_alone_is_a_plain_python_value` to
+  `tests/unit/test_functions.py`.
+
 ### v0.17.7 - 15th October 2026
 
 - Added `crates/genetic_opt/examples/numbers.rs`: picks 3 different

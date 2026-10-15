@@ -33,9 +33,6 @@ cargo fmt --manifest-path crates/genetic_opt/Cargo.toml --check
 cargo clippy --manifest-path crates/genetic_opt/Cargo.toml --all-targets -- -D warnings
 ```
 
-`numpy` is held below 2.0 and has no built wheel for Python 3.14, so
-the first `uv sync` on a machine compiles it (about 3 minutes).
-
 ## Core Rules
 
 1. **Self-Improvement**: When the user corrects a mistake, ALWAYS update the relevant guidelines (`.claude/rules/` or this file) to prevent it from happening again.

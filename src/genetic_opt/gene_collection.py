@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Collection
 from copy import copy
 
-from numpy import ndarray
+from numpy import generic, ndarray
 from numpy.random import RandomState
 
 from genetic_opt.exceptions import ValidationException
@@ -23,7 +23,10 @@ def _draw_genes(gene_space: AbstractGeneSpace, n: int) -> list:
     if n == 1:
         # `select_random(n=1)` returns a collection of one gene, but a
         # gene space written before that was stated may return the gene.
-        return [gene_space.select_random()]
+        gene = gene_space.select_random()
+        # As `tolist` below does: numpy 2 prints a numpy scalar as
+        # `np.int64(1)`, which changes the `id` of its Chromosome.
+        return [gene.item() if isinstance(gene, generic) else gene]
     genes = gene_space.select_random(n=n)
     return genes.tolist() if isinstance(genes, ndarray) else list(genes)
 

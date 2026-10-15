@@ -161,6 +161,19 @@ def test_chromosome_genes_and_size_follow_its_gene_collection(is_gene_set):
     assert chromosome.genes is chromosome.gene_collection.genes
 
 
+@pytest.mark.parametrize("is_gene_set", [False, True])
+def test_a_gene_drawn_alone_is_a_plain_python_value(is_gene_set):
+    # A single gene is drawn without `n`, and `BinaryGeneSpace` returns
+    # a numpy integer for it. numpy 2 prints that as `np.int64(1)`, so
+    # it gave the Chromosome another `id` than the same genes as `int`.
+    drawn = Chromosome(
+        size=1, gene_space=BinaryGeneSpace(), is_gene_set=is_gene_set
+    )
+    (gene,) = drawn.genes
+    assert type(gene) is int
+    assert drawn == Chromosome(size=1, genes=[gene], is_gene_set=is_gene_set)
+
+
 @pytest.mark.parametrize(
     "exception_class", [InvariantException, ValidationException]
 )

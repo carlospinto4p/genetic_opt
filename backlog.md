@@ -43,11 +43,6 @@ some tens of lines off.
 
 ### 2026.10.12 (found while registering the project in `programme`)
 
-- [ ] `numpy` is held below 2.0 (`pyproject.toml:9`) and 1.26.4 has
-  no built wheel for Python 3.14, the version `.python-version` now
-  asks for. `uv sync` compiled it from source: 3 minutes 25 seconds
-  on 12th October 2026, paid again on every new environment. Check
-  whether the package works with `numpy` 2 and raise the bound.
 - [ ] `.claude/rules/testing.md` holds text of this repo alone: the
   "Rust crate" row of the table, the paragraph on the integration
   suite and the `crates/genetic_opt/**` path. `programme` pushes
