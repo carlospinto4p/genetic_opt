@@ -2,6 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.9 - 15th October 2026
+
+- Added `AGENTS.md`, so Codex and OpenCode read `CLAUDE.md` and the
+  rules in `.claude/rules/`. It points at them and copies none of them,
+  in the same form as `downstream`'s.
+
 ### v0.17.8 - 15th October 2026
 
 - Raised the `numpy` bound in `pyproject.toml` from `<2.0.0` to
