@@ -41,16 +41,6 @@ some tens of lines off.
     `test_utils.py:43-44` reads `m.best["score"]`.
   - `GeneticBag` (Rust `Knapsack`), which `downstream` does not use.
 
-### 2026.10.13 (found while making a second `fit` a new run, 0.7.13)
-
-- [ ] `src/genetic_opt/algorithms/save.py:73`: `FitSaver` creates the
-  folder of the run when the `GeneticAlgorithm` is built, so a second
-  `fit` on the same object writes its `fit_data_<n>` files over those
-  of the first. The Rust crate creates a folder in each `fit`
-  (`algorithm.rs`, `create_run_folder`). `downstream` writes into
-  `self.save_path` before `fit` (`rule_optimizer.py:321-326`), so the
-  first folder has to exist at once. (LOW, S)
-
 ### 2026.10.13 (found while writing the `FitResult` types, 0.10.0)
 
 - [ ] `src/genetic_opt/algorithms/base.py`: `fit` with a negative

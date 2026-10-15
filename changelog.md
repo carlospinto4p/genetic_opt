@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.11 - 15th October 2026
+
+- Fixed a second `fit` on the same `GeneticAlgorithm` writing its
+  `fit_data_<n>` files over those of the first run. Each `fit` after
+  the first now saves in a new folder, as the Rust crate does, and
+  `save_path` holds it. The first run still saves in the folder made
+  when the object is built, so it can be written to before `fit`.
+  - `FitSaver.start_run` in `src/genetic_opt/algorithms/save.py` gives
+    the folder of a run that starts.
+  - Added `test_a_second_fit_saves_in_a_new_folder` to
+    `tests/unit/test_fit_save.py`.
+
 ### v0.17.10 - 15th October 2026
 
 - Moved the "Rust crate" row of the suites table and the paragraph on

@@ -320,6 +320,39 @@ def test_runs_started_in_the_same_second_get_a_folder_each(
         ] == ["experiment_config.yml", "fit_data/fit_data_1.bson"]
 
 
+def test_a_second_fit_saves_in_a_new_folder(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "genetic_opt.algorithms.save.now_for_file_path",
+        lambda: "20261012_101500",
+    )
+    algorithm = ones_algorithm(tmp_path)
+    first_folder = algorithm.save_path
+    saved = []
+    for n_generations in (2, 1):
+        algorithm.fit(
+            FitConfig(
+                n_generations=n_generations, population_size=20, n_jobs=1
+            ),
+            plot_metrics=False,
+            exit_condition=lambda _: False,
+        )
+        saved.append(
+            (
+                algorithm.save_path,
+                get_files_inside_folder(f"{algorithm.save_path}/fit_data"),
+            )
+        )
+    assert saved == [
+        (
+            first_folder,
+            ["fit_data_1.bson", "fit_data_2.bson", "fit_data_3.bson"],
+        ),
+        (f"{first_folder}_2", ["fit_data_1.bson", "fit_data_2.bson"]),
+    ]
+    # The first run's files are not written over by the second.
+    assert len(get_files_inside_folder(f"{first_folder}/fit_data")) == 3
+
+
 @pytest.mark.parametrize(
     "experiment_name", ["../elsewhere", "ones/../..", "/elsewhere", "..\\out"]
 )

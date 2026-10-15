@@ -32,7 +32,9 @@ class FitSaver:
         Create the folder of a run that starts now, as
         `<save.path>/<experiment_name>/<UTC date and time>`, with `_2`,
         `_3` and so on added when it exists. It is created here, so two
-        runs started in the same second do not share it.
+        runs started in the same second do not share it. The first run
+        is saved in it, and each later one in a new folder made by
+        `start_run`.
         :param save: where and how to save the run.
         :param experiment_name: a path inside `save.path`: not an
             absolute one, and without `..`.
@@ -47,9 +49,28 @@ class FitSaver:
                 f"a path inside the save path"
             )
         self.save: SaveConfig = save
-        self.folder: str = create_new_folder(
-            str(Path(save.path) / experiment_name / now_for_file_path())
+        self._experiment_folder: Path = Path(save.path) / experiment_name
+        self.folder: str = self._new_folder()
+        # Whether a run was saved in `self.folder` already
+        self._folder_used: bool = False
+
+    def _new_folder(self) -> str:
+        """Create the folder of a run that starts now."""
+        return create_new_folder(
+            str(self._experiment_folder / now_for_file_path())
         )
+
+    def start_run(self) -> str:
+        """
+        Get the folder of a run that starts: the one made when this
+        `FitSaver` was built for the first run, and a new one for each
+        later run.
+        :return: the folder, also kept in `self.folder`.
+        """
+        if self._folder_used:
+            self.folder = self._new_folder()
+        self._folder_used = True
+        return self.folder
 
     def save_experiment_config(
         self, fit_parameters: FitParameters, experiment_config: dict

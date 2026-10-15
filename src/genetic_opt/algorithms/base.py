@@ -144,8 +144,9 @@ class GeneticAlgorithm(ABC):
         :param extra_config: Additional dictionary that will be returned
             by the `fit` method, as a new key named `config`.
         :param save: Where and how to save each run. Nothing is saved
-            without it. The folder of the run is created at once, and
-            `self.save_path` holds it.
+            without it. The folder of the first run is created at once,
+            and `self.save_path` holds it. Each later `fit` saves in a
+            new folder, which `self.save_path` then holds.
         :param mutation_invariant: Optional function to check if the
             Chromosome that will mutate and the mutation result share the
             same invariant property.
@@ -393,6 +394,7 @@ class GeneticAlgorithm(ABC):
         self._score_requests = 0
         # Save fit parameters with extra config
         if self._saver:
+            self.save_path = self._saver.start_run()
             self._saver.save_experiment_config(
                 fit_parameters, self.experiment_config()
             )
