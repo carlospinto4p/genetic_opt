@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.10 - 15th October 2026
+
+- Moved the "Rust crate" row of the suites table and the paragraph on
+  the integration suite from `.claude/rules/testing.md` to
+  `.claude/rules/testing-areas.md`. `programme` refuses to push
+  `testing.md` over text added inside one of its sections, so this repo
+  stopped getting its updates. Only the `paths:` header now differs
+  from the shared copy, and the push keeps a project's own `paths:`.
+- Updated the `testing-areas.md` row of `AGENTS.md` to match.
+
 ### v0.17.9 - 15th October 2026
 
 - Added `AGENTS.md`, so Codex and OpenCode read `CLAUDE.md` and the

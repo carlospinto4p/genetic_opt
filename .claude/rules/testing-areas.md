@@ -1,8 +1,8 @@
 ---
 name: testing-areas
-description: What the test suites and the Rust crate build take
-version: 1.0
-# Recorded times: only when tests or the crate are in play.
+description: The Rust crate's tests, and what the suites and its build take
+version: 1.1
+# Rust suite and recorded times: only when tests or the crate are in play.
 paths:
   - "tests/**"
   - "crates/**"
@@ -10,8 +10,21 @@ paths:
 
 # Testing: what is particular to genetic_opt
 
-The additions of this repo to `testing.md`, which `programme` pushes
-to every Python project and would overwrite.
+The additions of this repo to `testing.md`. `programme` pushes that
+file to every Python project and refuses to push it over text a
+project added inside its sections, so the additions live here.
+
+## The Rust crate's suite
+
+A third suite beside the two in `testing.md`:
+
+| Suite | Location | Runs with | Purpose |
+|-------|----------|-----------|---------|
+| Rust crate | `crates/genetic_opt/tests/` and inline `#[cfg(test)]` | `cargo test --manifest-path crates/genetic_opt/Cargo.toml` | The Rust implementation |
+
+The integration suite here builds and runs the Rust example program
+and loads its output with the Python package. It carries the
+`integration` marker and is skipped when `cargo` is not installed.
 
 ## Recorded times
 

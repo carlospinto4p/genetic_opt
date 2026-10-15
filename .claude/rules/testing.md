@@ -20,11 +20,6 @@ per the global `testing-python.md` rule:
 |-------|----------|-----------|---------|
 | Unit | `tests/unit/` | `uv run pytest tests/unit` | Fast, isolated, no real data |
 | Integration | `tests/integration/` | `uv run pytest tests/integration` | Real collaborators, fixtures, servers, DBs |
-| Rust crate | `crates/genetic_opt/tests/` and inline `#[cfg(test)]` | `cargo test --manifest-path crates/genetic_opt/Cargo.toml` | The Rust implementation |
-
-The integration suite here builds and runs the Rust example program
-and loads its output with the Python package. It carries the
-`integration` marker and is skipped when `cargo` is not installed.
 
 The shared `tests/conftest.py` stays at the `tests/` root so its
 fixtures apply to both levels. Module grouping is kept *within* each

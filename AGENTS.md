@@ -25,7 +25,7 @@ Rust crate `crates/genetic_opt`, and what to do when a change here breaks
 | Any commit | `committing.md` |
 | A version bump or changelog entry | `versioning.md` |
 | Writing or changing tests | `testing.md` |
-| Timing the tests or the Rust build | `testing-areas.md` |
+| The Rust crate's tests, or timing the tests or its build | `testing-areas.md` |
 
 Paths are relative to `.claude/rules/`. Several rules can apply at once.
 

@@ -41,15 +41,6 @@ some tens of lines off.
     `test_utils.py:43-44` reads `m.best["score"]`.
   - `GeneticBag` (Rust `Knapsack`), which `downstream` does not use.
 
-### 2026.10.12 (found while registering the project in `programme`)
-
-- [ ] `.claude/rules/testing.md` holds text of this repo alone: the
-  "Rust crate" row of the table, the paragraph on the integration
-  suite and the `crates/genetic_opt/**` path. `programme` pushes
-  that file to every Python project. Whether its push keeps local
-  text was not read. If it does not, move the three to
-  `.claude/rules/testing-areas.md`, added in 0.7.7. (LOW, S)
-
 ### 2026.10.13 (found while making a second `fit` a new run, 0.7.13)
 
 - [ ] `src/genetic_opt/algorithms/save.py:73`: `FitSaver` creates the
