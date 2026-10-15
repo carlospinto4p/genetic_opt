@@ -2,6 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.14 - 15th October 2026
+
+- Regenerated `.claude/rules/00-rule-index.md`: the `testing-areas`
+  line now carries that rule's current description.
+
+
 ### v0.17.13 - 15th October 2026
 
 - `crates/genetic_opt`:
