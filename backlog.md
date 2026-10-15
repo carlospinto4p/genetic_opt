@@ -43,13 +43,6 @@ some tens of lines off.
 
 ### 2026.10.15 (found while testing the Rust validation errors, 0.17.6)
 
-- [ ] `crates/genetic_opt/src/algorithm.rs`, `breed`: the
-  `Error::Validation` for "parents were asked of a population with N
-  best chromosomes and no others" cannot be reached. The rest is empty
-  only when `n_besties` equals the population size, and then
-  `n_crossovers` equals it too, so no parent is drawn from the rest.
-  Replace the error with a comment and an `expect`, or find the case
-  it was written for. (LOW, S)
 - [ ] `crates/genetic_opt/src/algorithm.rs`: a `Problem` whose
   `init_population` returns no chromosomes makes `measure` panic on
   `self.population[0]`. Python refuses an empty population with an

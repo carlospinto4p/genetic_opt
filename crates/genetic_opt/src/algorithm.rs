@@ -368,13 +368,13 @@ impl<P: Problem> GeneticAlgorithm<P> {
         let n_besties = ((n_crossovers as f64 * self.config.besties_prop) as usize).min(size);
         let (besties, rest) = self.population.split_at(n_besties);
         let mut parents = besties.to_vec();
+        // Both proportions are at most 1, so `n_besties <= n_crossovers <=
+        // size`. The rest is empty only when `n_besties` is the whole
+        // population, and then no parent is drawn from it.
         for _ in n_besties..n_crossovers {
-            let parent = rest.choose(&mut self.rng).ok_or_else(|| {
-                Error::Validation(format!(
-                    "{n_crossovers} parents were asked of a population \
-                     with {n_besties} best chromosomes and no others"
-                ))
-            })?;
+            let parent = rest
+                .choose(&mut self.rng)
+                .expect("the rest is not empty when parents are drawn from it");
             parents.push(Arc::clone(parent));
         }
         parents.shuffle(&mut self.rng);

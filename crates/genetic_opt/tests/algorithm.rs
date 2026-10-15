@@ -404,6 +404,20 @@ fn the_population_keeps_its_size_and_is_sorted_best_first() {
 }
 
 #[test]
+fn proportions_at_0_and_1_breed_without_error() {
+    // With both at 1 every chromosome is a parent and the rest is empty.
+    for (crossovers_prop, besties_prop) in [(1.0, 1.0), (1.0, 0.0), (0.0, 1.0)] {
+        let mut config = FitConfig::new(4, 30);
+        config.crossovers_prop = crossovers_prop;
+        config.besties_prop = besties_prop;
+        config.stop_without_improvement = false;
+        config.min_population_size = 0;
+        let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
+        assert_eq!(algorithm.fit().unwrap().metrics.len(), 5);
+    }
+}
+
+#[test]
 fn a_second_fit_is_the_same_run_again() {
     let mut config = FitConfig::new(4, 30);
     config.stop_without_improvement = false;

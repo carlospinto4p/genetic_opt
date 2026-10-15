@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.13 - 15th October 2026
+
+- `crates/genetic_opt`:
+  - Replaced the `Error::Validation` in `breed` for parents asked of a
+    population with no chromosomes left after the best ones with an
+    `expect` and a comment. It could not be reached: both proportions
+    are at most 1, so the rest is empty only when every parent is one
+    of the best.
+  - Added `proportions_at_0_and_1_breed_without_error` to
+    `tests/algorithm.rs`.
+
 ### v0.17.12 - 15th October 2026
 
 - Fixed `GeneticAlgorithm.fit` returning an empty dictionary, which is
