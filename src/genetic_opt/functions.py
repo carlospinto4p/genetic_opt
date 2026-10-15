@@ -28,7 +28,8 @@ def format_bytes(num_bytes: float, suffix: str = "B") -> str:
 def format_seconds(seconds: float, only_hours: bool = False) -> str:
     """
     Format a raw number of seconds into a readable string, i.e.
-    format_seconds(200_000) return `2 days, 7:33:20 hours`.
+    format_seconds(200_000) return `2 days, 7:33:20 hours`. After the
+    days the rest is always in hours: `1 day, 0:00:05 hours`.
     :param seconds: raw number of seconds.
     :param only_hours: default to False. If True, return a string
         accumulating the hours in the format, without the `days`
@@ -42,12 +43,14 @@ def format_seconds(seconds: float, only_hours: bool = False) -> str:
     if only_hours:
         return f"{int(hours)}:{f_minutes}:{f_seconds}"
     days, hours = divmod(hours, 24)
+    days = int(days)
     time_ = f"{seconds:.2f} seconds"
     if minutes:
         time_ = f"{int(minutes)}:{f_seconds} minutes"
-    if hours:
+    # After the days the rest is always in hours.
+    if hours or days:
         time_ = f"{int(hours)}:{f_minutes}:{f_seconds} hours"
-    if days := int(days):
+    if days:
         days_str = f"{days} days" if days > 1 else f"{days} day"
         return f"{days_str}, {time_}"
     return time_

@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.16 - 15th October 2026
+
+- Fixed `format_seconds` printing `1 day, 0.00 seconds` for 86400
+  seconds. After the days the rest is now always in hours:
+  `1 day, 0:00:00 hours`, `1 day, 0:00:05 hours`. Changed in both
+  `src/genetic_opt/functions.py` and `crates/genetic_opt/src/format.rs`,
+  with the cases added to `tests/unit/test_functions.py` and to the
+  test in `format.rs`.
+
 ### v0.17.15 - 15th October 2026
 
 - Fixed the crate panicking in `measure` when a `Problem`'s

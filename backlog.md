@@ -41,12 +41,3 @@ some tens of lines off.
     `test_utils.py:43-44` reads `m.best["score"]`.
   - `GeneticBag` (Rust `Knapsack`), which `downstream` does not use.
 
-### 2026.10.15 (found while covering the small test gaps, 0.17.7)
-
-- [ ] `format_seconds` gives "1 day, 0.00 seconds" for 86400 seconds,
-  in both `src/genetic_opt/functions.py` and
-  `crates/genetic_opt/src/format.rs`: a whole number of days falls
-  through to the seconds text. Decide the text ("1 day" or
-  "1 day, 0:00:00 hours") and write it in both, with a test in
-  `tests/unit/test_functions.py` and in `format.rs`. Left untested in
-  0.17.7 so the odd text is not fixed in place by a test. (LOW, S)
