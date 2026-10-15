@@ -3,6 +3,8 @@ use std::fs::{File, read_dir};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread::available_parallelism;
 
+use rand::SeedableRng;
+
 use genetic_opt::examples::Knapsack;
 use genetic_opt::{
     Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score,
@@ -68,6 +70,7 @@ impl Problem for CountedKnapsack {
 struct Numbers {
     minimize: bool,
     keep_mutations: bool,
+    keep_crossovers: bool,
 }
 
 const NUMBERS: u8 = 12;
@@ -118,13 +121,101 @@ impl Problem for Numbers {
     fn mutation_invariant(&self, _before: &[u8], _after: &[u8]) -> bool {
         self.keep_mutations
     }
+
+    fn crossover_invariant(&self, _parents: (&[u8], &[u8]), _children: (&[u8], &[u8])) -> bool {
+        self.keep_crossovers
+    }
 }
 
 fn numbers(minimize: bool) -> Numbers {
     Numbers {
         minimize,
         keep_mutations: true,
+        keep_crossovers: true,
     }
+}
+
+/// A chromosome of 3 genes out of `gene_space_size`, whose first
+/// population is `first_genes` again and again.
+struct FirstGenes {
+    first_genes: Vec<u8>,
+    as_set: bool,
+    gene_space_size: usize,
+}
+
+impl Problem for FirstGenes {
+    type Gene = u8;
+    type Solution = u32;
+
+    fn chromosome_length(&self) -> usize {
+        3
+    }
+
+    fn chromosome_as_set(&self) -> bool {
+        self.as_set
+    }
+
+    fn minimize(&self) -> bool {
+        false
+    }
+
+    fn gene_space_size(&self) -> usize {
+        self.gene_space_size
+    }
+
+    fn random_gene(&self, rng: &mut Rng) -> u8 {
+        rand::RngExt::random_range(rng, 0..12)
+    }
+
+    fn fitness(&self, genes: &[u8]) -> Score {
+        Score::new(self.decode(genes).into())
+    }
+
+    fn decode(&self, genes: &[u8]) -> u32 {
+        genes.iter().map(|gene| u32::from(*gene)).sum()
+    }
+
+    fn crossover(&self, first: &[u8], second: &[u8], _rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
+        (first.to_vec(), second.to_vec())
+    }
+
+    fn init_population(&self, population_size: usize, _rng: &mut Rng) -> Vec<Vec<u8>> {
+        vec![self.first_genes.clone(); population_size]
+    }
+}
+
+/// The message of the error a run of `problem` stops with.
+fn fit_error<P: Problem>(problem: P, config: FitConfig) -> Error
+where
+    P::Solution: Clone,
+{
+    match GeneticAlgorithm::new(problem, config).fit() {
+        Ok(_) => panic!("the run did not stop with an error"),
+        Err(error) => error,
+    }
+}
+
+#[test]
+fn mutation_with_probability_0_keeps_every_gene() {
+    let mut rng = Rng::seed_from_u64(1);
+    assert_eq!(ZeroStart.mutate(&[5; 10], 0.0, &mut rng), [5; 10]);
+    assert_eq!(
+        numbers(false).mutate(&[20, 21, 22], 0.0, &mut rng),
+        [20, 21, 22]
+    );
+}
+
+#[test]
+fn mutation_with_probability_1_replaces_every_gene() {
+    let mut rng = Rng::seed_from_u64(1);
+    let list = ZeroStart.mutate(&[5; 10], 1.0, &mut rng);
+    assert_eq!(list.len(), 10);
+    assert!(list.iter().all(|gene| *gene < 2));
+    // Equal new genes are drawn again until the set has 3.
+    let set = numbers(false).mutate(&[20, 21, 22], 1.0, &mut rng);
+    assert_eq!(set.len(), PICKED);
+    assert!(set.windows(2).all(|pair| pair[0] < pair[1]));
+    assert!(set.iter().all(|gene| *gene < NUMBERS));
 }
 
 /// Counts the ones of a chromosome. Its first population has none.
@@ -248,26 +339,33 @@ fn the_metrics_count_the_different_chromosomes() {
     assert!(repeated);
 }
 
+/// The genes of each population of a knapsack run.
+fn knapsack_run_genes(n_jobs: usize, random_seed: u64) -> Vec<Vec<Vec<u8>>> {
+    let mut config = FitConfig::new(10, 30);
+    config.n_jobs = Some(n_jobs);
+    config.random_seed = random_seed;
+    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
+    algorithm.fit().unwrap();
+    algorithm
+        .history()
+        .iter()
+        .map(|population| {
+            population
+                .iter()
+                .map(|i| i.chromosome.genes().to_vec())
+                .collect()
+        })
+        .collect()
+}
+
 #[test]
 fn a_seed_gives_the_same_run_with_any_number_of_threads() {
-    let run = |n_jobs| {
-        let mut config = FitConfig::new(10, 30);
-        config.n_jobs = Some(n_jobs);
-        config.random_seed = 7;
-        let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-        algorithm.fit().unwrap();
-        algorithm
-            .history()
-            .iter()
-            .map(|population| {
-                population
-                    .iter()
-                    .map(|i| i.chromosome.genes().to_vec())
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>()
-    };
-    assert_eq!(run(1), run(two_jobs()));
+    assert_eq!(knapsack_run_genes(1, 7), knapsack_run_genes(two_jobs(), 7));
+}
+
+#[test]
+fn another_seed_gives_another_run() {
+    assert_ne!(knapsack_run_genes(1, 7), knapsack_run_genes(1, 8));
 }
 
 #[test]
@@ -382,13 +480,54 @@ fn on_generation_can_stop_the_run() {
 
 #[test]
 fn a_broken_invariant_stops_the_run() {
-    let problem = Numbers {
-        minimize: false,
-        keep_mutations: false,
-    };
-    let mut algorithm = GeneticAlgorithm::new(problem, FitConfig::new(5, 30));
+    for (keep_mutations, keep_crossovers, broken) in
+        [(false, true, "a mutation"), (true, false, "a crossover")]
+    {
+        let problem = Numbers {
+            minimize: false,
+            keep_mutations,
+            keep_crossovers,
+        };
+        let error = fit_error(problem, FitConfig::new(5, 30));
+        assert!(
+            matches!(&error, Error::Invariant(message) if message.starts_with(broken)),
+            "{error:?}"
+        );
+    }
+}
 
-    assert!(matches!(algorithm.fit(), Err(Error::Invariant(_))));
+#[test]
+fn chromosomes_the_problem_cannot_hold_are_refused() {
+    for (first_genes, as_set, gene_space_size, refused) in [
+        // A list of 2 genes.
+        (vec![1, 2], false, 12, "a chromosome has 2 genes"),
+        // A set with a gene twice keeps 2.
+        (vec![1, 1, 2], true, 12, "a chromosome has 2 genes"),
+        (vec![0, 1, 2], true, 2, "a set of 3 genes"),
+    ] {
+        let problem = FirstGenes {
+            first_genes,
+            as_set,
+            gene_space_size,
+        };
+        let error = fit_error(problem, FitConfig::new(5, 30));
+        assert!(
+            matches!(&error, Error::Validation(message) if message.starts_with(refused)),
+            "{error:?}"
+        );
+    }
+}
+
+#[test]
+fn more_threads_than_cores_are_refused() {
+    let cores = available_parallelism().map_or(1, |n| n.get());
+    let mut config = FitConfig::new(5, 30);
+    config.n_jobs = Some(cores + 1);
+    let error = fit_error(knapsack(), config);
+    assert!(
+        matches!(&error, Error::Validation(message) if message.starts_with("n_jobs")),
+        "{error:?}"
+    );
 }
 
 #[test]

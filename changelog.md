@@ -2,6 +2,30 @@
 ## Changelog - Genetic-Opt
 
 
+### v0.17.6 - 15th October 2026
+
+- Fixed `median` in `crates/genetic_opt/src/metrics.rs`: with no values
+  it subtracted 1 from 0 and panicked. It now returns not a number, as
+  `mean` and `variance` do.
+- Added tests to `tests/unit/test_binary_algs.py`:
+  - `test_set_mutation_with_probability_0_keeps_every_gene` and
+    `test_set_mutation_with_probability_1_replaces_every_gene`.
+  - `test_one_seed_gives_the_same_run_with_any_number_of_jobs`: two
+    runs with one job and one with two give the same populations.
+  - `test_another_seed_gives_another_run`.
+- Added `tests/unit/test_metrics.py`: `get_population_metrics` with
+  known scores, an even count, equal scores and a population of one.
+- Added tests to the Rust crate:
+  - `metrics.rs`: `statistics_of_equal_values` and
+    `statistics_of_no_values_are_not_numbers`.
+  - `tests/algorithm.rs`: mutation with probability 0 and 1 for lists
+    and sets, `another_seed_gives_another_run`,
+    `chromosomes_the_problem_cannot_hold_are_refused` (a list of the
+    wrong length, a set with a gene twice, a set longer than its gene
+    space) and `more_threads_than_cores_are_refused`.
+  - `a_broken_invariant_stops_the_run` now covers a false
+    `crossover_invariant` and checks which invariant the message names.
+
 ### v0.17.5 - 14th October 2026
 
 - Fixed `load_fit_result` in `fit_result_io.py`: a missing or empty

@@ -43,29 +43,6 @@ some tens of lines off.
 
 **Test coverage**
 
-- [ ] Mutation with probability 0 and 1 is untested for Python sets
-  (`GeneSet.random_mutate` in `gene_collection.py`) and in Rust
-  (`crates/genetic_opt/src/problem.rs:67-81`). Python lists have
-  `test_list_mutation_with_probability_0_and_1` since 0.6.9.
-  (MED, S)
-- [ ] No Python test runs `fit` twice with one seed and compares the
-  histories, or `n_jobs=1` against `n_jobs=2`. Rust has
-  `a_seed_gives_the_same_run_with_any_number_of_threads`
-  (`tests/algorithm.rs:158`). Neither side tests that another seed
-  gives another run. (MED, S)
-- [ ] `get_population_metrics` (`metrics.py:124-171`) has no test
-  with known values; the Rust statistics have one
-  (`metrics.rs:85`). All-equal scores and a population of one are
-  untested in both, and the Rust `median` of an empty slice
-  subtracts 1 from 0 (`metrics.rs:69`). (MED, S)
-- [ ] Rust `Error::Validation` paths with no test
-  (`algorithm.rs:246-254`, `:270-275`, `:296-301`, and the
-  `n_jobs > cores` half of `:235`): a set longer than its gene
-  space, a chromosome of the wrong length, parents asked from an
-  empty rest, too many threads. A false `crossover_invariant`
-  (`:311-318`) is untested, and `a_broken_invariant_stops_the_run`
-  (`tests/algorithm.rs:253`) does not check which message came
-  back. (MED, S)
 - [ ] `single_point_crossover` (`crates/genetic_opt/src/problem.rs:115-129`)
   is reached only through `Knapsack`; its short-input branch and
   inputs of different lengths are untested. `Knapsack::decode` and
@@ -133,3 +110,18 @@ some tens of lines off.
   `n_generations` runs no generation and returns an empty dictionary,
   which is not a `FitResult`. Refuse it with a
   `ValidationException`, as a `population_size` below 1 is. (LOW, S)
+
+### 2026.10.15 (found while testing the Rust validation errors, 0.17.6)
+
+- [ ] `crates/genetic_opt/src/algorithm.rs`, `breed`: the
+  `Error::Validation` for "parents were asked of a population with N
+  best chromosomes and no others" cannot be reached. The rest is empty
+  only when `n_besties` equals the population size, and then
+  `n_crossovers` equals it too, so no parent is drawn from the rest.
+  Replace the error with a comment and an `expect`, or find the case
+  it was written for. (LOW, S)
+- [ ] `crates/genetic_opt/src/algorithm.rs`: a `Problem` whose
+  `init_population` returns no chromosomes makes `measure` panic on
+  `self.population[0]`. Python refuses an empty population with an
+  error (`algorithms/base.py`, the empty-population error); the crate
+  could return `Error::Validation` from `first_chromosomes`. (LOW, S)

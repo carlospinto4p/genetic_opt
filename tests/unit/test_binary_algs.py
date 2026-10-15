@@ -335,6 +335,27 @@ def test_list_mutation_with_probability_0_and_1(probability, n_mutated):
     assert gene_space.calls == ([n_mutated] if n_mutated else [])
 
 
+def test_set_mutation_with_probability_0_keeps_every_gene():
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(
+        size=8, genes=set(range(100, 108)), is_gene_set=True
+    ).random_mutate(gene_space=gene_space, gene_mutate_prob=0)
+    assert chromosome.genes == set(range(100, 108))
+    assert gene_space.calls == []
+
+
+def test_set_mutation_with_probability_1_replaces_every_gene():
+    gene_space = RangeGeneSpace()
+    chromosome = Chromosome(
+        size=8, genes=set(range(100, 108)), is_gene_set=True
+    ).random_mutate(gene_space=gene_space, gene_mutate_prob=1)
+    assert isinstance(chromosome.genes, set)
+    assert len(chromosome.genes) == 8
+    assert chromosome.genes <= set(range(20))
+    # Equal new genes are drawn again until the set has 8.
+    assert gene_space.calls[0] == 8
+
+
 def test_set_mutation_keeps_the_size_of_the_set():
     gene_space = RangeGeneSpace()
     unmutated = Chromosome(
@@ -577,6 +598,39 @@ def test_a_second_fit_starts_a_new_run():
     # A Chromosome the first run scored is not scored again.
     assert len(calls) == len(set(calls))
     assert counted["processed"] == len(calls) - first_calls
+
+
+def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
+    """The genes of each population of a run of a new knapsack."""
+    genetic_bag = GeneticBag(
+        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+        capacity=165,
+        **seeds,
+    )
+    genetic_bag.no_improvement_condition = genetic_bag.no_exit_condition
+    result = genetic_bag.fit(
+        FitConfig(n_generations=5, population_size=30, n_jobs=n_jobs),
+        plot_metrics=False,
+    )
+    return [
+        [list(chromosome.genes) for _, chromosome in population]
+        for population in result["historial"]
+    ]
+
+
+def test_one_seed_gives_the_same_run_with_any_number_of_jobs():
+    first = _bag_run_genes(n_jobs=1)
+    assert len(first) == 6
+    assert _bag_run_genes(n_jobs=1) == first
+    # Two jobs, or the one that a machine with one core allows.
+    assert _bag_run_genes(n_jobs=min(2, cpu_count())) == first
+
+
+def test_another_seed_gives_another_run():
+    assert _bag_run_genes(n_jobs=1) != _bag_run_genes(
+        n_jobs=1, random_seed=7, gene_space_random_seed=8
+    )
 
 
 def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():

@@ -62,10 +62,13 @@ pub(crate) fn mean(values: &[f64]) -> f64 {
     values.iter().sum::<f64>() / values.len() as f64
 }
 
-/// The median of values sorted in either direction.
+/// The median of values sorted in either direction. Not a number when
+/// there are none, as the mean and the variance are.
 pub(crate) fn median(sorted: &[f64]) -> f64 {
     let middle = sorted.len() / 2;
-    if sorted.len().is_multiple_of(2) {
+    if sorted.is_empty() {
+        f64::NAN
+    } else if sorted.len().is_multiple_of(2) {
         (sorted[middle - 1] + sorted[middle]) / 2.0
     } else {
         sorted[middle]
@@ -94,5 +97,21 @@ mod tests {
         assert_eq!(median(&[5.0, 3.0, 2.0, 1.0]), 2.5);
         assert_eq!(median(&[1.0, 3.0, 5.0]), 3.0);
         assert_eq!(median(&[5.0, 3.0, 1.0]), 3.0);
+    }
+
+    #[test]
+    fn statistics_of_equal_values() {
+        for values in [&[2.5, 2.5, 2.5][..], &[2.5]] {
+            assert_eq!(mean(values), 2.5);
+            assert_eq!(median(values), 2.5);
+            assert_eq!(variance(values, 2.5), 0.0);
+        }
+    }
+
+    #[test]
+    fn statistics_of_no_values_are_not_numbers() {
+        assert!(mean(&[]).is_nan());
+        assert!(median(&[]).is_nan());
+        assert!(variance(&[], 0.0).is_nan());
     }
 }
