@@ -1,7 +1,7 @@
 import pytest
 
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.metrics import get_population_metrics
+from genetic_opt.metrics import Best, Metric, get_population_metrics
 from genetic_opt.score import Score
 
 # ── get_population_metrics Tests ───────────────────────────────────────
@@ -28,9 +28,9 @@ def test_population_metrics_of_known_scores():
     metric = get_population_metrics(
         population, decode_func=_sum_genes, fitting_seconds=1.234
     )
-    assert metric.best["score"].value == 4
-    assert metric.best["encoded"] is population[0][1]
-    assert metric.best["result"] == 2
+    assert metric.best.score.value == 4
+    assert metric.best.encoded is population[0][1]
+    assert metric.best.result == 2
     assert metric.size == 4
     assert metric.mean == 2.75
     assert metric.median == 3
@@ -39,6 +39,16 @@ def test_population_metrics_of_known_scores():
     assert metric.n_uniques == 3
     assert metric.percent_uniques == 75
     assert metric.fitting_seconds == 1.23
+
+
+def test_population_metrics_survive_to_dict_and_from_dict():
+    population = _population([(4, [1, 1]), (3, [1, 0])])
+    metric = get_population_metrics(
+        population, decode_func=_sum_genes, fitting_seconds=0.5
+    )
+    loaded = Metric.from_dict(metric.to_dict())
+    assert isinstance(loaded.best, Best)
+    assert loaded == metric
 
 
 def test_population_metrics_of_an_even_count_take_the_middle_two():

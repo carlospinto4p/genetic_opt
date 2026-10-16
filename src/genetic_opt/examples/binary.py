@@ -4,7 +4,7 @@ from genetic_opt.exceptions import ValidationException
 from genetic_opt.score import Score
 
 
-class GeneticBag(BinaryGeneticAlgorithm):
+class Knapsack(BinaryGeneticAlgorithm):
     """
     Problem: given N objects with weight w_i and value v_i, we have a
     bag with a total capacity W. We want to maximize the total value of the
@@ -88,7 +88,7 @@ class GeneticBag(BinaryGeneticAlgorithm):
             chromosome_as_set=False,
             decode_func=decode_bag,
             fitness_func=fit_bag,
-            opt_is_min=False,
+            minimize=False,
             random_seed=random_seed,
             gene_space_random_seed=gene_space_random_seed,
         )

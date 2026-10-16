@@ -59,8 +59,8 @@ class GeneticAlgorithm(ABC):
         a list, depending on the chromosome nature.
     :param decode_func: method that receives the genotype (chromosome) and
         returns the phenotype (original problem representation).
-    :param algo_fitness_func: method to value each chromosome (genotype).
-    :param opt_is_min: whether the optimum fitness value is the minimum (True)
+    :param fitness_func: method to value each chromosome (genotype).
+    :param minimize: whether the optimum fitness value is the minimum (True)
         or the maximum (False) of the `fitness_func`.
     :param experiment_name: Genetic algorithm experiment name.
         Default to the class name.
@@ -107,7 +107,7 @@ class GeneticAlgorithm(ABC):
         chromosome_as_set: bool,
         decode_func: Callable[[Chromosome], Any],
         fitness_func: Callable[[Chromosome], Score],
-        opt_is_min: bool,
+        minimize: bool,
         experiment_name: str | None = None,
         random_seed: int = 442,
         extra_config: dict | None = None,
@@ -133,8 +133,7 @@ class GeneticAlgorithm(ABC):
             representation).
         :param fitness_func: Function to value each chromosome (genotype)
             returning a Score object.
-            Will be stored internally as `algo_fitness_func`.
-        :param opt_is_min: whether the optimum fitness value is the
+        :param minimize: whether the optimum fitness value is the
             minimum (True) or the maximum (False) of the `fitness_func`.
         :param experiment_name: Genetic algorithm experiment name.
             Default to the class name. With `save` it names a folder
@@ -158,8 +157,8 @@ class GeneticAlgorithm(ABC):
         self.chromosome_length: int = chromosome_length
         self.chromosome_as_set: bool = chromosome_as_set
         self.decode_func: Callable[[Chromosome], Any] = decode_func
-        self.algo_fitness_func: Callable[[Chromosome], Score] = fitness_func
-        self.opt_is_min: bool = opt_is_min
+        self.fitness_func: Callable[[Chromosome], Score] = fitness_func
+        self.minimize: bool = minimize
         self.experiment_name: str = experiment_name or self.__class__.__name__
         self.random_seed: int = random_seed
         self.random_state: RandomState = RandomState(seed=random_seed)
@@ -174,9 +173,9 @@ class GeneticAlgorithm(ABC):
         self.save_path: str = self._saver.folder if self._saver else ""
 
         self.population: list[Chromosome] = []
-        # Historial of the different generations of populations
-        self.historial: list[list[tuple[Score, Chromosome]]] = []
-        # Historial of the metrics of each generation
+        # History of the different generations of populations
+        self.history: list[list[tuple[Score, Chromosome]]] = []
+        # History of the metrics of each generation
         self.metrics: list[Metric] = []
         # Extra configuration of the experiment, that depends on the custom,
         # child classes.
@@ -390,7 +389,7 @@ class GeneticAlgorithm(ABC):
         # What an earlier run left would be mixed into this one
         self.random_state = RandomState(seed=self.random_seed)
         self.population = []
-        self.historial = []
+        self.history = []
         self.metrics = []
         # The scores stay: scoring is the costly part of a run
         self._scores_before_run = len(self._chromosome_cache)
@@ -483,7 +482,7 @@ class GeneticAlgorithm(ABC):
                     self._chromosome_cache[chromosome_key]
                 )
             else:
-                chromosome.get_score(self.algo_fitness_func)
+                chromosome.get_score(self.fitness_func)
                 self._chromosome_cache[chromosome_key] = (
                     chromosome.score,
                     chromosome.score_time,
@@ -664,7 +663,7 @@ class GeneticAlgorithm(ABC):
                 (self.decode_func(chromosome), chromosome.score)
                 for chromosome in self.population
             ],
-            "historial": self.historial,
+            "history": self.history,
             "fit_parameters": fit_parameters,
         }
         if self.extra_config:
@@ -703,8 +702,7 @@ class GeneticAlgorithm(ABC):
             return {}
         previous, last = self.metrics[-2:]
         iteration_improvement = {
-            "best_score": last.best["score"].value
-            - previous.best["score"].value,
+            "best_score": last.best.score.value - previous.best.score.value,
             **{k: getattr(last, k) - getattr(previous, k) for k in diff_keys},
         }
         iteration_improvement["fitting_seconds"] = round(
@@ -742,7 +740,7 @@ class GeneticAlgorithm(ABC):
             # The workers are other processes and score copies of the
             # Chromosomes, so the scores must come back as results.
             scores = Parallel(n_jobs=n_jobs)(
-                delayed(_score_chromosome)(self.algo_fitness_func, chromosome)
+                delayed(_score_chromosome)(self.fitness_func, chromosome)
                 for chromosome in iter_func(list(new_population.values()))
             )
             self._chromosome_cache.update(zip(new_population, scores))
@@ -754,22 +752,22 @@ class GeneticAlgorithm(ABC):
 
         self.population.sort(
             key=lambda x: x.score.value,
-            reverse=not self.opt_is_min,
+            reverse=not self.minimize,
         )
 
     def _update_metrics(self, generation_fitting_time: float) -> None:
         """
-        Add the current population to `self.historial` and its `Metric`
+        Add the current population to `self.history` and its `Metric`
         to `self.metrics`.
         :param generation_fitting_time: fitting time of the last generation,
             in seconds.
         :return: None.
         """
-        self.historial.append(
+        self.history.append(
             [(chromosome.score, chromosome) for chromosome in self.population]
         )
         population_metrics = get_population_metrics(
-            population_with_scores=self.historial[-1],
+            population_with_scores=self.history[-1],
             decode_func=self.decode_func,
             fitting_seconds=generation_fitting_time,
         )

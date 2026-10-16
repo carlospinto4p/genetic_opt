@@ -95,18 +95,18 @@ class FitSaver:
         """
         # The file holds the last population and its metrics only, so
         # the earlier ones are not serialized.
-        n_population = len(fit_result["historial"])
+        n_population = len(fit_result["history"])
         serialized_data = serialize_fit_result(
             fit_result
             | {
-                "historial": fit_result["historial"][-1:],
+                "history": fit_result["history"][-1:],
                 "metrics": fit_result["metrics"][-1:],
             },
             self.save.serialize_decoded_chromosome_func,
             serialize_gene_func=self.save.serialize_gene_func,
         )
         serialized_data["population_idx"] = n_population
-        serialized_data["population"] = serialized_data.pop("historial")[-1]
+        serialized_data["population"] = serialized_data.pop("history")[-1]
         file_path = f"{self.folder}/fit_data/fit_data_{n_population}"
 
         if self.save.as_bson:

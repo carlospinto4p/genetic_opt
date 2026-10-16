@@ -13,7 +13,7 @@ from genetic_opt.algorithms import base as algorithms
 from genetic_opt.algorithms.base import GeneticAlgorithm
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.examples.binary import GeneticBag
+from genetic_opt.examples.binary import Knapsack
 from genetic_opt.exceptions import InvariantException, ValidationException
 from genetic_opt.fit_result import FitResult
 from genetic_opt.gene_space import AbstractGeneSpace
@@ -25,9 +25,7 @@ def test_genetic_bag():
     weights: list[int] = [23, 31, 29, 44, 53, 38, 63, 85, 89, 82]
     values: list[int] = [92, 57, 49, 68, 60, 43, 67, 84, 87, 72]
     capacity: int = 165
-    genetic_bag = GeneticBag(
-        weights=weights, values=values, capacity=capacity
-    )
+    genetic_bag = Knapsack(weights=weights, values=values, capacity=capacity)
     opt_data = genetic_bag.fit(
         FitConfig(
             n_generations=100,
@@ -59,7 +57,7 @@ class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
             fitness_func=lambda chromosome: Score(
                 value=sum(chromosome.genes)
             ),
-            opt_is_min=False,
+            minimize=False,
         )
 
     def get_init_population(self, population_size: int) -> list[list[int]]:
@@ -88,7 +86,7 @@ def test_fit_with_0_generations_scores_the_first_population_only():
         plot_metrics=False,
     )
     assert len(result["metrics"]) == 1
-    assert len(algorithm.historial) == 1
+    assert len(algorithm.history) == 1
     assert result["fit_parameters"]["n_generations"] == 0
     assert result["bests"]["scores"] == [Score(value=0)]
     assert len(result["last_population"]) == 20
@@ -112,7 +110,7 @@ class NumbersAlgorithm(GeneticAlgorithm):
     `tests/algorithm.rs`.
     """
 
-    def __init__(self, opt_is_min: bool):
+    def __init__(self, minimize: bool):
         super().__init__(
             gene_space=NumbersGeneSpace(random_seed=5),
             chromosome_length=3,
@@ -121,7 +119,7 @@ class NumbersAlgorithm(GeneticAlgorithm):
             fitness_func=lambda chromosome: Score(
                 value=sum(chromosome.genes)
             ),
-            opt_is_min=opt_is_min,
+            minimize=minimize,
         )
         self.no_improvement_condition = self.no_exit_condition
 
@@ -143,9 +141,9 @@ class NumbersAlgorithm(GeneticAlgorithm):
         return mix(c1, c2), mix(c2, c1)
 
 
-def _fit_numbers(opt_is_min: bool) -> tuple[NumbersAlgorithm, FitResult]:
+def _fit_numbers(minimize: bool) -> tuple[NumbersAlgorithm, FitResult]:
     """Run `NumbersAlgorithm` for 60 generations of 30 Chromosomes."""
-    algorithm = NumbersAlgorithm(opt_is_min=opt_is_min)
+    algorithm = NumbersAlgorithm(minimize=minimize)
     result = algorithm.fit(
         FitConfig(
             n_generations=60,
@@ -159,15 +157,15 @@ def _fit_numbers(opt_is_min: bool) -> tuple[NumbersAlgorithm, FitResult]:
 
 
 def test_set_chromosomes_stay_sets_and_the_best_never_gets_worse():
-    algorithm, result = _fit_numbers(opt_is_min=False)
-    bests = [metric.best["score"].value for metric in result["metrics"]]
+    algorithm, result = _fit_numbers(minimize=False)
+    bests = [metric.best.score.value for metric in result["metrics"]]
     assert len(bests) > 1
     assert bests == sorted(bests)
     assert bests[-1] == 9 + 10 + 11
     # Every set of 3 numbers out of 12.
     space_points = result["fit_metrics"]["fitness_func_calls"]
     assert space_points["space_points"] == 220
-    for population in algorithm.historial:
+    for population in algorithm.history:
         for _, chromosome in population:
             assert isinstance(chromosome.genes, set)
             assert len(chromosome.genes) == 3
@@ -175,13 +173,13 @@ def test_set_chromosomes_stay_sets_and_the_best_never_gets_worse():
 
 
 def test_minimize_keeps_the_lowest_scores():
-    algorithm, result = _fit_numbers(opt_is_min=True)
-    bests = [metric.best["score"].value for metric in result["metrics"]]
+    algorithm, result = _fit_numbers(minimize=True)
+    bests = [metric.best.score.value for metric in result["metrics"]]
     assert len(bests) > 1
     assert bests == sorted(bests, reverse=True)
     assert bests[-1] == 0 + 1 + 2
     assert result["bests"]["scores"][0].value == 3
-    for population in algorithm.historial:
+    for population in algorithm.history:
         scores = [score.value for score, _ in population]
         assert scores == sorted(scores)
 
@@ -244,19 +242,19 @@ def test_fit_scores_each_chromosome_once(tmp_path):
     # The fitness function runs in worker processes, so the calls are
     # counted through a file.
     calls_log = tmp_path / "calls.log"
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
-    fit_bag = genetic_bag.algo_fitness_func
+    fit_bag = genetic_bag.fitness_func
 
     def logged_fit_bag(chromosome):
         with open(calls_log, "a") as file:
             file.write(f"{chromosome!r}\n")
         return fit_bag(chromosome)
 
-    genetic_bag.algo_fitness_func = logged_fit_bag
+    genetic_bag.fitness_func = logged_fit_bag
     # Two jobs, or the one that a machine with one core allows.
     result = genetic_bag.fit(
         FitConfig(
@@ -274,7 +272,7 @@ def test_fit_scores_each_chromosome_once(tmp_path):
 
 def test_crossover_cuts_at_every_position_between_two_genes():
     size = 5
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[1] * size, values=[1] * size, capacity=size
     )
     zeros = Chromosome(size=size, genes=[0] * size)
@@ -290,7 +288,7 @@ def test_crossover_cuts_at_every_position_between_two_genes():
 
 
 def test_crossover_of_two_genes_swaps_the_second_one():
-    genetic_bag = GeneticBag(weights=[1, 2], values=[3, 4], capacity=3)
+    genetic_bag = Knapsack(weights=[1, 2], values=[3, 4], capacity=3)
     first, second = genetic_bag.crossover_func(
         Chromosome(size=2, genes=[0, 0]), Chromosome(size=2, genes=[1, 1])
     )
@@ -299,7 +297,7 @@ def test_crossover_of_two_genes_swaps_the_second_one():
 
 
 def test_crossover_of_one_gene_returns_the_same_genes():
-    genetic_bag = GeneticBag(weights=[1], values=[3], capacity=3)
+    genetic_bag = Knapsack(weights=[1], values=[3], capacity=3)
     first, second = genetic_bag.crossover_func(
         Chromosome(size=1, genes=[0]), Chromosome(size=1, genes=[1])
     )
@@ -308,7 +306,7 @@ def test_crossover_of_one_gene_returns_the_same_genes():
 
 
 def test_crossover_children_carry_the_seed_of_the_run():
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[1] * 5, values=[1] * 5, capacity=5, random_seed=7
     )
     children = genetic_bag.crossover_func(
@@ -423,9 +421,7 @@ def test_a_chromosome_built_from_a_gene_space_draws_with_one_call():
 
 def test_mutation_differs_between_chromosomes():
     size = 40
-    genetic_bag = GeneticBag(
-        weights=[1] * size, values=[1] * size, capacity=10
-    )
+    genetic_bag = Knapsack(weights=[1] * size, values=[1] * size, capacity=10)
     genetic_bag.gene_space = OnesGeneSpace()
     chromosomes = [Chromosome(size=size, genes=[0] * size) for _ in range(2)]
     first, second = genetic_bag.mutate_chromosomes(
@@ -484,9 +480,7 @@ def test_mutation_leaves_the_chromosome_as_it_was():
 
 def test_the_mutation_invariant_gets_the_chromosome_before_and_after():
     size = 40
-    genetic_bag = GeneticBag(
-        weights=[1] * size, values=[1] * size, capacity=10
-    )
+    genetic_bag = Knapsack(weights=[1] * size, values=[1] * size, capacity=10)
     genetic_bag.gene_space = OnesGeneSpace()
     pairs: list[tuple[list[int], list[int]]] = []
 
@@ -523,7 +517,7 @@ def test_a_broken_invariant_stops_the_run(invariant):
 
 def test_the_bag_refuses_weights_and_values_of_different_lengths():
     with pytest.raises(ValidationException, match="must be the same"):
-        GeneticBag(weights=[1, 2], values=[3], capacity=3)
+        Knapsack(weights=[1, 2], values=[3], capacity=3)
 
 
 # The same bags are decoded in `crates/genetic_opt/tests/algorithm.rs`,
@@ -538,20 +532,18 @@ KNOWN_BAGS = [
 
 @pytest.mark.parametrize("genes, decoded, value", KNOWN_BAGS)
 def test_the_bag_decodes_and_scores_known_bags(genes, decoded, value):
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
     chromosome = Chromosome(size=10, genes=genes)
     assert genetic_bag.decode_func(chromosome) == decoded
-    assert genetic_bag.algo_fitness_func(chromosome).value == value
+    assert genetic_bag.fitness_func(chromosome).value == value
 
 
 def test_the_bag_takes_nothing_after_the_first_object_that_does_not_fit():
-    genetic_bag = GeneticBag(
-        weights=[5, 10, 1], values=[1, 1, 1], capacity=12
-    )
+    genetic_bag = Knapsack(weights=[5, 10, 1], values=[1, 1, 1], capacity=12)
     chromosome = Chromosome(size=3, genes=[1, 1, 1])
     assert genetic_bag.decode_func(chromosome) == [1, 0, 0]
 
@@ -581,34 +573,34 @@ def test_fit_without_a_save_path_decodes_the_population_once():
 
 
 def test_the_fitness_function_of_the_bag_travels_without_the_bag():
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
-    sent_bytes = len(cloudpickle.dumps(genetic_bag.algo_fitness_func))
+    sent_bytes = len(cloudpickle.dumps(genetic_bag.fitness_func))
     genetic_bag.fit(
         FitConfig(n_generations=5, population_size=50, n_jobs=1),
         plot_metrics=False,
     )
-    assert len(cloudpickle.dumps(genetic_bag.algo_fitness_func)) == sent_bytes
+    assert len(cloudpickle.dumps(genetic_bag.fitness_func)) == sent_bytes
 
 
-def _counting_bag() -> tuple[GeneticBag, list[str]]:
+def _counting_bag() -> tuple[Knapsack, list[str]]:
     """A knapsack whose fitness function records each Chromosome it runs on."""
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
-    fit_bag = genetic_bag.algo_fitness_func
+    fit_bag = genetic_bag.fitness_func
     calls: list[str] = []
 
     def counted_fit_bag(chromosome):
         calls.append(repr(chromosome))
         return fit_bag(chromosome)
 
-    genetic_bag.algo_fitness_func = counted_fit_bag
+    genetic_bag.fitness_func = counted_fit_bag
     return genetic_bag, calls
 
 
@@ -650,7 +642,7 @@ def test_a_second_fit_starts_a_new_run():
     result = genetic_bag.fit(config, plot_metrics=False)
     generations = len(result["metrics"])
     assert 1 < generations <= 4
-    assert len(result["historial"]) == generations
+    assert len(result["history"]) == generations
     # 30 Chromosomes in the first population and 20 children in each
     # later generation: 2 * int((0.7 * 30) // 2).
     counted = result["fit_metrics"]["fitness_func_calls"]
@@ -662,7 +654,7 @@ def test_a_second_fit_starts_a_new_run():
 
 def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
     """The genes of each population of a run of a new knapsack."""
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
@@ -675,7 +667,7 @@ def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
     )
     return [
         [list(chromosome.genes) for _, chromosome in population]
-        for population in result["historial"]
+        for population in result["history"]
     ]
 
 
@@ -696,7 +688,7 @@ def test_another_seed_gives_another_run():
 def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
     genetic_bag, _ = _counting_bag()
     genetic_bag.no_improvement_condition = genetic_bag.no_exit_condition
-    seen: list[GeneticBag] = []
+    seen: list[Knapsack] = []
     result = genetic_bag.fit(
         FitConfig(n_generations=5, population_size=30, n_jobs=1),
         plot_metrics=False,
@@ -708,7 +700,7 @@ def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
     assert all(algorithm is genetic_bag for algorithm in seen)
 
 
-class CallbackCountingBag(GeneticBag):
+class CallbackCountingBag(Knapsack):
     callbacks = 0
 
     def default_fit_callback(self) -> None:
@@ -734,15 +726,15 @@ def test_fit_calls_the_callback_method_of_a_subclass_by_default():
 
 def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
     # Two genes give 4 Chromosomes, so the first population has them all.
-    genetic_bag = GeneticBag(weights=[1, 2], values=[3, 4], capacity=3)
-    fit_bag = genetic_bag.algo_fitness_func
+    genetic_bag = Knapsack(weights=[1, 2], values=[3, 4], capacity=3)
+    fit_bag = genetic_bag.fitness_func
     calls: list[str] = []
 
     def counted_fit_bag(chromosome):
         calls.append(repr(chromosome))
         return fit_bag(chromosome)
 
-    genetic_bag.algo_fitness_func = counted_fit_bag
+    genetic_bag.fitness_func = counted_fit_bag
     parallel_calls: list[dict] = []
 
     def counted_parallel(**kwargs):
@@ -765,7 +757,7 @@ def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
 def test_fit_formats_the_metrics_only_when_they_are_logged(
     monkeypatch, set_log_level, level, logged
 ):
-    genetic_bag = GeneticBag(
+    genetic_bag = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,

@@ -21,7 +21,7 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         chromosome_as_set: bool,
         decode_func: Callable[[Chromosome], Any],
         fitness_func: Callable[[Chromosome], Score],
-        opt_is_min: bool,
+        minimize: bool,
         experiment_name: str | None = None,
         random_seed: int = 442,
         gene_space_random_seed: int = 2,
@@ -36,7 +36,7 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
             and returns the phenotype (original problem representation).
         :param fitness_func: function to value each chromosome (genotype)
             returning a Score object.
-        :param opt_is_min: whether the optimum fitness value is the minimum
+        :param minimize: whether the optimum fitness value is the minimum
             (True) or the maximum (False) of the `fitness_func`.
         :param experiment_name: Genetic algorithm experiment name.
             Default to the class name.
@@ -53,7 +53,7 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
             chromosome_as_set=chromosome_as_set,
             decode_func=decode_func,
             fitness_func=fitness_func,
-            opt_is_min=opt_is_min,
+            minimize=minimize,
             experiment_name=experiment_name,
             random_seed=random_seed,
             **kwargs,

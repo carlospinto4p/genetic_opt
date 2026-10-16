@@ -8,16 +8,16 @@ This package provides two base classes, `algorithms.GeneticAlgorithm` and
 methodologies in order to tackle different optimization problems.
 
 There is an example of optimization problem tackled with these classes
-in `examples.binary.GeneticBag`.
+in `examples.binary.Knapsack`.
 
 The parameters of a run go in a `FitConfig`. To save the runs, the
 algorithm gets a `SaveConfig`:
 
 ```python
 from genetic_opt.algorithms import FitConfig, SaveConfig
-from genetic_opt.examples.binary import GeneticBag
+from genetic_opt.examples.binary import Knapsack
 
-bag = GeneticBag(
+bag = Knapsack(
     weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
     values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
     capacity=165,
@@ -75,7 +75,7 @@ dependency. `roadmap.md` has the reasons.
 A problem implements the trait `Problem` (its genes, its fitness
 function, its crossover) and `GeneticAlgorithm` runs it. The fitness
 function runs on several threads at once. `examples::Knapsack` is the
-example, the same problem as `examples.binary.GeneticBag`:
+example, the same problem as `examples.binary.Knapsack`:
 
 ```rust
 use genetic_opt::examples::Knapsack;

@@ -93,7 +93,7 @@ class FitResult(FitSummary):
     # One for each generation, the first population included
     metrics: list[Metric]
     # Each generation, sorted from its best Chromosome to its worst
-    historial: list[list[tuple[Score, Chromosome]]]
+    history: list[list[tuple[Score, Chromosome]]]
     # The last population, each Chromosome decoded
     last_population: list[tuple[Any, Score]]
 

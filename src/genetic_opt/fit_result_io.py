@@ -84,9 +84,7 @@ def load_fit_result(
             for decoded, score in last_raw["last_population"]
         ]
     response["metrics"] = [metric for *_, metric in generations]
-    response["historial"] = [
-        population for _, _, population, _ in generations
-    ]
+    response["history"] = [population for _, _, population, _ in generations]
     return response
 
 
@@ -253,14 +251,14 @@ def serialize_fit_result(
         bests,
         last_population,
         fit_metrics,
-        historial,
+        history,
         metrics,
         fit_parameters,
     ) = itemgetter(
         "bests",
         "last_population",
         "fit_metrics",
-        "historial",
+        "history",
         "metrics",
         "fit_parameters",
     )(fit_result.copy())
@@ -275,12 +273,12 @@ def serialize_fit_result(
         (serialize_decoded_chromosome_func(d), score.to_dict())
         for d, score in last_population
     ]
-    historial = [
+    history = [
         [
             (e[0].to_dict(), e[1].to_dict(serialize_gene_func))
             for e in population
         ]
-        for population in historial
+        for population in history
     ]
     metrics = [
         m.to_dict(
@@ -293,7 +291,7 @@ def serialize_fit_result(
         "bests": bests,
         "last_population": last_population,
         "fit_metrics": fit_metrics,
-        "historial": historial,
+        "history": history,
         "metrics": metrics,
         "fit_parameters": fit_parameters,
     }

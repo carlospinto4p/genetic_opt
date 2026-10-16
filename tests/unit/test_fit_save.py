@@ -47,7 +47,7 @@ def ones_algorithm(
         chromosome_as_set=False,
         decode_func=decode_genes,
         fitness_func=count_ones,
-        opt_is_min=False,
+        minimize=False,
         experiment_name=experiment_name,
         save=SaveConfig(
             path=f"{save_path}/",
@@ -77,7 +77,7 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
         FitConfig(n_generations=3, population_size=20, n_jobs=1)
     )
 
-    saved_generations = len(algorithm.historial)
+    saved_generations = len(algorithm.history)
     extension = "bson" if save_as_bson else "json"
     assert get_files_inside_folder(algorithm.save_path) == [
         "experiment_config.yml",
@@ -94,8 +94,8 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["fit_parameters"] == fit_result["fit_parameters"]
     assert loaded["fit_metrics"] == fit_result["fit_metrics"]
-    assert len(loaded["historial"]) == saved_generations
-    assert loaded["historial"] == fit_result["historial"]
+    assert len(loaded["history"]) == saved_generations
+    assert loaded["history"] == fit_result["history"]
     assert loaded["last_population"] == fit_result["last_population"]
     assert set(loaded) == set(fit_result)
 
@@ -122,8 +122,8 @@ def test_load_fit_result_orders_the_generations_by_number(tmp_path):
     ]
 
     loaded = load_fit_result(folder)
-    assert len(loaded["historial"]) == 11
-    assert loaded["historial"] == fit_result["historial"]
+    assert len(loaded["history"]) == 11
+    assert loaded["history"] == fit_result["history"]
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["last_population"] == fit_result["last_population"]
     assert loaded["fit_metrics"] == fit_result["fit_metrics"]
@@ -188,7 +188,7 @@ def test_load_fit_result_reads_a_run_saved_before_0_7_0(tmp_path):
 
     loaded = load_fit_result(folder)
     assert loaded["metrics"] == fit_result["metrics"]
-    assert loaded["historial"] == fit_result["historial"]
+    assert loaded["history"] == fit_result["history"]
 
 
 def test_the_saved_scores_keep_their_name_and_extra_metrics(saved_run):
@@ -436,13 +436,13 @@ def test_load_fit_result_applies_the_load_functions(saved_run):
         tuple(decoded) for decoded, _ in plain["last_population"]
     ]
     for metric, plain_metric in zip(loaded["metrics"], plain["metrics"]):
-        assert metric.best["result"] == tuple(plain_metric.best["result"])
-        assert metric.best["encoded"].genes == [
-            str(gene) for gene in plain_metric.best["encoded"].genes
+        assert metric.best.result == tuple(plain_metric.best.result)
+        assert metric.best.encoded.genes == [
+            str(gene) for gene in plain_metric.best.encoded.genes
         ]
     chromosomes = [
         chromosome
-        for population in loaded["historial"]
+        for population in loaded["history"]
         for _, chromosome in population
     ] + loaded["bests"]["encoded"]
     assert chromosomes
@@ -462,14 +462,14 @@ def test_load_fit_result_removes_duplicates_when_asked(saved_run):
     plain = load_fit_result(saved_run)
     loaded = load_fit_result(saved_run, remove_duplicates=True)
     for population, plain_population in zip(
-        loaded["historial"], plain["historial"], strict=True
+        loaded["history"], plain["history"], strict=True
     ):
         # The first of each Chromosome, in the order they were saved.
         first_seen: dict = {}
         for score, chromosome in plain_population:
             first_seen.setdefault(chromosome, score)
         assert population == [(s, c) for c, s in first_seen.items()]
-    assert len(loaded["historial"][0]) < len(plain["historial"][0])
+    assert len(loaded["history"][0]) < len(plain["history"][0])
 
 
 def test_load_fit_result_refuses_a_file_over_the_size_limit(saved_run):

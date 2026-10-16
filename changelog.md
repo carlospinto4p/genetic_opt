@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v1.0.0 - 16th October 2026
+
+- Renamed the Python names that differed from the Rust crate, so both
+  implementations use the same ones. Saved runs keep their layout:
+  runs saved by earlier versions load unchanged.
+  - `GeneticAlgorithm.historial` to `history`, also the `historial`
+    key of a `FitResult` and of what `load_fit_result` returns.
+  - The argument and attribute `opt_is_min` to `minimize`.
+  - The attribute `algo_fitness_func` to `fitness_func`, the name of
+    the argument it comes from.
+  - `examples.binary.GeneticBag` to `Knapsack`. A run saved without an
+    `experiment_name` now goes in a `Knapsack` folder.
+- Added `Best` to `src/genetic_opt/metrics.py`: a dataclass with
+  `score`, `encoded` and `result`, as the crate's `Best`.
+  `Metric.best` is now a `Best` in place of a dict, so
+  `m.best["score"]` becomes `m.best.score`.
+- Added `test_population_metrics_survive_to_dict_and_from_dict` to
+  `tests/unit/test_metrics.py`.
+
 ### v0.17.17 - 16th October 2026
 
 - Rotated changelog: archived 53 entries to `changelog/2024.md`, `changelog/2026.md`.
