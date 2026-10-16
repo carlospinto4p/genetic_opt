@@ -1,5 +1,5 @@
 use std::fs::{File, create_dir, create_dir_all};
-use std::io::{BufWriter, ErrorKind};
+use std::io::{BufWriter, ErrorKind, Write};
 use std::path::{Component, Path, PathBuf};
 
 use serde::Serialize;
@@ -96,7 +96,10 @@ pub(crate) fn write_experiment_config(
         fit_parameters,
         experiment_config,
     };
-    Ok(serde_norway::to_writer(BufWriter::new(file), &config)?)
+    let mut writer = BufWriter::new(file);
+    serde_norway::to_writer(&mut writer, &config)?;
+    // Dropping a `BufWriter` writes out its buffer but drops the error.
+    Ok(writer.flush()?)
 }
 
 pub(crate) fn write_generation<G: Serialize, S: Serialize>(
@@ -110,11 +113,89 @@ pub(crate) fn write_generation<G: Serialize, S: Serialize>(
     match format {
         SaveFormat::Json => {
             let file = File::create(folder.join(format!("{name}.json")))?;
-            Ok(serde_json::to_writer(BufWriter::new(file), generation)?)
+            let mut writer = BufWriter::new(file);
+            serde_json::to_writer(&mut writer, generation)?;
+            Ok(writer.flush()?)
         }
         SaveFormat::Bson => {
             let file = File::create(folder.join(format!("{name}.bson")))?;
-            Ok(bson::serialize_to_document(generation)?.to_writer(BufWriter::new(file))?)
+            let mut writer = BufWriter::new(file);
+            bson::serialize_to_document(generation)?.to_writer(&mut writer)?;
+            Ok(writer.flush()?)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{FitnessCalls, TotalFitTime};
+
+    // `/dev/full` opens, but refuses every write. The files here are
+    // smaller than the buffer, so the write fails only when the buffer is
+    // written out at the end.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_failed_write_is_returned() {
+        use std::os::unix::fs::symlink;
+
+        let folder = tempfile::tempdir().unwrap();
+        let folder = folder.path();
+        create_dir_all(folder.join("fit_data")).unwrap();
+        for name in [
+            "experiment_config.yml",
+            "fit_data/fit_data_1.json",
+            "fit_data/fit_data_1.bson",
+        ] {
+            symlink("/dev/full", folder.join(name)).unwrap();
+        }
+        let fit_parameters = FitParameters {
+            n_generations: 1,
+            population_size: 1,
+            crossovers_prop: 0.7,
+            besties_prop: 0.6,
+            mutate_prob: 0.05,
+            min_population_size: 1,
+            random_seed: 442,
+            n_jobs: 1,
+        };
+        let fit_metrics = FitMetrics {
+            fitness_func_calls: FitnessCalls {
+                total: 0,
+                processed: 0,
+                percent_processed: 0.0,
+                cached: 0,
+                space_points: 1.0,
+                exploration_percentage: 0.0,
+            },
+            total_fit_time: TotalFitTime {
+                n_jobs: 1,
+                raw: 0.0,
+                formatted: String::new(),
+            },
+            genetic_opt_version: String::new(),
+        };
+        let generation = GenerationFile::<u8, u8> {
+            bests: BestsColumns {
+                scores: Vec::new(),
+                result: Vec::new(),
+                encoded: Vec::new(),
+            },
+            last_population: Vec::new(),
+            fit_metrics: &fit_metrics,
+            metrics: &[],
+            fit_parameters: &fit_parameters,
+            config: None,
+            population_idx: 1,
+            population: Vec::new(),
+        };
+
+        assert!(write_experiment_config(folder, &fit_parameters, None).is_err());
+        for format in [SaveFormat::Json, SaveFormat::Bson] {
+            assert!(
+                write_generation(folder, format, &generation).is_err(),
+                "{format:?}"
+            );
         }
     }
 }

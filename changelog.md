@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v1.0.3 - 16th October 2026
+
+- `crates/genetic_opt/src/save.rs`: `write_experiment_config` and
+  `write_generation` flush their `BufWriter` and return its error. A
+  write that failed when the buffer was written out (a full disk) was
+  dropped, and the run went on as saved. Added the unit test
+  `a_failed_write_is_returned`, which writes to `/dev/full` (Linux
+  only).
+
+
 ### v1.0.2 - 16th October 2026
 
 - `.gitlab-ci.yml`, the `publish-package` job:
