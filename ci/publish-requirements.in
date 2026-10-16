@@ -1,0 +1,16 @@
+# Tools for the `publish-package` job in `.gitlab-ci.yml`. That job holds
+# `CI_JOB_TOKEN`, so every package it installs is pinned with hashes in
+# `publish-requirements.txt`, compiled from this file with:
+#
+#   uv pip compile ci/publish-requirements.in --universal \
+#     --python-version 3.14 --generate-hashes \
+#     -o ci/publish-requirements.txt
+#
+# Latest `build` and `twine` on https://pypi.org/pypi/build/json and
+# https://pypi.org/pypi/twine/json, read 12th October 2026.
+build==1.6.1
+twine==7.0.0
+# The build backend, installed here because the job builds with
+# `--no-isolation`. Keep within `[build-system] requires` in
+# `pyproject.toml`.
+hatchling>=1.32.4,<2.0.0

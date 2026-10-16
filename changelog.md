@@ -2,6 +2,23 @@
 ## Changelog - Genetic-Opt
 
 
+### v1.0.2 - 16th October 2026
+
+- `.gitlab-ci.yml`, the `publish-package` job:
+  - Installs its tools from the new `ci/publish-requirements.txt` with
+    `--require-hashes`, so the dependencies of `build` and `twine` are
+    pinned and hash-checked too. `ci/publish-requirements.in` lists the
+    tools and the command that compiles the file.
+  - Builds with `--no-isolation`, using the pinned `hatchling` from that
+    file instead of one `build` downloads unpinned.
+  - The comment at the top names `genetic_opt` instead of another
+    project's package, and no longer points to a "Release Tagging"
+    section that does not exist.
+- `changelog.md`: two blank lines between v1.0.2, v1.0.1, v1.0.0 and
+  v0.17.17, as `versioning.md` asks. `scripts/changelog-add.sh` writes
+  one; the fix is filed in `programme`, which keeps the script.
+
+
 ### v1.0.1 - 16th October 2026
 
 - `src/genetic_opt/algorithms/save.py`: `FitSaver` now refuses an
@@ -14,6 +31,7 @@
 - `pyproject.toml`: a comment next to `pymongo` says `import bson`
   comes from it, and that the unrelated PyPI package `bson` would
   shadow it.
+
 
 ### v1.0.0 - 16th October 2026
 
@@ -33,6 +51,7 @@
   `m.best["score"]` becomes `m.best.score`.
 - Added `test_population_metrics_survive_to_dict_and_from_dict` to
   `tests/unit/test_metrics.py`.
+
 
 ### v0.17.17 - 16th October 2026
 

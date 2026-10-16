@@ -2,11 +2,8 @@
 # libraries can install it as a versioned dependency using a deploy token
 # with `read_package_registry` scope, e.g.:
 #
-#   pip install market_wrapper \
+#   pip install genetic_opt \
 #     --index-url https://<token-name>:<token>@gitlab.com/api/v4/projects/<project-id>/packages/pypi/simple
-#
-# Pinning the git tag `vX.Y.Z` over SSH is the lighter alternative that
-# needs no registry — see `.claude/rules/committing.md` "Release Tagging".
 #
 # The publish job is available ONLY on tag pipelines (`vX.Y.Z`) and must
 # be triggered manually. It publishes exactly the tagged release: the
@@ -29,10 +26,10 @@ publish-package:
       when: manual
       allow_failure: false
   script:
-    # This job holds `CI_JOB_TOKEN`, so both tools are named by version.
-    # Latest on https://pypi.org/pypi/build/json and
-    # https://pypi.org/pypi/twine/json, read 12th October 2026.
-    - pip install --no-cache-dir build==1.6.1 twine==7.0.0
+    # This job holds `CI_JOB_TOKEN`, so every package it installs, the
+    # build backend included, is pinned with a hash. See
+    # `ci/publish-requirements.in` for how the file is compiled.
+    - pip install --no-cache-dir --require-hashes -r ci/publish-requirements.txt
     # Guard: the git tag must match the packaged version, so a mistagged
     # release never publishes under the wrong version.
     - VERSION=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/^version = "(.*)"/\1/')
@@ -41,8 +38,9 @@ publish-package:
         echo "Tag ${CI_COMMIT_TAG} does not match pyproject version v${VERSION}"
         exit 1
       fi
-    # Build both an sdist and a wheel via the project's build backend.
-    - python -m build
+    # Build both an sdist and a wheel with the hatchling installed above;
+    # `--no-isolation` stops `build` downloading an unpinned one.
+    - python -m build --no-isolation
     - >
       TWINE_USERNAME=gitlab-ci-token
       TWINE_PASSWORD=${CI_JOB_TOKEN}

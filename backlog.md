@@ -1,11 +1,10 @@
 # Backlog - Genetic-Opt
 
+### 2026.10.16 (v1.0.2)
+
+- [ ] (LOW, S) `pyproject.toml`: the sdist holds every file git tracks: `.claude/`, `backlog.md`, `roadmap.md`, `changelog/`, `.tyfold/`, `.pre-commit-scripts/`, `ci/`, `tests/` and the Rust crate (seen in a build of v1.0.1). Add a `[tool.hatch.build.targets.sdist]` `include` or `exclude`; decide whether `tests/` and `crates/` stay.
+
 ### 2026.10.16 (v1.0.0 scan)
-
-#### Security
-
-- [ ] (LOW, M) `.gitlab-ci.yml:34`: the publish job installs `build` and `twine` with plain `pip install`, so their dependencies are not pinned or hash-checked.
-- [ ] (LOW, S) `.gitlab-ci.yml:5,8`: the comment shows `pip install market_wrapper` (another project's package), and points to a "Release Tagging" section that `.claude/rules/committing.md` does not have.
 
 #### Performance
 
@@ -47,7 +46,6 @@
 - [ ] (LOW, S) Stale docstrings: `gene_collection.py:1` ("Gene Space submodule"), `chromosome.py:142-144` (Score as a tuple), `chromosome.py:188` (missing `is_gene_set`); no module docstring in `fit_result_io.py`, `algorithms/binary.py`, `examples/binary.py`, `score.py`; no class docstrings in `exceptions.py:8,29,33`; `base.py:613` `_get_fitted_data` returns a `FitResult` and could be named so.
 - [ ] (LOW, S) Dead parameters: `exceptions.py:9-23` `processing_object` and `functions.py:28` `format_seconds(only_hours=...)` are used only by tests.
 - [ ] (LOW, S) `README.md:40-41,47,65-66,98-102,126-127`: "Before 0.x.0" history notes belong in the changelog now that the version is 1.0.0.
-- [ ] (LOW, S) `changelog.md:21-22`: one blank line between v1.0.0 and v0.17.17; `versioning.md` requires two.
 
 #### Test coverage
 
