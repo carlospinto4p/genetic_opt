@@ -8,7 +8,6 @@
 
 #### Performance
 
-- [ ] (MED, S) `src/genetic_opt/files.py:184-185`: `save_json` uses `json.dump(data, file)`, which skips the C encoder. Measured on one generation's payload: 20.8 ms against 2.3 ms for `file.write(json.dumps(data))`. Paid every generation when saving JSON.
 - [ ] (MED, M) `src/genetic_opt/algorithms/base.py:435-439,662-665`, `algorithms/save.py:98-107`, `crates/genetic_opt/src/algorithm.rs:556-560`: every generation file holds the population twice (`population` and decoded `last_population`), but the loader reads `last_population` only from the last file. Dropping it changes the file format and how a crashed run is read: needs a decision.
 - [ ] (MED, M) `src/genetic_opt/algorithms/base.py:742-745`: a new `joblib.Parallel` is built each generation and `self.fitness_func` is pickled again per batch. Keep one `Parallel` open for the whole `fit` (not timed).
 - [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:736,750`: `repr(chromosome)` computed twice per unscored chromosome (and sorts the genes for a set). Keep the key from the first loop.

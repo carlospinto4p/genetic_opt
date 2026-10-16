@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v1.0.4 - 16th October 2026
+
+- `src/genetic_opt/files.py`: `save_json` writes the text of
+  `json.dumps` instead of calling `json.dump`, which uses the pure
+  Python encoder. Saving one generation's file went from 20.8 ms to
+  2.3 ms in the measurement of the v1.0.0 scan.
+
 ### v1.0.3 - 16th October 2026
 
 - `crates/genetic_opt/src/save.rs`: `write_experiment_config` and
