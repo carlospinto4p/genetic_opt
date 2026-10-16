@@ -1,7 +1,7 @@
 """Genetic Opt submodule that saves a run to a folder."""
 
 from collections.abc import Callable
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from genetic_opt.algorithms.config import SaveConfig
 from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
@@ -37,13 +37,18 @@ class FitSaver:
         `start_run`.
         :param save: where and how to save the run.
         :param experiment_name: a path inside `save.path`: not an
-            absolute one, and without `..`.
+            absolute one, without a Windows drive, and without `..`.
         :raises ValidationException: when `experiment_name` is not a
             path inside `save.path`.
         """
-        # A Windows path is checked too, whatever the system.
+        # A Windows path is checked too, whatever the system: `C:/x`
+        # and `C:x` have a drive and leave the save path on Windows.
         name_path = PurePosixPath(experiment_name.replace("\\", "/"))
-        if name_path.is_absolute() or ".." in name_path.parts:
+        if (
+            name_path.is_absolute()
+            or ".." in name_path.parts
+            or PureWindowsPath(experiment_name).drive
+        ):
             raise ValidationException(
                 f"experiment_name = {experiment_name!r} must be "
                 f"a path inside the save path"

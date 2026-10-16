@@ -4,9 +4,6 @@
 
 #### Security
 
-- [ ] (LOW, S) `src/genetic_opt/algorithms/save.py:571-578`: the experiment-name check misses a Windows drive prefix; `experiment_name="C:/x"` passes and writes outside the save folder on Windows. The crate's check (`save.rs:28-37`) rejects it. Test `PureWindowsPath(name).drive` too.
-- [ ] (LOW, S) `src/genetic_opt/fit_result_io.py:26,96,157`: `max_file_bytes` defaults to `None`, so a large file is read whole into memory before any check. Set a default limit or say so in the docstring.
-- [ ] (LOW, S) `pyproject.toml:12`: `import bson` comes from `pymongo`; the unrelated PyPI package `bson` would shadow it if installed. Add a comment next to the dependency.
 - [ ] (LOW, M) `.gitlab-ci.yml:34`: the publish job installs `build` and `twine` with plain `pip install`, so their dependencies are not pinned or hash-checked.
 - [ ] (LOW, S) `.gitlab-ci.yml:5,8`: the comment shows `pip install market_wrapper` (another project's package), and points to a "Release Tagging" section that `.claude/rules/committing.md` does not have.
 

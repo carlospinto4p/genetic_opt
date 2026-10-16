@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v1.0.1 - 16th October 2026
+
+- `src/genetic_opt/algorithms/save.py`: `FitSaver` now refuses an
+  `experiment_name` with a Windows drive (`C:/x`, `C:x`), which left
+  the save path on Windows. Two cases added to
+  `test_an_experiment_name_outside_the_save_path_is_refused`.
+- `src/genetic_opt/fit_result_io.py`: the `max_file_bytes` docstrings
+  of `load_fit_result` and `load_fit_result_file` say that with no
+  limit a file of any size is read whole into memory.
+- `pyproject.toml`: a comment next to `pymongo` says `import bson`
+  comes from it, and that the unrelated PyPI package `bson` would
+  shadow it.
+
 ### v1.0.0 - 16th October 2026
 
 - Renamed the Python names that differed from the Rust crate, so both

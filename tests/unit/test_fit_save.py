@@ -354,7 +354,15 @@ def test_a_second_fit_saves_in_a_new_folder(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "experiment_name", ["../elsewhere", "ones/../..", "/elsewhere", "..\\out"]
+    "experiment_name",
+    [
+        "../elsewhere",
+        "ones/../..",
+        "/elsewhere",
+        "..\\out",
+        "C:/elsewhere",
+        "C:elsewhere",
+    ],
 )
 def test_an_experiment_name_outside_the_save_path_is_refused(
     tmp_path, experiment_name

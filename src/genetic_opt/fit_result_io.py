@@ -37,7 +37,8 @@ def load_fit_result(
         remove_duplicates: whether to remove duplicated chromosomes
             in each population. Default to False.
         max_file_bytes: size over which a file is refused without being
-            read. No limit by default.
+            read. No limit by default, so a file of any size is read
+            whole into memory.
     Raises:
         ValidationException: the folder is missing or empty, a file is
             larger than `max_file_bytes`, or its content is not the one
@@ -107,7 +108,8 @@ def load_fit_result_file(
         remove_duplicates: whether to remove duplicated chromosomes
             in each population. Default to False.
         max_file_bytes: size over which the file is refused without
-            being read. No limit by default.
+            being read. No limit by default, so a file of any size is
+            read whole into memory.
     Raises:
         ValidationException: the file is larger than `max_file_bytes`, or
             its content is not the one of a fit result file.
