@@ -102,8 +102,8 @@ class FitResultFile(FitSummary):
     """
     What `fit_result_io.load_fit_result_file` returns: one generation
     of a saved run. `fit_metrics`, `fit_parameters` and `config` are as the
-    file holds them. The `last_population` of the file is not loaded:
-    it is `population`, decoded.
+    file holds them. It has no `last_population`, which a file saved
+    since 2.0.0 does not hold.
     """
 
     # Those of its own generation, or of every generation up to its

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from genetic_opt.examples.binary import Knapsack
 from genetic_opt.files import get_files_inside_folder
 from genetic_opt.fit_result_io import load_fit_result
 from genetic_opt.score import Score
@@ -75,9 +76,21 @@ def test_python_loads_a_run_saved_by_the_rust_crate(
     assert files
     assert all(file.endswith(f".{extension}") for file in files)
 
-    loaded = load_fit_result(str(run_folder / "fit_data"))
+    # The Python example decodes a bag as the crate's does.
+    knapsack = Knapsack(
+        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+        capacity=165,
+    )
+    loaded = load_fit_result(
+        str(run_folder / "fit_data"), knapsack.decode_func
+    )
     assert loaded["bests"]["scores"][0] == Score(value=309.0)
     assert loaded["bests"]["result"][0] == [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
+    assert loaded["last_population"][0] == (
+        loaded["bests"]["result"][0],
+        Score(value=309.0),
+    )
     assert len(loaded["history"]) == len(files)
     assert len(loaded["metrics"]) == len(files)
     assert loaded["metrics"][-1].best.score == Score(value=309.0)
@@ -97,10 +110,16 @@ def test_python_loads_sets_and_named_scores_saved_by_the_rust_crate(
     subprocess.run([numbers_example, str(tmp_path), extension], check=True)
     (run_folder,) = (tmp_path / "Numbers").iterdir()
 
-    loaded = load_fit_result(str(run_folder / "fit_data"))
+    # The crate's `Numbers` decodes a set into a list of its genes. A
+    # loaded set has no order, so the list is sorted here.
+    loaded = load_fit_result(
+        str(run_folder / "fit_data"),
+        lambda chromosome: sorted(chromosome.genes),
+    )
     best = Score(value=30.0, name="sum", extra_metrics={"largest": 11})
     assert loaded["bests"]["scores"][0] == best
     assert loaded["bests"]["result"][0] == [9, 10, 11]
+    assert loaded["last_population"][0] == ([9, 10, 11], best)
     best_encoded = loaded["bests"]["encoded"][0]
     assert best_encoded.is_gene_set
     assert best_encoded.genes == {9, 10, 11}

@@ -4,7 +4,6 @@
 
 #### Performance
 
-- [ ] (MED, M) `src/genetic_opt/algorithms/base.py:435-439,662-665`, `algorithms/save.py:98-107`, `crates/genetic_opt/src/algorithm.rs:556-560`: every generation file holds the population twice (`population` and decoded `last_population`), but the loader reads `last_population` only from the last file. Dropping it changes the file format and how a crashed run is read: needs a decision.
 - [ ] (MED, M) `src/genetic_opt/algorithms/base.py:742-745`: a new `joblib.Parallel` is built each generation and `self.fitness_func` is pickled again per batch. Keep one `Parallel` open for the whole `fit` (not timed).
 - [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:736,750`: `repr(chromosome)` computed twice per unscored chromosome (and sorts the genes for a set). Keep the key from the first loop.
 - [ ] (LOW, S) `src/genetic_opt/metrics.py:164-166`: `mean`, `median` and `var` each convert the same list to a numpy array. Convert once.

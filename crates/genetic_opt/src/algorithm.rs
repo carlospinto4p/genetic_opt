@@ -553,11 +553,6 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 result: bests.iter().map(|b| &b.result).collect(),
                 encoded: bests.iter().map(|b| &*b.encoded).collect(),
             },
-            last_population: self
-                .population
-                .iter()
-                .map(|i| (self.problem.decode(i.chromosome.genes()), &i.score))
-                .collect(),
             fit_metrics: &fit_metrics,
             metrics: &self.metrics[self.metrics.len() - 1..],
             fit_parameters,

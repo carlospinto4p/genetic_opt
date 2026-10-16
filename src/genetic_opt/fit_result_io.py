@@ -20,6 +20,7 @@ from genetic_opt.score import Score
 
 def load_fit_result(
     folder_path: str,
+    decode_func: Callable[[Chromosome], Any],
     load_decoded_chromosome_func: Callable[[Any], Any] | None = None,
     load_gene_func: Callable[[Any], Any] | None = None,
     remove_duplicates: bool = False,
@@ -30,6 +31,9 @@ def load_fit_result(
     Args:
         folder_path: Path of the `fit_data` folder, which contains the saved
             response of the function `GeneticAlgorithm.fit`.
+        decode_func: the `decode_func` of the algorithm that made the run.
+            It decodes the last population into `last_population`, which
+            the files do not hold since 2.0.0.
         load_decoded_chromosome_func: Function to load serialized Chromosomes.
             It is the identity function by default.
         load_gene_func: Function to load serialized Genes.
@@ -57,14 +61,12 @@ def load_fit_result(
     # generations so far in a file saved before 0.7.0. The rest is read
     # from the file of the last generation only, kept in `last_raw`.
     generations: list[tuple[int, str, list, Metric]] = []
-    last_idx, last_raw = None, None
+    last_idx, last_raw, last_population = None, None, []
     for file in files:
         with _refuse_malformed(file):
             raw = _read_fit_result_file(file, max_file_bytes)
             population_idx = raw["population_idx"]
-            population = _load_population(
-                raw["population"], load_gene_func, remove_duplicates
-            )
+            population = _load_population(raw["population"], load_gene_func)
             (metric,) = _load_metrics(
                 raw["metrics"][-1:],
                 load_decoded_chromosome_func,
@@ -72,6 +74,9 @@ def load_fit_result(
             )
             if last_idx is None or population_idx > last_idx:
                 last_idx, last_raw = population_idx, raw
+                last_population = population
+            if remove_duplicates:
+                population = _remove_duplicates(population)
             generations.append((population_idx, file, population, metric))
     if not generations:
         raise ValidationException(f"`{folder_path}` has no fit result file")
@@ -80,10 +85,13 @@ def load_fit_result(
         response = _load_fit_summary(
             last_raw, load_decoded_chromosome_func, load_gene_func
         )
-        response["last_population"] = [
-            (load_decoded_chromosome_func(decoded), Score(**score))
-            for decoded, score in last_raw["last_population"]
-        ]
+    # Decoded as `fit` decodes it: with its duplicates. A file saved
+    # before 2.0.0 also holds it decoded, as `last_population`, which
+    # is not read.
+    response["last_population"] = [
+        (decode_func(chromosome), score)
+        for score, chromosome in last_population
+    ]
     response["metrics"] = [metric for *_, metric in generations]
     response["history"] = [population for _, _, population, _ in generations]
     return response
@@ -128,8 +136,12 @@ def load_fit_result_file(
             raw["metrics"], load_decoded_chromosome_func, load_gene_func
         )
         response["population"] = _load_population(
-            raw["population"], load_gene_func, remove_duplicates
+            raw["population"], load_gene_func
         )
+        if remove_duplicates:
+            response["population"] = _remove_duplicates(
+                response["population"]
+            )
         response["population_idx"] = raw["population_idx"]
     return response
 
@@ -167,23 +179,25 @@ def _read_fit_result_file(file_path: str, max_file_bytes: int | None) -> dict:
 
 
 def _load_population(
-    population: list,
-    load_gene_func: Callable[[Any], Any] | None,
-    remove_duplicates: bool,
+    population: list, load_gene_func: Callable[[Any], Any] | None
 ) -> list[tuple[Score, Chromosome]]:
     """Load the population of a parsed fit result file."""
-    population = [
+    return [
         (Score(**e[0]), Chromosome.from_dict(e[1], load_gene_func))
         for e in population
     ]
-    if remove_duplicates:
-        clean_population, seen = [], set()
-        for score, chromosome in population:
-            if chromosome not in seen:
-                seen.add(chromosome)
-                clean_population.append((score, chromosome))
-        population = clean_population
-    return population
+
+
+def _remove_duplicates(
+    population: list[tuple[Score, Chromosome]],
+) -> list[tuple[Score, Chromosome]]:
+    """Keep the first of each Chromosome of a population, in order."""
+    clean_population, seen = [], set()
+    for score, chromosome in population:
+        if chromosome not in seen:
+            seen.add(chromosome)
+            clean_population.append((score, chromosome))
+    return clean_population
 
 
 def _load_metrics(
@@ -247,18 +261,17 @@ def serialize_fit_result(
             gene.
     Returns:
         A dictionary with the same schema as the `fit_result`, but with
-        serializable elements.
+        serializable elements. It leaves out `last_population`, which
+        is `history[-1]` decoded: `load_fit_result` decodes it again.
     """
     (
         bests,
-        last_population,
         fit_metrics,
         history,
         metrics,
         fit_parameters,
     ) = itemgetter(
         "bests",
-        "last_population",
         "fit_metrics",
         "history",
         "metrics",
@@ -271,10 +284,6 @@ def serialize_fit_result(
         ],
         "encoded": [c.to_dict(serialize_gene_func) for c in bests["encoded"]],
     }
-    last_population = [
-        (serialize_decoded_chromosome_func(d), score.to_dict())
-        for d, score in last_population
-    ]
     history = [
         [
             (e[0].to_dict(), e[1].to_dict(serialize_gene_func))
@@ -291,7 +300,6 @@ def serialize_fit_result(
     ]
     response = {
         "bests": bests,
-        "last_population": last_population,
         "fit_metrics": fit_metrics,
         "history": history,
         "metrics": metrics,

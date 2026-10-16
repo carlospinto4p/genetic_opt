@@ -787,7 +787,8 @@ fn a_run_is_saved_one_file_per_generation() {
             result.metrics[3].best.score.value
         );
         assert_eq!(saved["population"].as_array().unwrap().len(), 20);
-        assert_eq!(saved["last_population"].as_array().unwrap().len(), 20);
+        // The population is saved once, not decoded a second time.
+        assert!(saved.get("last_population").is_none());
         assert_eq!(
             saved["bests"]["scores"][0]["value"],
             result.bests[0].score.value

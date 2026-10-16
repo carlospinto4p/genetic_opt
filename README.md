@@ -46,6 +46,19 @@ ones of a single file loaded with `fit_result_io.load_fit_result_file`,
 are written once, in `fit_result.py`: `FitResult` and `FitResultFile`.
 Before 0.13.0 the module `fit_result_io` was named `utils`.
 
+The saved files hold each population once, as genes. The
+`last_population` of a loaded run is the last population decoded
+again, so `load_fit_result` takes the `decode_func` of the algorithm:
+
+```python
+from genetic_opt.fit_result_io import load_fit_result
+
+loaded = load_fit_result("<folder>/fit_data", bag.decode_func)
+```
+
+Before 2.0.0 every file also held its population decoded, and
+`load_fit_result` took no `decode_func`. It still reads those files.
+
 ## Logs
 
 The package writes the progress of a run to the logger `genetic_opt`

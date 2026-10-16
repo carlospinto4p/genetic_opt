@@ -87,7 +87,7 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
         f"fit_data_{i}.{extension}" for i in range(1, saved_generations + 1)
     ]
 
-    loaded = load_fit_result(f"{algorithm.save_path}/fit_data")
+    loaded = load_fit_result(f"{algorithm.save_path}/fit_data", decode_genes)
     assert loaded["bests"]["result"] == fit_result["bests"]["result"]
     assert loaded["bests"]["scores"] == fit_result["bests"]["scores"]
     assert loaded["bests"]["encoded"] == fit_result["bests"]["encoded"]
@@ -121,7 +121,7 @@ def test_load_fit_result_orders_the_generations_by_number(tmp_path):
         "fit_data_11.json",
     ]
 
-    loaded = load_fit_result(folder)
+    loaded = load_fit_result(folder, decode_genes)
     assert len(loaded["history"]) == 11
     assert loaded["history"] == fit_result["history"]
     assert loaded["metrics"] == fit_result["metrics"]
@@ -141,7 +141,7 @@ def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
     # Without an `extra_config` there is no `config`, the one optional key
     for result, result_type in (
         (fit_result, FitResult),
-        (load_fit_result(folder), FitResult),
+        (load_fit_result(folder, decode_genes), FitResult),
         (load_fit_result_file(f"{folder}/fit_data_1.json"), FitResultFile),
         (fit_result["bests"], Bests),
         (fit_result["fit_parameters"], FitParameters),
@@ -186,13 +186,13 @@ def test_load_fit_result_reads_a_run_saved_before_0_7_0(tmp_path):
         )
     assert len(metrics_so_far) > 2
 
-    loaded = load_fit_result(folder)
+    loaded = load_fit_result(folder, decode_genes)
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["history"] == fit_result["history"]
 
 
 def test_the_saved_scores_keep_their_name_and_extra_metrics(saved_run):
-    best = load_fit_result(saved_run)["bests"]["scores"][0]
+    best = load_fit_result(saved_run, decode_genes)["bests"]["scores"][0]
     assert best.name == "ones"
     assert best.extra_metrics["zeros"] == 12 - best.value
     assert len(best.extra_metrics["first"]) == 2
@@ -234,7 +234,7 @@ def test_the_extra_config_is_returned_and_saved_with_each_generation(
     )
     folder = f"{algorithm.save_path}/fit_data"
     assert fit_result["config"] == extra_config
-    assert load_fit_result(folder)["config"] == extra_config
+    assert load_fit_result(folder, decode_genes)["config"] == extra_config
     for file in get_files_inside_folder(folder, return_complete_path=True):
         assert load_json(file)["config"] == extra_config
 
@@ -268,7 +268,7 @@ def test_fit_saves_the_plot_as_a_jpeg(tmp_path):
 def test_the_plot_has_a_panel_for_the_other_keys_when_given(
     saved_run, other_keys, titles
 ):
-    loaded = load_fit_result(saved_run)
+    loaded = load_fit_result(saved_run, decode_genes)
     plot_genetic_algo_metrics(
         loaded["metrics"], loaded["fit_metrics"], other_keys=other_keys
     )
@@ -392,7 +392,7 @@ def test_load_fit_result_refuses_a_malformed_file(
     with open(f"{saved_run}/{file_name}", "wb") as file:
         file.write(content)
     with pytest.raises(ValidationException, match="not a fit result file"):
-        load_fit_result(saved_run)
+        load_fit_result(saved_run, decode_genes)
 
 
 # Of a file that is not the last one, only the population is read.
@@ -402,7 +402,6 @@ def test_load_fit_result_refuses_a_malformed_file(
         ("fit_data_1.json", lambda raw: raw["population"][0][0]),
         ("fit_data_2.json", lambda raw: raw["population"][0][0]),
         ("fit_data_2.json", lambda raw: raw["bests"]["scores"][0]),
-        ("fit_data_2.json", lambda raw: raw["last_population"][0][1]),
     ],
 )
 def test_load_fit_result_refuses_a_score_with_an_unknown_key(
@@ -413,7 +412,7 @@ def test_load_fit_result_refuses_a_score_with_an_unknown_key(
     get_score(raw)["unknown"] = 1
     save_json(raw, file_path)
     with pytest.raises(ValidationException, match="unknown"):
-        load_fit_result(saved_run)
+        load_fit_result(saved_run, decode_genes)
 
 
 @pytest.mark.parametrize("folder_name", ["empty", "missing"])
@@ -422,26 +421,26 @@ def test_load_fit_result_refuses_a_folder_without_files(
 ):
     (tmp_path / "empty").mkdir()
     with pytest.raises(ValidationException, match="no fit result file"):
-        load_fit_result(str(tmp_path / folder_name))
+        load_fit_result(str(tmp_path / folder_name), decode_genes)
 
 
 def test_load_fit_result_refuses_a_folder_with_another_file(saved_run):
     with open(f"{saved_run}/notes.txt", "w") as file:
         file.write("a note")
     with pytest.raises(ValidationException, match="notes.txt"):
-        load_fit_result(saved_run)
+        load_fit_result(saved_run, decode_genes)
 
 
 def test_load_fit_result_applies_the_load_functions(saved_run):
     loaded = load_fit_result(
-        saved_run, load_decoded_chromosome_func=tuple, load_gene_func=str
+        saved_run,
+        decode_genes,
+        load_decoded_chromosome_func=tuple,
+        load_gene_func=str,
     )
-    plain = load_fit_result(saved_run)
+    plain = load_fit_result(saved_run, decode_genes)
     assert loaded["bests"]["result"] == [
         tuple(result) for result in plain["bests"]["result"]
-    ]
-    assert [decoded for decoded, _ in loaded["last_population"]] == [
-        tuple(decoded) for decoded, _ in plain["last_population"]
     ]
     for metric, plain_metric in zip(loaded["metrics"], plain["metrics"]):
         assert metric.best.result == tuple(plain_metric.best.result)
@@ -467,8 +466,8 @@ def test_load_fit_result_removes_duplicates_when_asked(saved_run):
     raw = load_json(file_path)
     raw["population"][1] = raw["population"][0]
     save_json(raw, file_path)
-    plain = load_fit_result(saved_run)
-    loaded = load_fit_result(saved_run, remove_duplicates=True)
+    plain = load_fit_result(saved_run, decode_genes)
+    loaded = load_fit_result(saved_run, decode_genes, remove_duplicates=True)
     for population, plain_population in zip(
         loaded["history"], plain["history"], strict=True
     ):
@@ -481,6 +480,54 @@ def test_load_fit_result_removes_duplicates_when_asked(saved_run):
 
 
 def test_load_fit_result_refuses_a_file_over_the_size_limit(saved_run):
-    assert load_fit_result(saved_run, max_file_bytes=10**9)["bests"]
+    assert load_fit_result(saved_run, decode_genes, max_file_bytes=10**9)[
+        "bests"
+    ]
     with pytest.raises(ValidationException, match="max_file_bytes"):
-        load_fit_result(saved_run, max_file_bytes=10)
+        load_fit_result(saved_run, decode_genes, max_file_bytes=10)
+
+
+def test_the_files_do_not_hold_the_population_decoded(saved_run):
+    files = get_files_inside_folder(saved_run, return_complete_path=True)
+    assert len(files) > 1
+    for file in files:
+        assert "last_population" not in load_json(file)
+
+
+def test_load_fit_result_decodes_the_last_population_loaded(saved_run):
+    loaded = load_fit_result(
+        saved_run, lambda chromosome: chromosome.genes, load_gene_func=str
+    )
+    # The genes the decode function gets went through `load_gene_func`.
+    assert loaded["last_population"] == [
+        (chromosome.genes, score)
+        for score, chromosome in loaded["history"][-1]
+    ]
+    assert {
+        gene for genes, _ in loaded["last_population"] for gene in genes
+    } <= {"0", "1"}
+
+
+def test_load_fit_result_skips_the_decoded_population_of_an_old_file(
+    saved_run,
+):
+    # Before 2.0.0 each file also held its population decoded.
+    file_path = f"{saved_run}/fit_data_2.json"
+    raw = load_json(file_path)
+    raw["last_population"] = [[[9, 9], {"value": 1.0, "unknown": 1}]]
+    save_json(raw, file_path)
+    loaded = load_fit_result(saved_run, decode_genes)
+    assert loaded["last_population"] == [
+        (decode_genes(chromosome), score)
+        for score, chromosome in loaded["history"][-1]
+    ]
+
+
+def test_remove_duplicates_leaves_the_last_population_whole(saved_run):
+    file_path = f"{saved_run}/fit_data_2.json"
+    raw = load_json(file_path)
+    raw["population"][1] = raw["population"][0]
+    save_json(raw, file_path)
+    loaded = load_fit_result(saved_run, decode_genes, remove_duplicates=True)
+    assert len(loaded["history"][-1]) < len(raw["population"])
+    assert len(loaded["last_population"]) == len(raw["population"])

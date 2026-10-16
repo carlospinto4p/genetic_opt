@@ -2,6 +2,32 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.0.0 - 16th October 2026
+
+- A saved generation file no longer holds `last_population`, its
+  population decoded a second time. Each file held the population
+  twice, and only the copy of the last file was read.
+  - `src/genetic_opt/fit_result_io.py`:
+    - `load_fit_result` takes the algorithm's `decode_func` as its
+      second argument and decodes the last population with it, as
+      `fit` does. `remove_duplicates` leaves `last_population` whole,
+      as before. A file saved before 2.0.0 still loads; its
+      `last_population` is not read.
+    - `serialize_fit_result` leaves out `last_population`.
+  - `crates/genetic_opt/src/save.rs`: removed `last_population` from
+    `GenerationFile`.
+  - `crates/genetic_opt/src/algorithm.rs`: `save_generation` no longer
+    decodes the population.
+- `fit` and the crate's `fit` still return `last_population`.
+- Added tests in `tests/unit/test_fit_save.py`:
+  - `test_the_files_do_not_hold_the_population_decoded`.
+  - `test_load_fit_result_decodes_the_last_population_loaded`.
+  - `test_load_fit_result_skips_the_decoded_population_of_an_old_file`.
+  - `test_remove_duplicates_leaves_the_last_population_whole`.
+- `tests/integration/test_rust_layout.py` checks the decoded best of a
+  Rust run's last population.
+- `README.md`: documented the new argument.
+
 ### v1.0.5 - 16th October 2026
 
 - `pyproject.toml`: added `[tool.hatch.build.targets.sdist]`, so the

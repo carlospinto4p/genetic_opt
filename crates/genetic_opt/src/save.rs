@@ -62,12 +62,11 @@ struct ExperimentConfig<'a> {
 }
 
 /// One file of `fit_data/`, as the Python
-/// `fit_result_io.load_fit_result_file` reads it.
+/// `fit_result_io.load_fit_result_file` reads it. It does not hold the
+/// population decoded: the Python loader decodes `population` instead.
 #[derive(Serialize)]
 pub(crate) struct GenerationFile<'a, G: Serialize, S: Serialize> {
     pub bests: BestsColumns<'a, G, S>,
-    /// Pairs of a decoded chromosome and its score.
-    pub last_population: Vec<(S, &'a Score)>,
     pub fit_metrics: &'a FitMetrics,
     /// The metrics of this generation alone, as a list of one.
     pub metrics: &'a [Metric<G, S>],
@@ -181,7 +180,6 @@ mod tests {
                 result: Vec::new(),
                 encoded: Vec::new(),
             },
-            last_population: Vec::new(),
             fit_metrics: &fit_metrics,
             metrics: &[],
             fit_parameters: &fit_parameters,
