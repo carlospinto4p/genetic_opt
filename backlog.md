@@ -14,12 +14,6 @@ some tens of lines off.
 
 **Security**
 
-- [ ] **[manual]** `src/genetic_opt/fit_result_io.py`: since 0.6.1
-  `load_fit_result` refuses an unknown key in a `Score` or a
-  `Metric`, but still ignores one at the top level of a file and in
-  a saved Chromosome. Decide whether to refuse those too. Refusing
-  them makes an older version of the package unable to read a file
-  written by a newer one that adds a key.
 - [ ] **[manual]** `pyproject.toml:5`: the `authors` field carries a
   personal name and a personal email address, published as package
   metadata with every wheel. Decide whether that is wanted.
