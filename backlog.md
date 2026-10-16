@@ -12,12 +12,6 @@ Since 0.7.8 the `GeneticAlgorithm` class is in
 below were read in `algorithms/__init__.py` before the move and are
 some tens of lines off.
 
-**Security**
-
-- [ ] **[manual]** `pyproject.toml:5`: the `authors` field carries a
-  personal name and a personal email address, published as package
-  metadata with every wheel. Decide whether that is wanted.
-
 **Refactoring**
 
 - [ ] **[manual]** Decide whether to rename the Python names that
