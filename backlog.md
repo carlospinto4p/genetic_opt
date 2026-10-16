@@ -1,9 +1,5 @@
 # Backlog - Genetic-Opt
 
-### 2026.10.16 (v1.0.2)
-
-- [ ] (LOW, S) `pyproject.toml`: the sdist holds every file git tracks: `.claude/`, `backlog.md`, `roadmap.md`, `changelog/`, `.tyfold/`, `.pre-commit-scripts/`, `ci/`, `tests/` and the Rust crate (seen in a build of v1.0.1). Add a `[tool.hatch.build.targets.sdist]` `include` or `exclude`; decide whether `tests/` and `crates/` stay.
-
 ### 2026.10.16 (v1.0.0 scan)
 
 #### Performance

@@ -18,6 +18,10 @@ pytestmark = [
     pytest.mark.skipif(
         shutil.which("cargo") is None, reason="needs the Rust toolchain"
     ),
+    # The source package holds the tests but not the crate.
+    pytest.mark.skipif(
+        not CRATE_MANIFEST.is_file(), reason="needs the Rust crate"
+    ),
 ]
 
 

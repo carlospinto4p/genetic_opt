@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v1.0.5 - 16th October 2026
+
+- `pyproject.toml`: added `[tool.hatch.build.targets.sdist]`, so the
+  source package holds `src/genetic_opt`, `tests` and `README.md`
+  instead of every file git tracks (the Claude config, the backlog,
+  the changelog archive, the CI files and the Rust crate).
+- The tests that read the Rust crate skip when it is missing, as it is
+  in the source package:
+  - `tests/unit/test_versions.py`.
+  - `tests/integration/test_rust_layout.py`.
+
 ### v1.0.4 - 16th October 2026
 
 - `src/genetic_opt/files.py`: `save_json` writes the text of

@@ -1,6 +1,6 @@
 [project]
 name = "genetic-opt"
-version = "1.0.4"
+version = "1.0.5"
 description = "Genetic algorithm optimizers package."
 authors = [{ name = "Carlos Pinto", email = "carlospinto4p@gmail.com" }]
 readme = "README.md"
@@ -28,6 +28,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/genetic_opt"]
+
+# Without it the sdist holds every file git tracks. The Rust crate is
+# left out: the Python package does not use it, and the tests that
+# need it skip without it.
+[tool.hatch.build.targets.sdist]
+# Anchored: a bare `tests` also takes `crates/genetic_opt/tests`.
+include = ["/src/genetic_opt", "/tests", "/README.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
