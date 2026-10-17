@@ -19,7 +19,12 @@ stages:
 
 publish-package:
   stage: publish
-  image: python:3.14-slim
+  # Pinned to a digest, since this job holds `CI_JOB_TOKEN`: a moved tag
+  # cannot change what runs. The digest is the multi-arch index of
+  # `python:3.14-slim` on Docker Hub, read 17th October 2026. To update:
+  # read `docker-content-digest` from
+  # https://registry-1.docker.io/v2/library/python/manifests/3.14-slim
+  image: python:3.14-slim@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170
   rules:
     # Only offer the job on a semver tag pipeline, and only when clicked.
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'

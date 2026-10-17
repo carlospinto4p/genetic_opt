@@ -2,10 +2,6 @@
 
 ### 2026.10.17 (v5.10.2 /scan)
 
-#### Security
-
-- [ ] `.gitlab-ci.yml:22` — publish job holds `CI_JOB_TOKEN` on `python:3.14-slim`, not pinned to a digest — LOW — S
-
 #### Performance
 
 - [ ] `web/app.py:34-36` — the limits (300 gens, 400 chromosomes, 40 genes) allow a knapsack run of 18.1 s compute / 22.2 s over HTTP and a 96 MB response (function run: 9.9 s, 50.7 MB), which the comment says the limits should prevent; lower them and/or shrink the payload — HIGH — S

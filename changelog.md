@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.5 - 17th October 2026
+
+- `.gitlab-ci.yml`: the publish job's `python:3.14-slim` image is
+  pinned to its digest, read from Docker Hub on 17th October 2026, since
+  the job holds `CI_JOB_TOKEN`.
+
+
 ### v5.10.4 - 17th October 2026
 
 - `web/app.py`:
