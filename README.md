@@ -79,6 +79,30 @@ logging.basicConfig(
 )
 ```
 
+## Explainer
+
+`frontend/` is a web page that explains how the algorithm works and
+lets you step through real runs, generation by generation: the parents
+picked, how each pair was crossed, which genes the mutation changed and
+which children stayed. It shows the `Knapsack` example and
+`genetic_opt.web.runs.BinaryFunction`, which looks for the highest
+point of `x · sin(10πx) + 1`.
+
+The runs are made by this package, through a small server in
+`genetic_opt.web` that needs the `web` extra:
+
+```bash
+# The API, on http://localhost:5209
+uv sync --all-extras
+uv run python -m genetic_opt.web.app
+
+# The page, on http://localhost:5208
+corepack pnpm --dir frontend install
+corepack pnpm --dir frontend dev
+```
+
+`GENETIC_OPT_WEB_PORT` moves the API to another port, for both.
+
 ## Rust crate
 
 `crates/genetic_opt` is the same algorithm written in Rust. The Python

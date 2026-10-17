@@ -1,0 +1,207 @@
+/* Colours of the charts and genes: the validated palette of the
+   dataviz guidance, first three categorical slots plus violet. */
+:root {
+  color-scheme: light;
+  --bg: #f9f9f7;
+  --bg-surface: #fcfcfb;
+  --bg-raised: #f0efec;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --accent: #2a78d6;
+  --accent-dim: rgba(42, 120, 214, 0.16);
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --s7: #6250d6;
+  --gene-on: #2b2b29;
+  --gene-off: #fcfcfb;
+  --good: #006300;
+  --critical: #d03b3b;
+  --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0d0d0d;
+    --bg-surface: #1a1a19;
+    --bg-raised: #252523;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #3987e5;
+    --accent-dim: rgba(57, 135, 229, 0.2);
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s7: #9085e9;
+    --gene-on: #e6e5e0;
+    --gene-off: #1a1a19;
+    --good: #0ca30c;
+    --critical: #e66767;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+h1 {
+  font-size: 1.9rem;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.4rem;
+}
+
+h2 {
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+  margin: 2.2rem 0 0.6rem;
+}
+
+h3 {
+  font-size: 1.15rem;
+  margin: 1.4rem 0 0.4rem;
+}
+
+p {
+  margin: 0 0 0.8rem;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.95em;
+  background: var(--bg-raised);
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.3rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  font-size: 1.0625rem;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.8rem;
+}
+
+button:hover:not(:disabled) {
+  background: var(--bg-raised);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+input[type='number'],
+input[type='text'] {
+  background: var(--bg-surface);
+  border: 1px solid var(--axis);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.45rem;
+  width: 100%;
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  padding: 1rem 1.2rem;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+.error {
+  color: var(--critical);
+  font-weight: 600;
+}
+
+.chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--bg-raised);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--grid);
+  vertical-align: middle;
+}
+
+th {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  color: var(--text);
+}
+
+.num {
+  text-align: right;
+}

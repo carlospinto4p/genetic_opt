@@ -33,6 +33,14 @@ cargo fmt --manifest-path crates/genetic_opt/Cargo.toml --check
 cargo clippy --manifest-path crates/genetic_opt/Cargo.toml --all-targets -- -D warnings
 ```
 
+```bash
+# Explainer: API on 5209, front-end on 5208 (`frontend/`)
+uv run python -m genetic_opt.web.app
+corepack pnpm --dir frontend dev
+corepack pnpm --dir frontend run check
+corepack pnpm --dir frontend run build
+```
+
 ## Core Rules
 
 1. **Self-Improvement**: When the user corrects a mistake, ALWAYS update the relevant guidelines (`.claude/rules/` or this file) to prevent it from happening again.

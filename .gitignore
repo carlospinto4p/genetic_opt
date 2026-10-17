@@ -56,6 +56,9 @@ dist/
 # Local data
 */data/
 
+# Explainer front-end (`frontend`)
+node_modules/
+
 # Rust crate (`crates/genetic_opt`)
 target/
 **/target/

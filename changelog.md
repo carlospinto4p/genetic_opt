@@ -2,6 +2,30 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.1.0 - 17th October 2026
+
+- Added an explainer of the algorithm, a web page in `frontend/`
+  (Svelte 5, Vite, pnpm) served on port 5208:
+  - How it works: genes, chromosomes, decoding, the score, and each
+    step of a generation, shown on a real run of `Knapsack`.
+  - Knapsack: a run of the example with your own objects and
+    `FitConfig`, stepped through generation by generation.
+  - Find a maximum: the same for `BinaryFunction`, with the population
+    drawn on the curve.
+- Added `src/genetic_opt/web`, the server of the page, on port 5209:
+  - `runs.py`: `record_run` runs an algorithm and keeps, for each
+    generation, the parents picked, the gene each child took from each
+    parent, the genes the mutation changed, and the children that
+    stayed. `BinaryFunction`: the second example, a list of bits read
+    as a number of an interval.
+  - `app.py`: FastAPI routes `/api/info`, `/api/examples`,
+    `/api/runs/knapsack` and `/api/runs/function`. A run is capped at
+    300 generations, 400 chromosomes and 40 genes.
+- Added the extra `web` (`fastapi`, `uvicorn`) and `httpx2` to the dev
+  group, for FastAPI's `TestClient`.
+- Added `tests/unit/web/test_runs.py` and
+  `tests/integration/web/test_app.py`.
+
 ### v5.0.12 - 17th October 2026
 
 - Made four tests check values instead of shapes:

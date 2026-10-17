@@ -1,0 +1,254 @@
+<script lang="ts">
+  import { fmt, niceTicks } from '../lib/format'
+
+  // Values per generation, one line per series, on one axis. A
+  // click picks a generation; `selected` draws it as a vertical line.
+  interface Series {
+    name: string
+    color: string
+    values: number[]
+  }
+
+  let {
+    series,
+    selected = -1,
+    onselect,
+    height = 240,
+    format = (v: number) => fmt(v),
+    yMin = undefined,
+    yMax = undefined,
+  }: {
+    series: Series[]
+    selected?: number
+    onselect?: (i: number) => void
+    height?: number
+    format?: (v: number) => string
+    yMin?: number
+    yMax?: number
+  } = $props()
+
+  let width = $state(600)
+  let hover = $state(-1)
+
+  const pad = { l: 60, r: 90, t: 14, b: 32 }
+
+  let n = $derived(series[0]?.values.length ?? 0)
+  let ticks = $derived.by(() => {
+    const all = series.flatMap((s) => s.values)
+    return niceTicks(yMin ?? Math.min(...all), yMax ?? Math.max(...all))
+  })
+  let lo = $derived(ticks[0])
+  let hi = $derived(ticks[ticks.length - 1])
+  let plotW = $derived(Math.max(10, width - pad.l - pad.r))
+  let plotH = $derived(height - pad.t - pad.b)
+
+  const x = (i: number) => pad.l + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW)
+  const y = (v: number) => pad.t + plotH - ((v - lo) / (hi - lo || 1)) * plotH
+
+  let xTicks = $derived.by(() => {
+    if (n <= 1) return [0]
+    return niceTicks(0, n - 1, Math.min(8, n - 1)).filter(
+      (t) => Number.isInteger(t) && t <= n - 1,
+    )
+  })
+
+  // Labels at the end of each line, pushed apart so they do not overlap
+  let endLabels = $derived.by(() => {
+    const labels = series
+      .map((s) => ({ name: s.name, color: s.color, y: y(s.values[n - 1]) }))
+      .sort((a, b) => a.y - b.y)
+    for (let i = 1; i < labels.length; i++) {
+      labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 17)
+    }
+    return labels
+  })
+
+  function path(values: number[]): string {
+    return values.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join('')
+  }
+
+  function indexAt(e: MouseEvent): number {
+    const rect = (e.currentTarget as SVGElement).getBoundingClientRect()
+    const px = e.clientX - rect.left - pad.l
+    if (n <= 1) return 0
+    return Math.max(0, Math.min(n - 1, Math.round((px / plotW) * (n - 1))))
+  }
+</script>
+
+<div class="chart" bind:clientWidth={width}>
+  {#if series.length > 1}
+    <div class="legend">
+      {#each series as s (s.name)}
+        <span><i style="background: {s.color}"></i>{s.name}</span>
+      {/each}
+    </div>
+  {/if}
+  <svg
+    {width}
+    {height}
+    role="button"
+    tabindex="0"
+    aria-label="Chart by generation. Click to pick a generation."
+    onmousemove={(e) => (hover = indexAt(e))}
+    onmouseleave={() => (hover = -1)}
+    onclick={(e) => onselect?.(indexAt(e))}
+    onkeydown={(e) => {
+      if (e.key === 'ArrowRight') onselect?.(Math.min(n - 1, selected + 1))
+      if (e.key === 'ArrowLeft') onselect?.(Math.max(0, selected - 1))
+    }}
+  >
+    {#each ticks as t (t)}
+      <line class="grid" x1={pad.l} x2={pad.l + plotW} y1={y(t)} y2={y(t)} />
+      <text class="tick" x={pad.l - 8} y={y(t) + 5} text-anchor="end">
+        {format(t)}
+      </text>
+    {/each}
+    <line
+      class="axis"
+      x1={pad.l}
+      x2={pad.l + plotW}
+      y1={pad.t + plotH}
+      y2={pad.t + plotH}
+    />
+    {#each xTicks as t (t)}
+      <text class="tick" x={x(t)} y={height - 8} text-anchor="middle">{t}</text>
+    {/each}
+
+    {#if selected >= 0 && selected < n}
+      <line
+        class="selected"
+        x1={x(selected)}
+        x2={x(selected)}
+        y1={pad.t}
+        y2={pad.t + plotH}
+      />
+    {/if}
+
+    {#each series as s (s.name)}
+      <path d={path(s.values)} fill="none" stroke={s.color} stroke-width="2" />
+      {#if n === 1}
+        <circle cx={x(0)} cy={y(s.values[0])} r="4" fill={s.color} />
+      {/if}
+    {/each}
+
+    {#each endLabels as l (l.name)}
+      <text class="end-label" x={pad.l + plotW + 8} y={l.y + 5}>{l.name}</text>
+    {/each}
+
+    {#if hover >= 0}
+      <line
+        class="crosshair"
+        x1={x(hover)}
+        x2={x(hover)}
+        y1={pad.t}
+        y2={pad.t + plotH}
+      />
+      {#each series as s (s.name)}
+        <circle
+          cx={x(hover)}
+          cy={y(s.values[hover])}
+          r="4.5"
+          fill={s.color}
+          stroke="var(--bg-surface)"
+          stroke-width="2"
+        />
+      {/each}
+    {/if}
+  </svg>
+  {#if hover >= 0}
+    <div
+      class="tooltip"
+      style="left: {Math.min(x(hover) + 12, width - 170)}px; top: {pad.t}px"
+    >
+      <div class="tooltip-title">Generation {hover}</div>
+      {#each series as s (s.name)}
+        <div class="tooltip-row">
+          <i style="background: {s.color}"></i>
+          <span>{s.name}</span>
+          <b>{format(s.values[hover])}</b>
+        </div>
+      {/each}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .chart {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+  svg {
+    display: block;
+    cursor: crosshair;
+  }
+  svg:focus-visible {
+    outline: 2px solid var(--accent);
+    border-radius: 4px;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    color: var(--text-2);
+    margin-bottom: 0.3rem;
+  }
+  .legend i,
+  .tooltip i {
+    display: inline-block;
+    width: 0.8rem;
+    height: 3px;
+    border-radius: 2px;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+  .grid {
+    stroke: var(--grid);
+  }
+  .axis {
+    stroke: var(--axis);
+  }
+  .tick {
+    fill: var(--muted);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .end-label {
+    fill: var(--text-2);
+    font-size: 0.9rem;
+  }
+  .selected {
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 4 3;
+  }
+  .crosshair {
+    stroke: var(--muted);
+  }
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    min-width: 150px;
+  }
+  .tooltip-title {
+    font-weight: 600;
+  }
+  .tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    color: var(--text-2);
+  }
+  .tooltip-row b {
+    margin-left: auto;
+    padding-left: 0.8rem;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
