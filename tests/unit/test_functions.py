@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 import re
 
@@ -63,8 +64,13 @@ def test_format_bytes(num_bytes, expected):
 # ── now_for_file_path Tests ────────────────────────────────────────────
 
 
-def test_now_for_file_path_format():
-    assert re.fullmatch(r"\d{8}_\d{6}", now_for_file_path())
+def test_now_for_file_path_is_the_utc_time_to_the_second():
+    before = dt.datetime.now(tz=dt.UTC).replace(microsecond=0)
+    now = now_for_file_path()
+    after = dt.datetime.now(tz=dt.UTC)
+    assert re.fullmatch(r"\d{8}_\d{6}", now)
+    parsed = dt.datetime.strptime(now, "%Y%m%d_%H%M%S").replace(tzinfo=dt.UTC)
+    assert before <= parsed <= after
 
 
 # ── time_it_with_logger Tests ──────────────────────────────────────────

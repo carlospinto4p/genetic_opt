@@ -1,7 +1,7 @@
 import json
-import pickle
 
 import pytest
+from numpy.random import RandomState
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.gene_space import BinaryGeneSpace
@@ -14,7 +14,7 @@ from tests.unit.conftest import OnesGeneSpace
 def test_a_chromosome_builds_its_random_state_on_first_use():
     size = 40
     unused = Chromosome(size=size, genes=[0] * size)
-    unused_bytes = len(pickle.dumps(unused))
+    assert unused._random_state is None
     # Two Chromosomes with one seed and no state given mutate alike.
     first, second = (
         Chromosome(size=size, genes=[0] * size).random_mutate(
@@ -22,10 +22,11 @@ def test_a_chromosome_builds_its_random_state_on_first_use():
         )
         for _ in range(2)
     )
-    assert 0 < sum(first.genes) < size
     assert first.genes == second.genes
-    # The state is some 3 KB of a pickled Chromosome.
-    assert unused_bytes < 1000 < len(pickle.dumps(first))
+    # The genes that mutate, all to 1, are the first draws of the seed.
+    draws = RandomState(seed=unused.random_seed).random(size)
+    assert first.genes == [int(draw < 0.5) for draw in draws]
+    assert 0 < sum(first.genes) < size
 
 
 def test_a_mutated_chromosome_gets_a_new_id():

@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.12 - 17th October 2026
+
+- Made four tests check values instead of shapes:
+  - `test_load_fit_result_refuses_a_file_over_the_size_limit`: under
+    the limit the run loads as it does with the default one.
+  - `test_get_file_size_of_a_missing_file_is_none`: a file of 1536
+    bytes is `1.5 KiB`.
+  - `test_now_for_file_path_is_the_utc_time_to_the_second`, before
+    `test_now_for_file_path_format`: the time is UTC, not only the
+    format.
+  - `test_a_chromosome_builds_its_random_state_on_first_use`: the
+    genes that mutate are the first draws of the seed, in place of the
+    size of a pickled numpy `RandomState`.
+
 ### v5.0.11 - 17th October 2026
 
 - Added Rust tests the Python package already had:

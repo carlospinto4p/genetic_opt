@@ -168,5 +168,5 @@ def test_loading_a_corrupt_bson_file_raises(tmp_path):
 
 def test_get_file_size_of_a_missing_file_is_none(tmp_path):
     assert get_file_size(f"{tmp_path}/missing") is None
-    save_json(DATA, f"{tmp_path}/data")
-    assert get_file_size(f"{tmp_path}/data.json").endswith(" B")
+    (tmp_path / "data.bin").write_bytes(b"x" * 1536)
+    assert get_file_size(f"{tmp_path}/data.bin") == "1.5 KiB"

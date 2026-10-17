@@ -281,9 +281,10 @@ def test_load_fit_result_removes_duplicates_when_asked(saved_run):
 
 
 def test_load_fit_result_refuses_a_file_over_the_size_limit(saved_run):
-    assert load_fit_result(saved_run, decode_genes, max_file_bytes=10**9)[
-        "bests"
-    ]
+    # Under the limit the run loads as it does with the default one.
+    assert load_fit_result(
+        saved_run, decode_genes, max_file_bytes=10**9
+    ) == load_fit_result(saved_run, decode_genes)
     with pytest.raises(ValidationException, match="max_file_bytes"):
         load_fit_result(saved_run, decode_genes, max_file_bytes=10)
 
