@@ -56,6 +56,22 @@ def _score_chromosome(
     return score, chromosome.score_time
 
 
+def parent_counts(
+    population_size: int, crossovers_prop: float, besties_prop: float
+) -> tuple[int, int]:
+    """
+    How many parents a generation crosses, and how many of them are the
+    best Chromosomes of the population.
+    :param population_size: number of Chromosomes in the population.
+    :param crossovers_prop: proportion of the population to cross.
+    :param besties_prop: proportion of the parents that are the best.
+    :return: a tuple (parents, best parents). The parents are an even
+        number, to be crossed in pairs.
+    """
+    n_crossovers = 2 * int((crossovers_prop * population_size) // 2)
+    return n_crossovers, int(n_crossovers * besties_prop)
+
+
 class GeneticAlgorithm(ABC):
     """
     Genetic algorithm base class.
@@ -744,9 +760,9 @@ class GeneticAlgorithm(ABC):
         """
         init_time = time()
         population_length = len(self.population)
-        # Ensure that the crossover population is even
-        n_crossovers = 2 * int((crossovers_prop * population_length) // 2)
-        n_besties = int(n_crossovers * besties_prop)
+        n_crossovers, n_besties = parent_counts(
+            population_length, crossovers_prop, besties_prop
+        )
         # Get the crossover candidates, choosing the besties and a sample
         # of the rest. Their positions are drawn, and not the
         # Chromosomes, which numpy would copy into an array first: a

@@ -46,12 +46,13 @@
   let crossed = $derived(parentA && parentB ? cross(parentA.genes, parentB.genes) : [])
 
   let fit = $derived(ran?.fit)
-  let selection = $derived.by(() => {
-    if (!fit) return null
-    const n = 2 * Math.floor(Math.floor(fit.crossovers_prop * fit.population_size) / 2)
-    const best = Math.floor(n * fit.besties_prop)
-    return { n, best, random: n - best }
-  })
+  let selection = $derived(
+    breeding && {
+      n: breeding.n_crossovers,
+      best: breeding.n_besties,
+      random: breeding.n_crossovers - breeding.n_besties,
+    },
+  )
 
   const off = (genes: Gene[], decoded: number[]) =>
     genes.flatMap((g, i) => (g === 1 && decoded[i] === 0 ? [i] : []))

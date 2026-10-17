@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.12.0 - 18th October 2026
+
+- Added `parent_counts` to `algorithms/base.py`: how many parents a
+  generation crosses and how many of them are the best. Used by
+  `next_generation_selection` and by the web recorder in `web/runs.py`,
+  which each worked the counts out by themselves.
+- `frontend/src/pages/Guide.svelte` reads the counts from the run's
+  breeding record instead of working them out again.
+- Added 5 cases of `test_parent_counts_cross_an_even_number_of_parents`
+  to `tests/unit/algorithms/test_base.py`.
+
+
 ### v5.11.2 - 18th October 2026
 
 - Fixed `test_fast_scores_are_not_sent_to_the_workers` in

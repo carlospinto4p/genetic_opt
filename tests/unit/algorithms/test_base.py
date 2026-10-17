@@ -565,6 +565,28 @@ def test_proportions_at_0_and_1_breed_without_error(
     assert counted["total"] == 30 + children * 4
 
 
+@pytest.mark.parametrize(
+    ("population_size", "crossovers_prop", "besties_prop", "counts"),
+    [
+        # 21 parents, rounded down to an even 20; 20 * 0.6 = 12 best
+        (30, 0.7, 0.6, (20, 12)),
+        (30, 1.0, 1.0, (30, 30)),
+        (31, 1.0, 0.5, (30, 15)),
+        (30, 0.0, 1.0, (0, 0)),
+        (1, 1.0, 1.0, (0, 0)),
+    ],
+)
+def test_parent_counts_cross_an_even_number_of_parents(
+    population_size, crossovers_prop, besties_prop, counts
+):
+    assert (
+        algorithms.parent_counts(
+            population_size, crossovers_prop, besties_prop
+        )
+        == counts
+    )
+
+
 def test_a_population_of_one_breeds_no_children():
     knapsack, _ = _counting_bag()
     result = knapsack.fit(

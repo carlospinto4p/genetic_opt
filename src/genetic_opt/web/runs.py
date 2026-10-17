@@ -5,7 +5,7 @@ from math import isinf, pi, sin
 from pathlib import Path
 from typing import Any
 
-from genetic_opt.algorithms.base import GeneticAlgorithm
+from genetic_opt.algorithms.base import GeneticAlgorithm, parent_counts
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.algorithms.config import FitConfig
 from genetic_opt.chromosome import Chromosome
@@ -131,11 +131,12 @@ class _Recorder:
         self, crossovers_prop: float, besties_prop: float, **kwargs: Any
     ) -> None:
         before = list(self.population)
-        # As `GeneticAlgorithm.next_generation_selection` counts them
-        n_crossovers = 2 * int((crossovers_prop * len(before)) // 2)
+        n_crossovers, n_besties = parent_counts(
+            len(before), crossovers_prop, besties_prop
+        )
         self._breeding = {
             "n_crossovers": n_crossovers,
-            "n_besties": int(n_crossovers * besties_prop),
+            "n_besties": n_besties,
             "ranks": {id(c): rank for rank, c in enumerate(before)},
             "parents": [],
             "crossovers": [],
