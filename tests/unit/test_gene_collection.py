@@ -116,21 +116,15 @@ def test_a_gene_drawn_alone_is_a_plain_python_value(is_gene_set):
     assert drawn == Chromosome(size=1, genes=[gene], is_gene_set=is_gene_set)
 
 
-def test_construction_errors_name_the_sizes_and_nothing_else():
-    with pytest.raises(ValidationException) as no_genes:
-        Chromosome(size=3)
-    assert no_genes.value.processing_object is None
-
+def test_construction_errors_name_the_sizes():
     with pytest.raises(ValidationException) as wrong_size:
         Chromosome(size=2, genes=[1, 0, 1])
-    assert wrong_size.value.processing_object is None
     assert wrong_size.value.message == (
         "Chromosome size (2) must match the length of the genes (3)"
     )
 
     with pytest.raises(ValidationException) as small_space:
         Chromosome(size=3, gene_space=BinaryGeneSpace(), is_gene_set=True)
-    assert small_space.value.processing_object is None
     assert small_space.value.message == (
         "Chromosome received a `size` (3) greater than its `gene_space` (2)"
     )

@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.0 - 17th October 2026
+
+- Removed the `processing_object` parameter and attribute of
+  `GeneticOptException`, and with it the "At object:" part of its
+  message. Nothing in the package passed one.
+- Removed the `only_hours` parameter of `format_seconds` in
+  `functions.py`. Nothing in the package passed it.
+- Updated the tests that used them: `test_exceptions.py`,
+  `test_functions.py` and `test_gene_collection.py`.
+
 ### v4.1.2 - 17th October 2026
 
 - Fixed: `Chromosome.from_dict` and `Metric.from_dict` build the class

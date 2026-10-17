@@ -42,10 +42,6 @@ def test_format_seconds(seconds, expected):
     assert format_seconds(seconds) == expected
 
 
-def test_format_seconds_only_hours():
-    assert format_seconds(200_000, only_hours=True) == "55:33:20"
-
-
 # ── format_bytes Tests ─────────────────────────────────────────────────
 
 

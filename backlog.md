@@ -2,10 +2,6 @@
 
 ### 2026.10.16 (v1.0.0 scan)
 
-#### Refactoring
-
-- [ ] (LOW, S) Dead parameters: `exceptions.py:9-23` `processing_object` and `functions.py:28` `format_seconds(only_hours=...)` are used only by tests.
-
 #### Test coverage
 
 - [ ] (HIGH, S) `tests/integration/test_rust_layout.py:74-86`: a Rust run loaded in Python checks only a few fields. Check every key and value type against the `FitResult` TypedDicts (as `tests/unit/test_fit_result.py` does for Python runs): the other `fit_parameters` keys, `total_fit_time`, `genetic_opt_version`, `percent_processed`, `cached`, `exploration_percentage`, `last_population`, every Metric field, and each chromosome's `score_time` and `random_seed`.
