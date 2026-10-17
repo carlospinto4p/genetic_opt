@@ -32,19 +32,28 @@ def _draw_genes(gene_space: AbstractGeneSpace, n: int) -> list:
 
 
 def _check_genes_or_gene_space(
-    genes: Collection | None, gene_space: AbstractGeneSpace | None
+    size: int,
+    genes: Collection | None,
+    gene_space: AbstractGeneSpace | None,
 ) -> None:
     """
     Check that a gene collection gets genes or a GeneSpace to draw
     them from.
+    :param size: size of the collection.
     :param genes: genes received, already turned from a numpy array.
     :param gene_space: GeneSpace object received.
-    :raises ValidationException: when both are empty.
+    :raises ValidationException: when both are empty, or when there are
+        fewer genes than `size` and no GeneSpace to draw the rest from.
     """
     if not (genes or gene_space):
         raise ValidationException(
             "Chromosome must be initialized with the `genes` "
             "parameter or using a `gene_space`"
+        )
+    if not gene_space and len(genes) < size:
+        raise ValidationException(
+            f"Chromosome received {len(genes)} genes for a `size` of "
+            f"{size}, and no `gene_space` to draw the rest from"
         )
 
 
@@ -126,7 +135,7 @@ class GeneList(GeneCollection):
         """
         if isinstance(genes, ndarray):
             genes = genes.tolist()
-        _check_genes_or_gene_space(genes, gene_space)
+        _check_genes_or_gene_space(size, genes, gene_space)
         self.size = size
         if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)
@@ -202,7 +211,7 @@ class GeneSet(GeneCollection):
             genes = set(genes.flatten())
         if isinstance(genes, list):
             genes = set(genes)
-        _check_genes_or_gene_space(genes, gene_space)
+        _check_genes_or_gene_space(size, genes, gene_space)
         self.size = size
         if not genes and gene_space:
             genes = self.select_random(gene_space, n=size)

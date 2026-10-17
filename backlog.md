@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (MED, S) `src/genetic_opt/gene_collection.py:133-134,209-211`: `GeneList`/`GeneSet` built with fewer genes than `size` and no `gene_space` crash with `AttributeError`/`TypeError` instead of `ValidationException`. Add the check and a regression test.
 - [ ] (MED, S) `src/genetic_opt/algorithms/base.py:355-388`: `fit` validates `FitConfig` and resolves `n_jobs` inline (~35 lines). Move into `FitConfig.__post_init__` or a helper, like the crate's `fit_parameters()`.
 - [ ] (MED, S) `src/genetic_opt/algorithms/base.py:470-490,731-751`: the score-cache lookup by `repr(chromosome)` is written twice; `get_chromosome_score` is called only by tests.
 - [ ] (MED, S) `src/genetic_opt/algorithms/base.py:290-303`: no counterpart to the crate's `FitConfig.stop_without_improvement`; tests turn it off by replacing `no_improvement_condition` on the instance (`tests/unit/test_binary_algs.py:663,690,714`).

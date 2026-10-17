@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.0.5 - 17th October 2026
+
+- Fixed `src/genetic_opt/gene_collection.py`: a `GeneList` or `GeneSet`
+  given fewer genes than its `size` and no `gene_space` failed with an
+  `AttributeError` or a `TypeError`. It now raises a
+  `ValidationException` naming both numbers.
+- Added `test_a_chromosome_short_of_genes_needs_a_gene_space` in
+  `tests/unit/test_functions.py`.
+
 ### v2.0.4 - 17th October 2026
 
 - Fixed `src/genetic_opt/fit_result_io.py`: an error raised by the

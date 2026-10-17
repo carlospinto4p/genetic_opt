@@ -144,6 +144,16 @@ def test_a_chromosome_needs_genes_or_a_gene_space(is_gene_set):
     )
 
 
+@pytest.mark.parametrize("is_gene_set", [False, True])
+def test_a_chromosome_short_of_genes_needs_a_gene_space(is_gene_set):
+    with pytest.raises(ValidationException) as short:
+        Chromosome(size=3, genes=[1], is_gene_set=is_gene_set)
+    assert short.value.message == (
+        "Chromosome received 1 genes for a `size` of 3, and no "
+        "`gene_space` to draw the rest from"
+    )
+
+
 @pytest.mark.parametrize("other", [None, "[1, 0, 1]", [1, 0, 1]])
 def test_a_chromosome_differs_from_what_is_not_a_chromosome(other):
     chromosome = Chromosome(size=3, genes=[1, 0, 1])
