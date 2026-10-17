@@ -1095,11 +1095,15 @@ def _tournament_parents(
 
     algorithm.cross_parents = keep_parents
     algorithm.next_generation_selection(
-        crossovers_prop=1.0,
-        besties_prop=n_besties / 20,
+        FitConfig(
+            n_generations=1,
+            population_size=20,
+            crossovers_prop=1.0,
+            besties_prop=n_besties / 20,
+            selection="tournament",
+            tournament_size=tournament_size,
+        ),
         n_jobs=1,
-        selection="tournament",
-        tournament_size=tournament_size,
     )
     return picked
 

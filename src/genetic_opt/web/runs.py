@@ -128,11 +128,11 @@ class _Recorder:
         return record
 
     def next_generation_selection(
-        self, crossovers_prop: float, besties_prop: float, **kwargs: Any
+        self, config: FitConfig, **kwargs: Any
     ) -> None:
         before = list(self.population)
         n_crossovers, n_besties = parent_counts(
-            len(before), crossovers_prop, besties_prop
+            len(before), config.crossovers_prop, config.besties_prop
         )
         self._breeding = {
             "n_crossovers": n_crossovers,
@@ -142,11 +142,7 @@ class _Recorder:
             "crossovers": [],
             "mutations": [],
         }
-        super().next_generation_selection(
-            crossovers_prop=crossovers_prop,
-            besties_prop=besties_prop,
-            **kwargs,
-        )
+        super().next_generation_selection(config, **kwargs)
 
     def cross_parents(self, parents: list[Chromosome]) -> list[Chromosome]:
         self._breeding["parents"] = list(parents)

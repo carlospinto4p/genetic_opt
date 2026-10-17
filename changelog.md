@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v6.0.0 - 18th October 2026
+
+- `GeneticAlgorithm.next_generation_selection` takes the run's
+  `FitConfig` instead of `crossovers_prop`, `besties_prop`,
+  `mutate_prob`, `selection` and `tournament_size`. `iter_func` and
+  `n_jobs` stay. A subclass that overrides it now receives `config`.
+- Updated `fit`, the web recorder in `web/runs.py` and
+  `_tournament_parents` in `tests/unit/algorithms/test_base.py` to
+  match. `downstream` neither calls nor overrides the method.
+
+
 ### v5.12.0 - 18th October 2026
 
 - Added `parent_counts` to `algorithms/base.py`: how many parents a

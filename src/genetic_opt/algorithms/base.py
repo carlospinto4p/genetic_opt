@@ -468,13 +468,7 @@ class GeneticAlgorithm(ABC):
                     )
                 else:
                     self.next_generation_selection(
-                        crossovers_prop=config.crossovers_prop,
-                        besties_prop=config.besties_prop,
-                        mutate_prob=config.mutate_prob,
-                        iter_func=iter_func,
-                        n_jobs=n_jobs,
-                        selection=config.selection,
-                        tournament_size=config.tournament_size,
+                        config, iter_func=iter_func, n_jobs=n_jobs
                     )
                 # The texts are built only when they are going to be logged
                 if logger.isEnabledFor(INFO):
@@ -734,34 +728,25 @@ class GeneticAlgorithm(ABC):
 
     def next_generation_selection(
         self,
-        crossovers_prop: float = FitConfig.crossovers_prop,
-        besties_prop: float = FitConfig.besties_prop,
-        mutate_prob: float = FitConfig.mutate_prob,
+        config: FitConfig,
         iter_func: Callable | None = None,
         n_jobs: int = FitConfig.n_jobs,
-        selection: str = FitConfig.selection,
-        tournament_size: int = FitConfig.tournament_size,
     ) -> None:
         """
         Handles the selection of the next generation. See the class doc.
-        :param crossovers_prop: proportion of chromosomes to crossover
-            in each step.
-        :param besties_prop: proportion of bests chromosomes to maintain for
-            each generation.
-        :param mutate_prob: probability of a chromosome mutation.
+        :param config: the parameters of the run. Its `crossovers_prop`,
+            `besties_prop`, `mutate_prob`, `selection` and
+            `tournament_size` are read.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :param n_jobs: number of jobs to use to parallelize the evaluation of
             each element of the population. Default to `FitConfig.n_jobs`.
-        :param selection: how the parents that are not besties are picked
-            from the rest: `"random"` or `"tournament"`.
-        :param tournament_size: Chromosomes drawn for each tournament.
         :return: None.
         """
         init_time = time()
         population_length = len(self.population)
         n_crossovers, n_besties = parent_counts(
-            population_length, crossovers_prop, besties_prop
+            population_length, config.crossovers_prop, config.besties_prop
         )
         # Get the crossover candidates, choosing the besties and a sample
         # of the rest. Their positions are drawn, and not the
@@ -769,11 +754,13 @@ class GeneticAlgorithm(ABC):
         # seed gives the same parents either way.
         rest = self.population[n_besties:]
         n_drawn = n_crossovers - n_besties
-        if selection == "tournament":
+        if config.selection == "tournament":
             # The rest is sorted best first, so the lowest position drawn
             # wins each tournament
             positions = self.random_state.choice(
-                len(rest), size=(n_drawn, tournament_size), replace=True
+                len(rest),
+                size=(n_drawn, config.tournament_size),
+                replace=True,
             ).min(axis=1)
         else:
             positions = self.random_state.choice(
@@ -784,7 +771,9 @@ class GeneticAlgorithm(ABC):
         ]
         self.random_state.shuffle(parents)
         children = self.cross_parents(parents)
-        mutated_children = self.mutate_chromosomes(children, mutate_prob)
+        mutated_children = self.mutate_chromosomes(
+            children, config.mutate_prob
+        )
         # Get the new population adding the mutated children to the
         # previous population
         self.population = mutated_children + self.population
