@@ -2,6 +2,29 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.7 - 17th October 2026
+
+- Added tests of saving and loading a run:
+  - `test_a_run_of_set_chromosomes_loads_back_as_sets` in
+    `tests/unit/algorithms/test_save.py`: a run of set Chromosomes, as
+    JSON and as BSON, loads back with every Chromosome a set.
+  - `test_fit_saves_each_generation_and_loads_it_back` also compares the
+    `to_dict` of each Chromosome, since `Chromosome.__eq__` looks at the
+    genes alone.
+  - `test_a_chromosome_comes_back_whole_from_its_dict` in
+    `tests/unit/test_chromosome.py`: genes, `score`, `score_time` and
+    `random_seed` survive `to_dict`, JSON and `from_dict`.
+- Added `load_fit_result_file` tests in `tests/unit/test_fit_result_io.py`:
+  each file of a JSON and of a BSON run, `remove_duplicates`,
+  `max_file_bytes` and a malformed file.
+- Added `test_an_error_of_the_fitness_function_stops_the_run` in
+  `tests/unit/algorithms/test_base.py`: the error of a fitness function
+  comes out of `fit` as it is, with one job and with two, and the next
+  run works.
+- Moved `NumbersAlgorithm` and `NumbersGeneSpace` from
+  `tests/unit/algorithms/test_base.py` to `tests/unit/conftest.py`.
+  `NumbersAlgorithm` takes keyword arguments for `GeneticAlgorithm`.
+
 ### v5.0.6 - 17th October 2026
 
 - Added tests of `fit` in `tests/unit/algorithms/test_base.py`:

@@ -1,4 +1,5 @@
 import json
+import os
 from math import inf
 
 import bson
@@ -307,3 +308,72 @@ def test_remove_duplicates_leaves_the_last_population_whole(saved_run):
     loaded = load_fit_result(saved_run, decode_genes, remove_duplicates=True)
     assert len(loaded["history"][-1]) < len(raw["population"])
     assert len(loaded["last_population"]) == len(raw["population"])
+
+
+# ── load_fit_result_file Tests ─────────────────────────────────────────
+
+
+@pytest.mark.parametrize("save_as_bson", [True, False])
+def test_load_fit_result_file_gives_the_generation_of_the_file(
+    tmp_path, save_as_bson
+):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=save_as_bson)
+    fit_result = algorithm.fit(
+        FitConfig(n_generations=2, population_size=20, n_jobs=1),
+    )
+    extension = "bson" if save_as_bson else "json"
+    folder = f"{algorithm.save_path}/fit_data"
+    n_files = len(fit_result["history"])
+    assert n_files > 1
+
+    for idx in range(1, n_files + 1):
+        loaded = load_fit_result_file(f"{folder}/fit_data_{idx}.{extension}")
+        assert loaded["population_idx"] == idx
+        assert loaded["population"] == fit_result["history"][idx - 1]
+        assert loaded["metrics"] == [fit_result["metrics"][idx - 1]]
+        assert loaded["fit_parameters"] == fit_result["fit_parameters"]
+    # The last file holds the bests and the counts of the whole run.
+    assert loaded["bests"] == fit_result["bests"]
+    assert loaded["fit_metrics"] == fit_result["fit_metrics"]
+
+
+def test_load_fit_result_file_removes_duplicates_when_asked(saved_run):
+    file_path = f"{saved_run}/fit_data_1.json"
+    raw = load_json(file_path)
+    raw["population"][1] = raw["population"][0]
+    save_json(raw, file_path)
+
+    plain = load_fit_result_file(file_path)
+    loaded = load_fit_result_file(file_path, remove_duplicates=True)
+    first_seen: dict = {}
+    for score, chromosome in plain["population"]:
+        first_seen.setdefault(chromosome, score)
+    assert loaded["population"] == [(s, c) for c, s in first_seen.items()]
+    assert len(loaded["population"]) < len(plain["population"])
+
+
+def test_load_fit_result_file_refuses_a_file_over_the_size_limit(saved_run):
+    file_path = f"{saved_run}/fit_data_1.json"
+    size = os.path.getsize(file_path)
+    loaded = load_fit_result_file(file_path, max_file_bytes=size)
+    assert loaded == load_fit_result_file(file_path)
+    with pytest.raises(ValidationException, match="max_file_bytes"):
+        load_fit_result_file(file_path, max_file_bytes=size - 1)
+
+
+@pytest.mark.parametrize(
+    "file_name, content",
+    [
+        ("fit_data_9.json", b"not json"),
+        ("fit_data_9.json", b"[1, 2]"),
+        ("fit_data_9.json", b'{"bests": {"scores": []}}'),
+        ("fit_data_9.bson", b"not bson"),
+    ],
+)
+def test_load_fit_result_file_refuses_a_malformed_file(
+    tmp_path, file_name, content
+):
+    file_path = tmp_path / file_name
+    file_path.write_bytes(content)
+    with pytest.raises(ValidationException, match="not a fit result file"):
+        load_fit_result_file(str(file_path))

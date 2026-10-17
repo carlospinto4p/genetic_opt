@@ -4,10 +4,6 @@
 
 #### Test coverage
 
-- [ ] (MED, S) `ones_algorithm` in `tests/unit/conftest.py`: the unit suite saves and loads only list chromosomes; set chromosomes are covered only by the cargo-gated integration suite.
-- [ ] (MED, S) `load_fit_result_file` (`tests/unit/test_fit_result.py`, `tests/unit/algorithms/test_save.py`) is tested only on JSON, never with `remove_duplicates`, `max_file_bytes`, BSON or a malformed file.
-- [ ] (MED, S) `test_fit_saves_each_generation_and_loads_it_back` in `tests/unit/algorithms/test_save.py`: history equality relies on `Chromosome.__eq__` (genes only), so losing `score_time` or `random_seed` on save would pass. Add a direct `Chromosome.to_dict`/`from_dict` round-trip test.
-- [ ] (LOW, S) No test for a fitness function that raises inside a worker process (`base.py:742-745`, `n_jobs > 1`).
 - [ ] (LOW, S) `fit_result_io.py:66-74`: two files with the same `population_idx` (`fit_data_1.json` and `fit_data_1.bson`) put a generation twice in `history`; untested and not refused.
 - [ ] (LOW, S) `score.py:23-26`: `Score.to_dict` drops an empty `name` or `extra_metrics`, so `Score(value=1, extra_metrics={})` does not round-trip equal. Untested.
 - [ ] (LOW, S) `algorithms/plots.py:138`: plot title without a score name is untested.

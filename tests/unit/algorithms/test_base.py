@@ -13,7 +13,6 @@ from numpy import array
 
 from genetic_opt.algorithms import FitConfig
 from genetic_opt.algorithms import base as algorithms
-from genetic_opt.algorithms.base import GeneticAlgorithm
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
@@ -27,7 +26,12 @@ from genetic_opt.fit_result import (
 from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
-from tests.unit.conftest import OnesGeneSpace
+from tests.unit.conftest import (
+    NumbersAlgorithm,
+    OnesGeneSpace,
+    count_ones,
+    ones_algorithm,
+)
 
 # ── GeneticAlgorithm Tests ─────────────────────────────────────────────
 
@@ -99,54 +103,6 @@ def test_fit_with_0_generations_scores_the_first_population_only():
     assert result["fit_parameters"]["n_generations"] == 0
     assert result["bests"]["scores"] == [Score(value=0)]
     assert len(result["last_population"]) == 20
-
-
-class NumbersGeneSpace(AbstractGeneSpace):
-    """Gene space of the numbers 0 to 11, as Python integers."""
-
-    def __len__(self) -> int:
-        return 12
-
-    def select_random(self, n=None):
-        genes = self.random_state.randint(12, size=n)
-        return int(genes) if n is None else genes.tolist()
-
-
-class NumbersAlgorithm(GeneticAlgorithm):
-    """
-    Pick 3 different numbers under 12 with the highest sum, or the
-    lowest. A Chromosome is a set. The `Numbers` problem of the crate's
-    `tests/algorithm.rs`.
-    """
-
-    def __init__(self, minimize: bool):
-        super().__init__(
-            gene_space=NumbersGeneSpace(random_seed=5),
-            chromosome_length=3,
-            chromosome_as_set=True,
-            decode_func=lambda chromosome: sum(chromosome.genes),
-            fitness_func=lambda chromosome: Score(
-                value=sum(chromosome.genes)
-            ),
-            minimize=minimize,
-        )
-
-    def crossover_func(
-        self, c1: Chromosome, c2: Chromosome
-    ) -> tuple[Chromosome, Chromosome]:
-        """The lowest gene of one parent and the others of the other."""
-
-        def mix(first: Chromosome, second: Chromosome) -> Chromosome:
-            genes = sorted(first.genes)[:1] + sorted(second.genes)[1:]
-            return Chromosome(
-                size=self.chromosome_length,
-                genes=set(genes),
-                gene_space=self.gene_space,
-                is_gene_set=True,
-                random_seed=self.random_seed,
-            )
-
-        return mix(c1, c2), mix(c2, c1)
 
 
 def _fit_numbers(minimize: bool) -> tuple[NumbersAlgorithm, FitResult]:
@@ -288,6 +244,24 @@ def test_fit_scores_each_chromosome_once(tmp_path):
     assert (
         len(calls) == result["fit_metrics"]["fitness_func_calls"]["processed"]
     )
+
+
+def broken_fitness(chromosome):
+    raise ArithmeticError(f"a bug scoring {chromosome!r}")
+
+
+@pytest.mark.parametrize("n_jobs", [1, min(2, cpu_count())])
+def test_an_error_of_the_fitness_function_stops_the_run(tmp_path, n_jobs):
+    algorithm = ones_algorithm(tmp_path)
+    algorithm.fitness_func = broken_fitness
+    config = FitConfig(n_generations=2, population_size=20, n_jobs=n_jobs)
+    # Raised as it is, from the worker process that scored it.
+    with pytest.raises(ArithmeticError, match="a bug scoring"):
+        algorithm.fit(config)
+
+    # The workers of the broken run do not stay in the way of the next.
+    algorithm.fitness_func = count_ones
+    assert algorithm.fit(config)["bests"]["scores"]
 
 
 def test_mutation_differs_between_chromosomes():

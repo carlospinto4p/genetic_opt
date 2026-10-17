@@ -1,3 +1,4 @@
+import json
 import pickle
 
 import pytest
@@ -76,6 +77,42 @@ def test_chromosome_genes_and_size_follow_its_gene_collection(is_gene_set):
     assert mutated.genes is mutated.gene_collection.genes
     assert mutated.size == mutated.gene_collection.size == 2
     assert chromosome.genes is chromosome.gene_collection.genes
+
+
+@pytest.mark.parametrize(
+    "genes, is_gene_set", [([1, 0, 1], False), ({3, 7, 11}, True)]
+)
+@pytest.mark.parametrize("scored", [True, False])
+def test_a_chromosome_comes_back_whole_from_its_dict(
+    genes, is_gene_set, scored
+):
+    chromosome = Chromosome(
+        size=3, genes=genes, random_seed=7, is_gene_set=is_gene_set
+    )
+    if scored:
+        chromosome.score = Score(
+            value=2.5, name="sum", extra_metrics={"zeros": 1}
+        )
+        chromosome.score_time = 0.25
+    # Through JSON, as `fit` saves it.
+    loaded = Chromosome.from_dict(
+        json.loads(json.dumps(chromosome.to_dict(serialize_gene_func=str))),
+        load_genes_func=int,
+    )
+    assert type(loaded.genes) is type(genes)
+    assert (
+        loaded.genes,
+        loaded.is_gene_set,
+        loaded.score,
+        loaded.score_time,
+        loaded.random_seed,
+    ) == (
+        genes,
+        is_gene_set,
+        chromosome.score,
+        chromosome.score_time,
+        7,
+    )
 
 
 def test_chromosome_from_dict_builds_the_subclass_it_is_called_on():

@@ -3,11 +3,11 @@ from os.path import exists
 import pytest
 import yaml
 
-from genetic_opt.algorithms import FitConfig
+from genetic_opt.algorithms import FitConfig, SaveConfig
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import get_files_inside_folder, load_json
 from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
-from tests.unit.conftest import decode_genes, ones_algorithm
+from tests.unit.conftest import NumbersAlgorithm, decode_genes, ones_algorithm
 
 # ── FitSaver Tests ─────────────────────────────────────────────────────
 
@@ -39,6 +39,49 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert loaded["history"] == fit_result["history"]
     assert loaded["last_population"] == fit_result["last_population"]
     assert set(loaded) == set(fit_result)
+    # A Chromosome equals another by its genes alone, so the rest of it
+    # is compared through `to_dict`. Every `score_time` here rounds to 0:
+    # `test_a_chromosome_comes_back_whole_from_its_dict` checks that one.
+    assert [
+        [chromosome.to_dict() for _, chromosome in population]
+        for population in loaded["history"]
+    ] == [
+        [chromosome.to_dict() for _, chromosome in population]
+        for population in fit_result["history"]
+    ]
+
+
+@pytest.mark.parametrize("save_as_bson", [True, False])
+def test_a_run_of_set_chromosomes_loads_back_as_sets(tmp_path, save_as_bson):
+    algorithm = NumbersAlgorithm(
+        minimize=False,
+        save=SaveConfig(
+            path=f"{tmp_path}/",
+            serialize_decoded_chromosome_func=int,
+            as_bson=save_as_bson,
+            plot_metrics=False,
+        ),
+    )
+    fit_result = algorithm.fit(
+        FitConfig(n_generations=3, population_size=20, n_jobs=1),
+    )
+
+    loaded = load_fit_result(
+        f"{algorithm.save_path}/fit_data", algorithm.decode_func
+    )
+    assert loaded["history"] == fit_result["history"]
+    assert loaded["bests"]["encoded"] == fit_result["bests"]["encoded"]
+    assert loaded["bests"]["result"] == fit_result["bests"]["result"]
+    assert loaded["last_population"] == fit_result["last_population"]
+    chromosomes = [
+        chromosome
+        for population in loaded["history"]
+        for _, chromosome in population
+    ] + loaded["bests"]["encoded"]
+    assert all(
+        chromosome.is_gene_set and isinstance(chromosome.genes, set)
+        for chromosome in chromosomes
+    )
 
 
 def test_each_file_holds_the_metrics_of_its_generation_alone(tmp_path):
