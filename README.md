@@ -3,8 +3,8 @@
 
 Genetic algorithm optimizers package.
 
-This package provides two base classes, `algorithms.GeneticAlgorithm` and 
-`algorithms.binary.BinaryGeneticAlgorithm` to formulate genetic optimization
+This package provides two base classes, `algorithms.GeneticAlgorithm` and
+`algorithms.BinaryGeneticAlgorithm` to formulate genetic optimization
 methodologies in order to tackle different optimization problems.
 
 There is an example of optimization problem tackled with these classes
@@ -72,6 +72,8 @@ print(result["bests"]["scores"][0].value)
 ```
 
 ```python
+from genetic_opt.algorithms import BinaryGeneticAlgorithm, SaveConfig
+
 BinaryGeneticAlgorithm(
     ...,
     save=SaveConfig(

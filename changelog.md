@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v7.1.0 - 18th October 2026
+
+- `genetic_opt.algorithms` exports `BinaryGeneticAlgorithm`, as it does
+  `GeneticAlgorithm`. The README example that builds one now shows the
+  import.
+- Added a test of the export to `tests/unit/algorithms/test_binary.py`.
+
+
 ### v7.0.2 - 18th October 2026
 
 - Added `frontend/src/components/ServerError.svelte`: the "server did

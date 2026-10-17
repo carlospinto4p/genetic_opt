@@ -9,7 +9,6 @@
 #### Refactoring
 
 - [ ] `algorithms/plots.py:500`, `algorithms/save.py` — saved-run code sits under `algorithms/`, apart from `fit_result.py`, `fit_result_io.py`, `files.py`; a `runs/` subpackage would group them, but `downstream` imports `genetic_opt.files` and `genetic_opt.fit_result_io` (needs shims or a downstream backlog item) — LOW — M
-- [ ] `algorithms/__init__.py:3-14` — re-exports `Chromosome` and `Score` but not `BinaryGeneticAlgorithm`, which the README uses — LOW — S
 - [ ] `algorithms/base.py:568-577` — Rust refuses a gene space too small for a set chromosome at run start (`algorithm.rs:461-469`); Python only fails when the first set chromosome is built (`gene_collection.py:477-481`) — LOW — S
 - [ ] `pyproject.toml:56-57` — ruff has `line-length = 78` but no rule selection, so E501 is never checked although `CLAUDE.md` says it is enforced; 5 lines are over (`fit_result.py:13`, `fit_result_io.py:346`, `functions.py:69`, `base.py:601`, `tests/unit/algorithms/test_base.py:439`) — LOW — S
 - [ ] `web/runs.py:408-409` — infinite-`space_points`-to-`None` repeats `fit_result_io.py:326-329` — LOW — S

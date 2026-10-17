@@ -87,3 +87,15 @@ def test_a_run_crossed_with_uniform_crossover_finds_the_best_bag():
         )
     )
     assert result["bests"]["scores"][0].value == 309
+
+
+# ── algorithms package Tests ───────────────────────────────────────────
+
+
+def test_the_algorithms_package_exports_binary_genetic_algorithm():
+    import genetic_opt.algorithms
+
+    assert genetic_opt.algorithms.BinaryGeneticAlgorithm is (
+        BinaryGeneticAlgorithm
+    )
+    assert "BinaryGeneticAlgorithm" in genetic_opt.algorithms.__all__
