@@ -2,6 +2,27 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.11.0 - 18th October 2026
+
+- `fit` says why a run ended, in both implementations:
+  - Added `StopReason` to `fit_result.py`: `completed`,
+    `min_population`, `no_improvement`, `stale_generations`,
+    `max_seconds` or `exit_condition`.
+  - `FitResult` has `stop_reason`, only in what `fit` returns: the saved
+    files do not hold it.
+  - Added `StopReason` and `FitResult::stop_reason` to the crate, with
+    `OnGeneration` for a stop asked by `on_generation`.
+- `algorithms/base.py`: the five stop checks moved out of `fit` into
+  `_stop_reason`. Its log lines now read as the crate's, such as "the
+  run stopped after generation 0: 0 seconds reached".
+- `crates/genetic_opt/src/algorithm.rs`: the stop checks moved out of
+  `fit_from` into `stop_reason`.
+- `web/runs.py`: `record_run` takes `stop_reason` from the result of
+  `fit`, instead of checking two of the five conditions again.
+- Added tests: `stop_reason` in the stop tests of `test_base.py`, and
+  `the_result_says_why_the_run_stopped` in the crate.
+
+
 ### v5.10.13 - 17th October 2026
 
 - `PopulationTable.svelte`: the genes of each member are turned into

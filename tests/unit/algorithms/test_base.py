@@ -184,6 +184,7 @@ def test_fit_stops_when_the_mean_score_does_not_change():
         ),
     )
     assert len(result["metrics"]) == 2
+    assert result["stop_reason"] == "no_improvement"
 
 
 def test_fit_without_the_improvement_stop_breeds_every_generation():
@@ -199,12 +200,16 @@ def test_fit_without_the_improvement_stop_breeds_every_generation():
         ),
     )
     assert len(result["metrics"]) == 6
+    assert result["stop_reason"] == "completed"
     assert algorithm.no_improvement_condition()
     assert "stop_without_improvement" not in result["fit_parameters"]
 
 
-@pytest.mark.parametrize("max_seconds, generations", [(0, 1), (3600, 6)])
-def test_fit_stops_after_max_seconds(max_seconds, generations):
+@pytest.mark.parametrize(
+    "max_seconds, generations, stop_reason",
+    [(0, 1, "max_seconds"), (3600, 6, "completed")],
+)
+def test_fit_stops_after_max_seconds(max_seconds, generations, stop_reason):
     result = ZeroStartAlgorithm().fit(
         FitConfig(
             n_generations=5,
@@ -216,6 +221,7 @@ def test_fit_stops_after_max_seconds(max_seconds, generations):
         ),
     )
     assert len(result["metrics"]) == generations
+    assert result["stop_reason"] == stop_reason
     assert "max_seconds" not in result["fit_parameters"]
 
 
@@ -239,6 +245,7 @@ def test_fit_stops_after_max_stale_generations(
         ),
     )
     assert len(result["metrics"]) == generations
+    assert result["stop_reason"] == "stale_generations"
     assert algorithm.stale_generations() == generations - 1
     assert "max_stale_generations" not in result["fit_parameters"]
 
@@ -274,7 +281,10 @@ def test_fit_logs_that_max_stale_generations_stopped_it(
             max_stale_generations=2,
         ),
     )
-    assert "no better best score for 2 generations!" in caplog.text
+    assert (
+        "the run stopped after generation 2: no better best score for 2 "
+        "generations" in caplog.text
+    )
 
 
 def test_fit_logs_that_max_seconds_stopped_it(caplog, set_log_level):
@@ -288,14 +298,17 @@ def test_fit_logs_that_max_seconds_stopped_it(caplog, set_log_level):
             max_seconds=0,
         ),
     )
-    assert "0 seconds reached!" in caplog.text
+    assert (
+        "the run stopped after generation 0: 0 seconds reached" in caplog.text
+    )
 
 
 @pytest.mark.parametrize(
-    "min_population_size, generations", [(2, 1), (1, 6), (0, 6)]
+    "min_population_size, generations, stop_reason",
+    [(2, 1, "min_population"), (1, 6, "completed"), (0, 6, "completed")],
 )
 def test_fit_stops_below_min_population_size(
-    min_population_size, generations
+    min_population_size, generations, stop_reason
 ):
     # Without mutations every Chromosome is all zeros: 1 different one.
     result = ZeroStartAlgorithm().fit(
@@ -311,6 +324,7 @@ def test_fit_stops_below_min_population_size(
     assert [metric.n_uniques for metric in result["metrics"]] == [1] * (
         generations
     )
+    assert result["stop_reason"] == stop_reason
 
 
 def test_fit_scores_each_chromosome_once(tmp_path, score_in_workers):
@@ -679,6 +693,7 @@ def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
         exit_condition=lambda algorithm: len(algorithm.metrics) == 2,
     )
     assert len(result["metrics"]) == 2
+    assert result["stop_reason"] == "exit_condition"
     assert len(seen) == 2
     assert all(algorithm is knapsack for algorithm in seen)
 

@@ -19,7 +19,7 @@ mod save;
 mod score;
 
 pub use algorithm::{
-    AlgorithmConfig, FitConfig, FitParameters, FitResult, GeneticAlgorithm, Selection,
+    AlgorithmConfig, FitConfig, FitParameters, FitResult, GeneticAlgorithm, Selection, StopReason,
 };
 pub use chromosome::{Chromosome, Individual};
 pub use error::{Error, Result};

@@ -11,7 +11,7 @@ use rand::SeedableRng;
 use genetic_opt::examples::{Knapsack, Numbers};
 use genetic_opt::{
     AlgorithmConfig, Chromosome, Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig,
-    Score, Selection, single_point_crossover, uniform_crossover,
+    Score, Selection, StopReason, single_point_crossover, uniform_crossover,
 };
 
 /// Two threads, or the one that a machine with one core allows.
@@ -413,6 +413,40 @@ fn the_log_names_each_reason_to_stop() {
         }),
         "INFO the run stopped after generation 0: on_generation asked to stop"
     );
+}
+
+#[test]
+fn the_result_says_why_the_run_stopped() {
+    // `ZeroStart` without mutations: every chromosome is all zeros.
+    let stop_reason = |change: &dyn Fn(&mut FitConfig), stop: bool| {
+        let mut config = FitConfig::new(5, 20);
+        config.mutate_prob = 0.0;
+        config.min_population_size = 0;
+        config.stop_without_improvement = false;
+        change(&mut config);
+        algorithm(ZeroStart)
+            .fit_with(&config, |_| stop)
+            .unwrap()
+            .stop_reason
+    };
+    assert_eq!(stop_reason(&|_| {}, false), StopReason::Completed);
+    assert_eq!(
+        stop_reason(&|c| c.min_population_size = 2, false),
+        StopReason::MinPopulation
+    );
+    assert_eq!(
+        stop_reason(&|c| c.stop_without_improvement = true, false),
+        StopReason::NoImprovement
+    );
+    assert_eq!(
+        stop_reason(&|c| c.max_stale_generations = Some(2), false),
+        StopReason::StaleGenerations
+    );
+    assert_eq!(
+        stop_reason(&|c| c.max_seconds = Some(0.0), false),
+        StopReason::MaxSeconds
+    );
+    assert_eq!(stop_reason(&|_| {}, true), StopReason::OnGeneration);
 }
 
 #[test]

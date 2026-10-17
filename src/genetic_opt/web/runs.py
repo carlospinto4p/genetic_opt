@@ -220,21 +220,6 @@ def _metrics(metric: Metric) -> dict[str, Any]:
     }
 
 
-def _stop_reason(algorithm: GeneticAlgorithm, config: FitConfig) -> str:
-    """
-    Why the run ended, checked in the order `GeneticAlgorithm.fit`
-    checks it after the last generation.
-    """
-    if algorithm.metrics[-1].n_uniques < config.min_population_size:
-        return "min_population"
-    if (
-        config.stop_without_improvement
-        and algorithm.no_improvement_condition()
-    ):
-        return "no_improvement"
-    return "completed"
-
-
 def record_run(
     algorithm_class: type[GeneticAlgorithm],
     config: FitConfig,
@@ -289,7 +274,7 @@ def record_run(
         "chromosome_length": algorithm.chromosome_length,
         "minimize": algorithm.minimize,
         "generations": generations,
-        "stop_reason": _stop_reason(algorithm, config),
+        "stop_reason": result["stop_reason"],
         "fit_metrics": result["fit_metrics"]["fitness_func_calls"],
     }
 

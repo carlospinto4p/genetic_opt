@@ -1,10 +1,22 @@
 """Genetic Opt shape of the result of a run, in memory and loaded."""
 
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
+
+# Why `GeneticAlgorithm.fit` ended a run: it bred every generation, or
+# met `min_population_size`, `stop_without_improvement`,
+# `max_stale_generations`, `max_seconds` or its `exit_condition`
+StopReason = Literal[
+    "completed",
+    "min_population",
+    "no_improvement",
+    "stale_generations",
+    "max_seconds",
+    "exit_condition",
+]
 
 
 class Bests(TypedDict):
@@ -100,6 +112,8 @@ class FitResult(FitSummary):
     history: list[list[tuple[Score, Chromosome]]]
     # The last population, each Chromosome decoded
     last_population: list[tuple[Any, Score]]
+    # Only in what `fit` returns: the saved files do not hold it
+    stop_reason: NotRequired[StopReason]
 
 
 class FitResultFile(FitSummary):

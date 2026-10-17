@@ -18,7 +18,7 @@ from genetic_opt.algorithms.config import FitConfig, SaveConfig
 from genetic_opt.algorithms.save import FitSaver
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import InvariantException, ValidationException
-from genetic_opt.fit_result import FitParameters, FitResult
+from genetic_opt.fit_result import FitParameters, FitResult, StopReason
 from genetic_opt.functions import (
     format_seconds,
     identity_func,
@@ -397,7 +397,8 @@ class GeneticAlgorithm(ABC):
             Their scores are not computed again. As with
             `init_population`, its length is the size of every
             population of the run.
-        :return: a `FitResult`.
+        :return: a `FitResult`, whose `stop_reason` says why the run
+            ended.
         :raises ValidationException: when a value of `config` is not
             valid, when the fitness function gives a NaN score, or when
             `first_population` is empty, has a Chromosome that does not
@@ -484,56 +485,65 @@ class GeneticAlgorithm(ABC):
                             decode_population=False,
                         )
                     )
-                # Exit conditions
-                if self.metrics[-1].n_uniques < config.min_population_size:
-                    logger.info(
-                        f"Minimum population size reached: "
-                        f"{config.min_population_size}\n\t"
-                        f"Training finished at iteration {n_generation}"
-                    )
-                    break
-                if (
-                    config.stop_without_improvement
-                    and self.no_improvement_condition()
-                ):
-                    logger.info(
-                        f"no more improvement detected!\n\t"
-                        f"Training finished at iteration {n_generation}"
-                    )
-                    break
-                max_stale = config.max_stale_generations
-                if (
-                    max_stale is not None
-                    and self.stale_generations() >= max_stale
-                ):
-                    logger.info(
-                        f"no better best score for {max_stale} "
-                        f"generations!\n\tTraining finished at iteration "
-                        f"{n_generation}"
-                    )
-                    break
-                if (
-                    config.max_seconds is not None
-                    and time() - run_start >= config.max_seconds
-                ):
-                    logger.info(
-                        f"{config.max_seconds} seconds reached!\n\t"
-                        f"Training finished at iteration {n_generation}"
-                    )
-                    break
-                if exit_func(self):
-                    logger.info(
-                        f"exit condition reached!\n\tTraining "
-                        f"finished at iteration {n_generation}"
-                    )
+                stop_reason = self._stop_reason(config, run_start, exit_func)
+                if stop_reason != "completed":
                     break
         # Built when the run ends, as it decodes the whole population
         fit_result = self._get_fit_result(
             fit_parameters=fit_parameters, n_jobs=n_jobs
         )
+        fit_result["stop_reason"] = stop_reason
         if self._saver and self._saver.save.plot_metrics:
             self._saver.save_plots(fit_result)
         return fit_result
+
+    def _stop_reason(
+        self,
+        config: FitConfig,
+        run_start: float,
+        exit_func: Callable[[GeneticAlgorithm], bool],
+    ) -> StopReason:
+        """
+        Check, in order, whether the run stops after the generation just
+        measured, and log why when it does.
+        :param config: the parameters of the run.
+        :param run_start: the `time()` the run started at.
+        :param exit_func: the `exit_condition` of the run.
+        :return: the first condition met, or `completed` when none is.
+        """
+        max_stale = config.max_stale_generations
+        reason: StopReason
+        if self.metrics[-1].n_uniques < config.min_population_size:
+            reason = "min_population"
+            text = (
+                f"fewer than {config.min_population_size} different "
+                f"chromosomes"
+            )
+        elif (
+            config.stop_without_improvement
+            and self.no_improvement_condition()
+        ):
+            reason, text = "no_improvement", "the mean score did not change"
+        elif max_stale is not None and self.stale_generations() >= max_stale:
+            reason = "stale_generations"
+            text = f"no better best score for {max_stale} generations"
+        elif (
+            config.max_seconds is not None
+            and time() - run_start >= config.max_seconds
+        ):
+            reason, text = (
+                "max_seconds",
+                f"{config.max_seconds} seconds reached",
+            )
+        elif exit_func(self):
+            reason, text = "exit_condition", "the exit condition was met"
+        else:
+            return "completed"
+        logger.info(
+            f"the run stopped after generation {len(self.metrics) - 1}: "
+            f"{text}"
+        )
+        return reason
 
     def _fit_parameters(self, config: FitConfig) -> FitParameters:
         """

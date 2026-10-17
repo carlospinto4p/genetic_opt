@@ -102,6 +102,12 @@ returns one with the same keys for a saved run. Those keys, and the
 ones of a single file loaded with `fit_result_io.load_fit_result_file`,
 are written once, in `fit_result.py`: `FitResult` and `FitResultFile`.
 
+Only the result of `fit` has `stop_reason`, which says why the run
+ended: `completed`, `min_population`, `no_improvement`,
+`stale_generations`, `max_seconds` or `exit_condition`. The saved files
+do not hold it. In the crate it is `FitResult::stop_reason`, a
+`StopReason`, where `OnGeneration` stands for `exit_condition`.
+
 The saved files hold each population once, as genes. The
 `last_population` of a loaded run is the last population decoded
 again, so `load_fit_result` takes the `decode_func` of the algorithm:

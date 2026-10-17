@@ -1,5 +1,9 @@
 # Backlog - Genetic-Opt
 
+### 2026.10.18
+
+- [ ] `tests/unit/algorithms/test_base.py:802` — flaky: `test_fast_scores_are_not_sent_to_the_workers` failed once under `pytest tests/unit -n 4` (`CountedParallel.batches == [49]`) and passed alone. `_score_new` (`base.py:947-984`) times the first Chromosome with `perf_counter`; when that one call is slow on a loaded machine, the other 49 go to the workers. Make the timing in the test deterministic (e.g. patch the measured seconds) — MED — S
+
 ### 2026.10.17 (v5.10.2 /scan)
 
 #### Performance
@@ -8,7 +12,6 @@
 
 #### Refactoring
 
-- [ ] `algorithms/base.py:479-520` — no single source for why a run stopped: Python checks five conditions inline, Rust builds its own chain (`algorithm.rs:386-405`), `web/runs.py:224-236` copies two of five, `runs.py:401-406` guesses for saved runs; so `_stop_reason` reports "completed" for runs stopped by `max_stale_generations`, `max_seconds` or `exit_condition`. Return the stop reason from `fit` in both implementations; this also shortens the ~170-line `fit` (`base.py:361-529`) — MED — M
 - [ ] `gene_collection.py:411-413` — `GeneSet.__init__` fills the caller's own set in place via `_complete_genes` (`:482-483`); a tuple passes the `list`/`ndarray` conversion (`:406-409`) and fails on `.update` — MED — S
 - [ ] `algorithms/base.py:731-732` — the crossed-parents / best-parents counts are computed in four places (also `web/runs.py:112-115`, `Guide.svelte:46-47`, `algorithm.rs:549-550`); one helper, and Guide reads `breeding.n_crossovers` — MED — S
 - [ ] `algorithms/base.py:702-711` — `next_generation_selection` takes seven loose `FitConfig` fields plus `iter_func`/`n_jobs`; pass `config` (and the override at `web/runs.py:107`) — MED — M

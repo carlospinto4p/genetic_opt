@@ -142,8 +142,28 @@ pub struct FitResult<G, S> {
     pub metrics: Vec<Metric<G, S>>,
     pub fit_metrics: FitMetrics,
     pub fit_parameters: FitParameters,
+    /// Why the run ended. It is not saved with the run.
+    pub stop_reason: StopReason,
     /// Folder the run was saved in, when it was.
     pub save_folder: Option<PathBuf>,
+}
+
+/// Why a run ended: the first [`FitConfig`] condition a generation met,
+/// in the order they are listed, or none of them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StopReason {
+    /// It bred every generation asked.
+    Completed,
+    /// [`FitConfig::min_population_size`].
+    MinPopulation,
+    /// [`FitConfig::stop_without_improvement`].
+    NoImprovement,
+    /// [`FitConfig::max_stale_generations`].
+    StaleGenerations,
+    /// [`FitConfig::max_seconds`].
+    MaxSeconds,
+    /// `on_generation` returned `true`, in [`GeneticAlgorithm::fit_with`].
+    OnGeneration,
 }
 
 /// Number of different chromosomes a problem has: every list of `length`
@@ -337,6 +357,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
         );
 
         let run_start = Instant::now();
+        let mut stop_reason = StopReason::Completed;
         for generation in 0..=config.n_generations {
             let start = Instant::now();
             let candidates = if generation == 0 {
@@ -382,29 +403,8 @@ impl<P: Problem> GeneticAlgorithm<P> {
             if let (Some(folder), Some(save)) = (&save_folder, &self.config.save) {
                 self.save_generation(folder, save, &fit_parameters)?;
             }
-            // In the order the Python package checks them.
-            let reason = if self.metrics[generation].n_uniques < config.min_population_size {
-                Some(format!(
-                    "fewer than {} different chromosomes",
-                    config.min_population_size
-                ))
-            } else if config.stop_without_improvement && self.mean_stalled() {
-                Some("the mean score did not change".to_string())
-            } else if let Some(stale) = config.max_stale_generations
-                && self.stale_generations() >= stale
-            {
-                Some(format!("no better best score for {stale} generations"))
-            } else if let Some(seconds) = config.max_seconds
-                && run_start.elapsed().as_secs_f64() >= seconds
-            {
-                Some(format!("{seconds} seconds reached"))
-            } else if stop {
-                Some("on_generation asked to stop".to_string())
-            } else {
-                None
-            };
-            if let Some(reason) = reason {
-                info!("the run stopped after generation {generation}: {reason}");
+            stop_reason = self.stop_reason(config, run_start, stop);
+            if stop_reason != StopReason::Completed {
                 break;
             }
         }
@@ -414,8 +414,53 @@ impl<P: Problem> GeneticAlgorithm<P> {
             metrics: self.metrics.clone(),
             fit_metrics,
             fit_parameters,
+            stop_reason,
             save_folder,
         })
+    }
+
+    /// Whether the run stops after the generation just measured, checked
+    /// in the order the Python package checks it. It logs why when it
+    /// does.
+    fn stop_reason(&self, config: &FitConfig, run_start: Instant, stop: bool) -> StopReason {
+        let (reason, text) =
+            if self.metrics[self.metrics.len() - 1].n_uniques < config.min_population_size {
+                (
+                    StopReason::MinPopulation,
+                    format!(
+                        "fewer than {} different chromosomes",
+                        config.min_population_size
+                    ),
+                )
+            } else if config.stop_without_improvement && self.mean_stalled() {
+                (
+                    StopReason::NoImprovement,
+                    "the mean score did not change".to_string(),
+                )
+            } else if let Some(stale) = config.max_stale_generations
+                && self.stale_generations() >= stale
+            {
+                (
+                    StopReason::StaleGenerations,
+                    format!("no better best score for {stale} generations"),
+                )
+            } else if let Some(seconds) = config.max_seconds
+                && run_start.elapsed().as_secs_f64() >= seconds
+            {
+                (StopReason::MaxSeconds, format!("{seconds} seconds reached"))
+            } else if stop {
+                (
+                    StopReason::OnGeneration,
+                    "on_generation asked to stop".to_string(),
+                )
+            } else {
+                return StopReason::Completed;
+            };
+        info!(
+            "the run stopped after generation {}: {text}",
+            self.metrics.len() - 1
+        );
+        reason
     }
 
     fn fit_parameters(&self, config: &FitConfig) -> Result<FitParameters> {

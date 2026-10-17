@@ -39,7 +39,8 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     assert len(loaded["history"]) == saved_generations
     assert loaded["history"] == fit_result["history"]
     assert loaded["last_population"] == fit_result["last_population"]
-    assert set(loaded) == set(fit_result)
+    # The files do not hold why the run stopped
+    assert set(loaded) == set(fit_result) - {"stop_reason"}
     # A Chromosome equals another by its genes alone, so the rest of it
     # is compared through `to_dict`. Every `score_time` here rounds to 0:
     # `test_a_chromosome_comes_back_whole_from_its_dict` checks that one.
