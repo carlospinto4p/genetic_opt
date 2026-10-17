@@ -77,8 +77,9 @@ def get_file_size(file_path: str) -> str | None:
     Get the size of a file, as a formatted string.
     If the file does not exist, will return None.
     """
-    if (file := Path(file_path)).exists():
-        return format_bytes(file.stat().st_size)
+    if not (file := Path(file_path)).exists():
+        return None
+    return format_bytes(file.stat().st_size)
 
 
 def get_files_inside_folder(
@@ -117,7 +118,7 @@ def load_bson(bson_path: str) -> Any:
     return bson.decode(bson_data)
 
 
-def load_json(json_path: str, **kwargs) -> Any:
+def load_json(json_path: str, **kwargs: Any) -> Any:
     """
     Load a JSON file.
     :param json_path: json file path.
@@ -128,7 +129,7 @@ def load_json(json_path: str, **kwargs) -> Any:
         return load_json_fun(file, **kwargs)
 
 
-def save_bson(data, file_path: str) -> None:
+def save_bson(data: dict, file_path: str) -> None:
     """Save a .bson file."""
     import bson
 
@@ -140,7 +141,7 @@ def save_bson(data, file_path: str) -> None:
     log_saved("bson", file_path)
 
 
-def save_json(data, file_path: str, **kwargs) -> None:
+def save_json(data: Any, file_path: str, **kwargs: Any) -> None:
     """
     Save a .json file.
     :param data: Json data to save.

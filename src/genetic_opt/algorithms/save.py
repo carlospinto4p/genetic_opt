@@ -27,7 +27,7 @@ class FitSaver:
     reads the files of `fit_data/` back.
     """
 
-    def __init__(self, save: SaveConfig, experiment_name: str):
+    def __init__(self, save: SaveConfig, experiment_name: str) -> None:
         """
         Create the folder of a run that starts now, as
         `<save.path>/<experiment_name>/<UTC date and time>`, with `_2`,

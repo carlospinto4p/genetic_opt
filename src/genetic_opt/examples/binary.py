@@ -23,7 +23,7 @@ class Knapsack(BinaryGeneticAlgorithm):
         capacity: int,
         random_seed: int = 666,
         gene_space_random_seed: int = 52,
-    ):
+    ) -> None:
         """
         :param weights: list of objects weights.
         :param values: list of objects values.

@@ -6,7 +6,7 @@ from genetic_opt.logs import log_format
 
 
 class GeneticOptException(Exception):
-    def __init__(self, message: str, processing_object: Any = None):
+    def __init__(self, message: str, processing_object: Any = None) -> None:
         """
         Initialize the exception. Nothing is logged: the code that
         catches it decides whether it is worth a log line.

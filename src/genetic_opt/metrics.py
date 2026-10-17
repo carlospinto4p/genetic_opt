@@ -61,15 +61,13 @@ class Metric:
         """
         Get a Metric object from a serialized object, created by the method
             `to_dict` of this class.
-        Args:
-            d: Metric dictionary, as returned by the method
-                `to_dict` of this class.
-            load_decoded_chromosome_func: Function to load serialized
-                Chromosomes. It is the identity function by default.
-            load_gene_func: Function to load each Gene.
-                It is the identity function by default.
-        Returns:
-            a Metric object.
+        :param d: Metric dictionary, as returned by the method `to_dict`
+            of this class.
+        :param load_decoded_chromosome_func: Function to load serialized
+            Chromosomes. It is the identity function by default.
+        :param load_gene_func: Function to load each Gene. It is the
+            identity function by default.
+        :return: a Metric object.
         """
         load_decoded_chromosome_func = (
             load_decoded_chromosome_func or identity_func
@@ -106,11 +104,12 @@ class Metric:
             - n_uniques
             - percent_uniques
             - fitting_seconds
-        Args:
-            serialize_decoded_chromosome_func: function to get a serializable
-                object from each decoded chromosome.
-            serialize_gene_func: function to get a serializable object from each
-                gene. If None (default), the identity function will be used.
+        :param serialize_decoded_chromosome_func: function to get a
+            serializable object from each decoded chromosome.
+        :param serialize_gene_func: function to get a serializable object
+            from each gene. If None (default), the identity function will
+            be used.
+        :return: the dictionary.
         """
         serialize_decoded_chromosome_func = (
             serialize_decoded_chromosome_func or identity_func
@@ -139,16 +138,13 @@ def get_population_metrics(
 ) -> Metric:
     """
     Get a Genetic Algorithm population metrics.
-
-    Args:
-        population_with_scores: list of tuples (Score, Chromosome) that
-            make up the population.
-        decode_func: function that receives the genotype (chromosome)
-            and returns the phenotype (original problem representation).
-        fitting_seconds: number of seconds that it took for the population
-            to get fitted.
-
-    Returns: the `Metric` of the population.
+    :param population_with_scores: list of tuples (Score, Chromosome) that
+        make up the population.
+    :param decode_func: function that receives the genotype (chromosome)
+        and returns the phenotype (original problem representation).
+    :param fitting_seconds: number of seconds that it took for the
+        population to get fitted.
+    :return: the `Metric` of the population.
     """
     scores = [score for score, chromosome in population_with_scores]
     chromosomes = [chromosome for score, chromosome in population_with_scores]

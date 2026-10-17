@@ -2,6 +2,29 @@
 ## Changelog - Genetic-Opt
 
 
+### v4.1.1 - 17th October 2026
+
+- Fixed: a broken `crossover_invariant` raises an `InvariantException`
+  that says "crossed to", not "mutated to".
+  `test_a_broken_invariant_stops_the_run` checks each message.
+- `get_file_size` in `files.py` returns `None` explicitly for a missing
+  file instead of falling off the end.
+- Changed the `Args:`/`Returns:`/`Raises:` docstrings to the Sphinx
+  `:param:`/`:return:`/`:raises:` form:
+  - `fit_result_io.py`: `load_fit_result`, `load_fit_result_file`,
+    `serialize_fit_result`.
+  - `metrics.py`: `Metric.from_dict`, `Metric.to_dict`,
+    `get_population_metrics`.
+  - `chromosome.py`: `Chromosome.from_dict`, `Chromosome.to_dict`.
+  - `algorithms/plots.py`: `plot_genetic_algo_metrics`.
+- Type hints:
+  - Added `| None` to `Score.name`, `Score.extra_metrics` and the
+    `random_state` of `Chromosome.random_mutate`.
+  - Added `-> None` to every `__init__`.
+  - Annotated `identity_func`, the wrapper of `time_it_with_logger`,
+    `Chromosome.__eq__`, the `data` of `save_bson` and `save_json`, and
+    every `**kwargs`.
+
 ### v4.1.0 - 17th October 2026
 
 - Added `examples::Numbers` to the crate, beside `examples::Knapsack`:

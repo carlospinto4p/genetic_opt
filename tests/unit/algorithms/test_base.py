@@ -289,12 +289,16 @@ def test_the_mutation_invariant_gets_the_chromosome_before_and_after():
 
 
 @pytest.mark.parametrize(
-    "invariant", ["mutation_invariant", "crossover_invariant"]
+    "invariant, message",
+    [
+        ("mutation_invariant", "mutated to"),
+        ("crossover_invariant", "crossed to"),
+    ],
 )
-def test_a_broken_invariant_stops_the_run(invariant):
+def test_a_broken_invariant_stops_the_run(invariant, message):
     knapsack, _ = _counting_bag()
     setattr(knapsack, invariant, lambda *_: False)
-    with pytest.raises(InvariantException, match="mutated to"):
+    with pytest.raises(InvariantException, match=message):
         knapsack.fit(
             FitConfig(
                 n_generations=3,

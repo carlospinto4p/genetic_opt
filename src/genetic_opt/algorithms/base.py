@@ -120,7 +120,7 @@ class GeneticAlgorithm(ABC):
             bool,
         ]
         | None = None,
-    ):
+    ) -> None:
         """
         Initialize the GeneticAlgorithm base class.
         :param gene_space: GeneSpace object. Set of possible genes inside
@@ -263,7 +263,7 @@ class GeneticAlgorithm(ABC):
             (c1, c2), crossover
         ):
             raise InvariantException(
-                f"Chromosomes {c1}, {c2} mutated to {crossover}"
+                f"Chromosomes {c1}, {c2} crossed to {crossover}"
             )
         return crossover
 

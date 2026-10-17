@@ -57,15 +57,14 @@ def plot_genetic_algo_metrics(
 ) -> None:
     """
     Plot genetic algorithm training metrics summary.
-    Args:
-        metrics: list of Metric objects, one for each algorithm population.
-        fit_metrics: the `fit_metrics` of a `FitResult`.
-        other_keys: dictionary with schema:
-            - <metric name>: function
-            where the functions are applied to the best Chromosome of each
-            population.
-    Returns:
-        None (but it creates a plt.Figure)
+    :param metrics: list of Metric objects, one for each algorithm
+        population.
+    :param fit_metrics: the `fit_metrics` of a `FitResult`.
+    :param other_keys: dictionary with schema:
+        - <metric name>: function
+        where the functions are applied to the best Chromosome of each
+        population.
+    :return: None (but it creates a plt.Figure)
     """
     import matplotlib.pyplot as plt
 

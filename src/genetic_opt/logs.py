@@ -8,7 +8,7 @@ from typing import Any
 APP_NAME: str = "genetic_opt"
 
 
-def log_format(d: Any, **kwargs) -> str:
+def log_format(d: Any, **kwargs: Any) -> str:
     """Pretty format a dictionary to be printed inside the logs."""
     return pformat(d, sort_dicts=False, indent=3, **kwargs)
 

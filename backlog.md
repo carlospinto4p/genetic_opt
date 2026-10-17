@@ -4,10 +4,6 @@
 
 #### Refactoring
 
-- [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:240`: crossover-invariant error says "mutated to"; should say "crossed to".
-- [ ] (LOW, S) `src/genetic_opt/files.py:75-81`: `get_file_size` returns `None` by falling off the end.
-- [ ] (LOW, S) Google-style `Args:`/`Returns:` docstrings where the project uses Sphinx: `fit_result_io.py:30,101,240`, `metrics.py:64,109,143`, `chromosome.py:86,189`, `algorithms/plots.py:47-56`.
-- [ ] (LOW, S) Type hints: `score.py:9-10` and `chromosome.py:156` need `| None`; missing annotations in `functions.py:10,69`, `files.py:131,173`, `chromosome.py:110`, `algorithms/binary.py:28`, and `-> None` on `__init__`s.
 - [ ] (LOW, S) `chromosome.py:99` and `metrics.py:88`: `from_dict` builds the base class instead of `cls(...)`.
 - [ ] (LOW, S) Stale docstrings: `gene_collection.py:1` ("Gene Space submodule"), `chromosome.py:142-144` (Score as a tuple), `chromosome.py:188` (missing `is_gene_set`); no module docstring in `fit_result_io.py`, `algorithms/binary.py`, `examples/binary.py`, `score.py`; no class docstrings in `exceptions.py:8,29,33`; `base.py:613` `_get_fitted_data` returns a `FitResult` and could be named so.
 - [ ] (LOW, S) Dead parameters: `exceptions.py:9-23` `processing_object` and `functions.py:28` `format_seconds(only_hours=...)` are used only by tests.

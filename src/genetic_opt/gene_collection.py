@@ -64,7 +64,7 @@ class GeneCollection(ABC):
     This class constitutes the Chromosome class for genetic algorithms.
     """
 
-    def __init__(self, size: int, genes: Collection):
+    def __init__(self, size: int, genes: Collection) -> None:
         """
         Initialize a gene collection.
         :param size: total size of the collection.
@@ -120,7 +120,7 @@ class GeneList(GeneCollection):
         size: int,
         genes: list | None = None,
         gene_space: AbstractGeneSpace | None = None,
-    ):
+    ) -> None:
         """
         Initialize the gene list.
         If `genes` is received, and it has a length less than the received
@@ -191,7 +191,7 @@ class GeneSet(GeneCollection):
         size: int,
         genes: set | None = None,
         gene_space: AbstractGeneSpace | None = None,
-    ):
+    ) -> None:
         """
         Initialize the gene set.
         If `genes` is received, and it has a length lesser to the size

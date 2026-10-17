@@ -27,7 +27,7 @@ class Chromosome:
         gene_space: AbstractGeneSpace | None = None,
         random_seed: int = 442,
         is_gene_set: bool = False,
-    ):
+    ) -> None:
         """
         Chromosome initialization.
         :param size: Chromosome size (length of genes).
@@ -83,12 +83,10 @@ class Chromosome:
         """
         Create a Chromosome from a serialized dictionary, created with the
         method `to_dict`.
-        Args:
-            d: serialized Chromosome, as a dictionary.
-            load_genes_func: Function to load each Gene.
-                It is the identity function by default.
-        Returns:
-            A Chromosome.
+        :param d: serialized Chromosome, as a dictionary.
+        :param load_genes_func: Function to load each Gene. It is the
+            identity function by default.
+        :return: A Chromosome.
         """
         load_genes_func = load_genes_func or identity_func
         is_gene_set, genes = d["is_gene_set"], d["genes"]
@@ -107,7 +105,7 @@ class Chromosome:
             chromosome.score_time = d.get("score_time", 0)
         return chromosome
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Chromosome):
             return NotImplemented
         if self.id == other.id:
@@ -153,7 +151,7 @@ class Chromosome:
         self,
         gene_space: AbstractGeneSpace,
         gene_mutate_prob: float,
-        random_state: RandomState = None,
+        random_state: RandomState | None = None,
     ) -> Chromosome:
         """
         Get a Chromosome with some genes of this one replaced at random
@@ -186,9 +184,10 @@ class Chromosome:
         """
         Get a dictionary that describes the Chromosome.
         Keys: `genes`, `score`, `score_time`, `random_seed`.
-        Args:
-            serialize_gene_func: function to get a serializable object from each
-                gene. If None (default), the identity function will be used.
+        :param serialize_gene_func: function to get a serializable object
+            from each gene. If None (default), the identity function will
+            be used.
+        :return: the dictionary.
         """
         serialize_gene_func = serialize_gene_func or identity_func
         return {

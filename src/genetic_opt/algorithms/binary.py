@@ -25,8 +25,8 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         experiment_name: str | None = None,
         random_seed: int = 442,
         gene_space_random_seed: int = 2,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """
         :param chromosome_length: length of the collection of genes that
             encodes a determined problem state.

@@ -14,7 +14,7 @@ class AbstractGeneSpace(ABC):
     genotype, which represents a real problem phenotype.
     """
 
-    def __init__(self, random_seed: int = 442):
+    def __init__(self, random_seed: int = 442) -> None:
         """
         Initialize the Gene Space.
         Elements inside are genes, which form chromosomes.

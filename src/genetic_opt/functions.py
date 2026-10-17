@@ -5,9 +5,10 @@ from collections.abc import Callable
 from functools import wraps
 from logging import Logger
 from time import time
+from typing import Any
 
 
-def identity_func(x):
+def identity_func(x: Any) -> Any:
     """Return the input received."""
     return x
 
@@ -66,7 +67,7 @@ def time_it_with_logger(logger: Logger) -> Callable:
 
     def time_it_(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             logger.info(f"`{func.__name__}` started...")
             start_time = time()
             result = func(*args, **kwargs)

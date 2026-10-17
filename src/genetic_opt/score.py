@@ -10,8 +10,8 @@ class Score:
     """
 
     value: float
-    name: str = None
-    extra_metrics: dict | list = None
+    name: str | None = None
+    extra_metrics: dict | list | None = None
 
     def to_dict(self) -> dict:
         """
