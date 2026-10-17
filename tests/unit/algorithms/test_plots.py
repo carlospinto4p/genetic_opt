@@ -1,9 +1,15 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import pytest
 
-from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
+from genetic_opt.algorithms import FitConfig
+from genetic_opt.algorithms.plots import (
+    plot_genetic_algo_metrics,
+    save_fit_plots,
+)
 from genetic_opt.fit_result_io import load_fit_result
-from tests.unit.conftest import decode_genes
+from tests.unit.conftest import decode_genes, ones_algorithm
 
 # ── plot_genetic_algo_metrics Tests ────────────────────────────────────
 
@@ -65,3 +71,31 @@ def test_the_plot_title_names_the_score_when_it_has_a_name(
         assert figure.get_suptitle() == title
     finally:
         plt.close(figure)
+
+
+# ── save_fit_plots Tests ───────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "other_metrics_to_plot", [None, {"genes": lambda c: sum(c.genes)}]
+)
+def test_a_saved_run_gets_the_plot_that_fit_saves(
+    tmp_path, other_metrics_to_plot
+):
+    algorithm = ones_algorithm(
+        tmp_path,
+        plot_metrics=True,
+        other_metrics_to_plot=other_metrics_to_plot,
+    )
+    algorithm.fit(FitConfig(n_generations=3, population_size=20, n_jobs=1))
+    plot_path = Path(algorithm.save_path) / "fit_plots.jpg"
+    saved_by_fit = plot_path.read_bytes()
+    plot_path.unlink()
+
+    drawn = save_fit_plots(
+        algorithm.save_path,
+        other_metrics_to_plot=other_metrics_to_plot,
+        load_gene_func=int,
+    )
+    assert drawn == str(plot_path)
+    assert plot_path.read_bytes() == saved_by_fit

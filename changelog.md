@@ -2,6 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.3.0 - 17th October 2026
+
+- Added `save_fit_plots` to `src/genetic_opt/algorithms/plots.py`: it
+  draws `fit_plots.jpg` from the files of a saved run, in the run's
+  folder, for a run saved without the plot or by the Rust crate. It
+  takes `other_metrics_to_plot` and `load_gene_func`. Checked on a
+  `downstream` run saved in September 2024: the plot matches the one that
+  run saved.
+- Added tests:
+  - `tests/unit/algorithms/test_plots.py`: the image is the one `fit`
+    saves, byte for byte, with and without `other_metrics_to_plot`.
+  - `tests/integration/test_rust_layout.py`: a run of the crate gets
+    its plot.
+- Updated `README.md`.
+
+
 ### v5.2.0 - 17th October 2026
 
 - Added starting a run from a population with its scores, instead of

@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from operator import itemgetter
 from pathlib import Path
+from typing import Any
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.files import (
@@ -11,6 +12,8 @@ from genetic_opt.files import (
     log_saved,
 )
 from genetic_opt.fit_result import FitMetrics
+from genetic_opt.fit_result_io import load_fit_result
+from genetic_opt.functions import identity_func
 from genetic_opt.metrics import Metric
 
 # `matplotlib` is imported inside the functions that plot: it takes
@@ -132,6 +135,42 @@ def plot_genetic_algo_metrics(
     fig.suptitle(f"Genetic Algorithm Metrics{score_name_str}")
     # Good if no `other keys`, let's see otherwise
     plt.subplots_adjust(top=0.94 if other_keys else 0.93)
+
+
+def save_fit_plots(
+    run_folder: str,
+    other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
+    | None = None,
+    load_gene_func: Callable[[Any], Any] | None = None,
+) -> str:
+    """
+    Plot the metrics of a saved run and save them in its folder as
+    `fit_plots.jpg`, the plot `fit` saves when the run ends. For a run
+    saved with `SaveConfig.plot_metrics` off, or by the Rust crate,
+    which saves no plot.
+    :param run_folder: folder of the run, which holds `fit_data/`.
+    :param other_metrics_to_plot: as `SaveConfig.other_metrics_to_plot`.
+    :param load_gene_func: function to load each saved gene, as
+        `load_fit_result` takes it. It is needed when the saved genes
+        can not be kept as they are, such as dictionaries in a set
+        Chromosome, and for `other_metrics_to_plot` to get the genes it
+        expects. The identity function by default.
+    :return: path of the image.
+    """
+    loaded = load_fit_result(
+        f"{run_folder}/fit_data",
+        # The plot uses no decoded Chromosome
+        decode_func=identity_func,
+        load_gene_func=load_gene_func,
+    )
+    plot_genetic_algo_metrics(
+        metrics=loaded["metrics"],
+        fit_metrics=loaded["fit_metrics"],
+        other_keys=other_metrics_to_plot,
+    )
+    path = f"{run_folder}/fit_plots"
+    save_current_figure(path)
+    return ensure_file_extension(path, "jpg")
 
 
 def save_current_figure(path: str, extension: str = "jpg") -> None:

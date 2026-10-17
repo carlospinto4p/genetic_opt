@@ -43,7 +43,14 @@ naming the Chromosome. The crate stops with `Error::Validation`.
 A saved run also gets a plot of its metrics, `fit_plots.jpg`.
 `SaveConfig(plot_metrics=False)` leaves it out, and
 `other_metrics_to_plot` adds the functions of the best Chromosome
-of each population to it.
+of each population to it. `algorithms.plots.save_fit_plots` draws it
+later for a run saved without it, or by the Rust crate:
+
+```python
+from genetic_opt.algorithms.plots import save_fit_plots
+
+save_fit_plots("<run folder>")
+```
 
 `fit` returns a dictionary, and `fit_result_io.load_fit_result`
 returns one with the same keys for a saved run. Those keys, and the
@@ -163,7 +170,8 @@ With `AlgorithmConfig::save` set, a run is saved in the layout of the
 Python package: `experiment_config.yml` and one
 `fit_data/fit_data_<n>` file per generation, as BSON or JSON.
 `fit_result_io.load_fit_result` reads them. It does not save the plot
-`fit_plots.jpg`.
+`fit_plots.jpg`, which `algorithms.plots.save_fit_plots` draws from the
+saved files.
 
 Each `fit_data_<n>` file holds the metrics of its own generation, in
 both implementations. `fit_result_io.load_fit_result` also reads runs

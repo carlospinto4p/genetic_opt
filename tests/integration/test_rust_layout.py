@@ -10,6 +10,7 @@ import yaml
 
 from genetic_opt import __version__
 from genetic_opt.algorithms import FitConfig
+from genetic_opt.algorithms.plots import save_fit_plots
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
 from genetic_opt.files import get_files_inside_folder
@@ -262,6 +263,22 @@ def test_python_goes_on_with_a_run_saved_by_the_rust_crate(
     # The best bag of the crate's run stays
     assert result["bests"]["scores"][0] == Score(value=309.0)
     assert result["fit_metrics"]["fitness_func_calls"]["cached"] >= len(last)
+
+
+def test_python_plots_a_run_saved_by_the_rust_crate(
+    tmp_path, numbers_example
+):
+    subprocess.run([numbers_example, str(tmp_path)], check=True)
+    (run_folder,) = (tmp_path / "Numbers").iterdir()
+    assert not (run_folder / "fit_plots.jpg").exists()
+
+    drawn = save_fit_plots(
+        str(run_folder),
+        other_metrics_to_plot={"largest": lambda c: max(c.genes)},
+    )
+    assert drawn == str(run_folder / "fit_plots.jpg")
+    # Every JPEG file starts with these bytes.
+    assert (run_folder / "fit_plots.jpg").read_bytes()[:3] == b"\xff\xd8\xff"
 
 
 def test_the_rust_example_saves_bson_when_no_format_is_given(

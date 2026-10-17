@@ -2,9 +2,6 @@
 
 ### 2026.10.17 (v5.1.0 improvements review)
 
-- [ ] Draw `fit_plots.jpg` for a run already saved: a function in
-  `fit_result_io` or `algorithms.plots` that takes the run's folder.
-  Runs saved by the crate have no plot today. Impact MEDIUM, effort Low.
 - [ ] Report progress from the Rust crate. It writes nothing during a
   run, where the Python package logs each generation's metrics to the
   `genetic_opt` logger. Use the `log` crate, which writes nothing until
