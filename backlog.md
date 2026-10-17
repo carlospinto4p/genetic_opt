@@ -2,10 +2,6 @@
 
 ### 2026.10.16 (v1.0.0 scan)
 
-#### Performance
-
-- [ ] (LOW, S) `.claude/rules/testing-areas.md` "Recorded times": measured at v0.7.4 (89 unit tests, 5.2 s); now 177 unit tests in 8.95 s, 5 integration tests, 40 Rust tests. Re-measure all four rows and the slowest-tests note.
-
 #### Refactoring
 
 - [ ] (MED, S) `src/genetic_opt/fit_result_io.py:61-74,120-131,136-152`: `_refuse_malformed` catches `AttributeError`/`TypeError`/`ValueError`/`KeyError` around the caller's `load_gene_func` and `load_decoded_chromosome_func`, so a bug in those is reported as "not a fit result file". Narrow the catch to the parsing.

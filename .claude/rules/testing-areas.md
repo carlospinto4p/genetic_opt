@@ -33,15 +33,15 @@ compared with. One run of each, on a machine with 16 cores.
 
 | Date | Version | What | Time |
 |------|---------|------|------|
-| 2026-10-13 | v0.7.4 | `uv run pytest tests/unit`, 89 tests | 5.2 s |
-| 2026-10-13 | v0.7.4 | `uv run pytest tests/integration`, 2 tests | 0.5 s |
-| 2026-10-13 | v0.7.4 | `cargo build` into an empty target folder | 12.7 s |
-| 2026-10-13 | v0.7.4 | `cargo test` after that build, 18 tests | 5.3 s |
+| 2026-10-17 | v2.0.2 | `uv run pytest tests/unit`, 185 tests | 3.9 s |
+| 2026-10-17 | v2.0.2 | `uv run pytest tests/integration`, 5 tests | 0.5 s |
+| 2026-10-17 | v2.0.2 | `cargo build` into an empty target folder | 7.8 s |
+| 2026-10-17 | v2.0.2 | `cargo test` after that build, 42 tests | 5.3 s |
 
 - The integration run had the crate built already. Of the 5.3 s of
-  `cargo test`, the tests took 0.06 s and the rest was compiling.
-- The slowest unit tests on 13th October 2026
-  (`uv run pytest tests/unit --durations=10`): the three of
-  `test_fit_save.py` that save a run, 1.6 s, 0.8 s and 0.75 s, and
-  `test_fit_scores_each_chromosome_once`, 0.6 s, which starts worker
+  `cargo test`, the tests took 0.08 s and the rest was compiling.
+- The slowest unit tests on 17th October 2026
+  (`uv run pytest tests/unit --durations=10`): the two of
+  `test_fit_save.py` that save a plot, 0.75 s and 0.53 s, and
+  `test_fit_scores_each_chromosome_once`, 0.32 s, which starts worker
   processes. No fixture takes 100 ms.

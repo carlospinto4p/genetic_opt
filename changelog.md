@@ -2,6 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.0.3 - 17th October 2026
+
+- `.claude/rules/testing-areas.md`: "Recorded times" re-measured at
+  v2.0.2: 185 unit tests in 3.9 s, 5 integration tests in 0.5 s, a
+  clean `cargo build` in 7.8 s, and 42 Rust tests in 5.3 s.
+
 ### v2.0.2 - 17th October 2026
 
 - `crates/genetic_opt/src/algorithm.rs`: `score` puts the new
