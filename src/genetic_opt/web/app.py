@@ -8,9 +8,11 @@ import logging
 import os
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from pydantic import BaseModel, Field, model_validator
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, NonNegativeInt, model_validator
 
 from genetic_opt import __version__
 from genetic_opt.algorithms.config import FitConfig
@@ -39,6 +41,8 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 MAX_GENERATIONS = 300
 MAX_POPULATION = 400
 MAX_GENES = 40
+# Largest magnitude of either end of the interval of the function
+MAX_INTERVAL_END = 1e9
 
 
 class FitParams(BaseModel):
@@ -49,7 +53,9 @@ class FitParams(BaseModel):
     crossovers_prop: float = Field(FitConfig.crossovers_prop, ge=0, le=1)
     besties_prop: float = Field(FitConfig.besties_prop, ge=0, le=1)
     mutate_prob: float = Field(FitConfig.mutate_prob, ge=0, le=1)
-    min_population_size: int = Field(FitConfig.min_population_size, ge=0)
+    min_population_size: int = Field(
+        FitConfig.min_population_size, ge=0, le=MAX_POPULATION
+    )
     stop_without_improvement: bool = FitConfig.stop_without_improvement
     random_seed: int = Field(442, ge=0, lt=2**32)
     gene_space_random_seed: int = Field(2, ge=0, lt=2**32)
@@ -71,12 +77,12 @@ class FitParams(BaseModel):
 
 
 class KnapsackRequest(BaseModel):
-    weights: list[int] = Field(
+    weights: list[NonNegativeInt] = Field(
         default_factory=lambda: list(KNAPSACK_WEIGHTS),
         min_length=1,
         max_length=MAX_GENES,
     )
-    values: list[int] = Field(
+    values: list[NonNegativeInt] = Field(
         default_factory=lambda: list(KNAPSACK_VALUES),
         min_length=1,
         max_length=MAX_GENES,
@@ -86,8 +92,18 @@ class KnapsackRequest(BaseModel):
 
 
 class FunctionRequest(BaseModel):
-    low: float = FUNCTION_LOW
-    high: float = FUNCTION_HIGH
+    low: float = Field(
+        FUNCTION_LOW,
+        ge=-MAX_INTERVAL_END,
+        le=MAX_INTERVAL_END,
+        allow_inf_nan=False,
+    )
+    high: float = Field(
+        FUNCTION_HIGH,
+        ge=-MAX_INTERVAL_END,
+        le=MAX_INTERVAL_END,
+        allow_inf_nan=False,
+    )
     n_bits: int = Field(FUNCTION_BITS, ge=2, le=MAX_GENES)
     fit: FitParams = Field(default_factory=FitParams)
 
@@ -107,6 +123,21 @@ class SavedRunRequest(BaseModel):
 
 app = FastAPI(title="genetic_opt explainer")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
+
+
+@app.exception_handler(RequestValidationError)
+async def refuse_request(
+    request: Request, error: RequestValidationError
+) -> JSONResponse:
+    """
+    The 422 of FastAPI without the `input` of each error: a NaN or an
+    infinity the request held cannot be written back as JSON.
+    """
+    detail = [
+        {key: e[key] for key in ("type", "loc", "msg")}
+        for e in error.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 
 @app.get("/api/info")

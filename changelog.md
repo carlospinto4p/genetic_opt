@@ -2,6 +2,24 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.4 - 17th October 2026
+
+- `web/app.py`:
+  - `FunctionRequest.low` and `high` refuse NaN, infinity and a
+    magnitude over `MAX_INTERVAL_END` (1e9), which gave a 500.
+  - `FitParams.min_population_size` is at most `MAX_POPULATION`, and
+    knapsack `weights` and `values` refuse negative numbers.
+  - Added `refuse_request`: a 422 for a request FastAPI refuses no
+    longer repeats its input, so one holding a NaN is a 422, not a 500.
+- `web/runs.py`: `saved_run` refuses with `ValidationException` a run
+  whose files miss a parameter, or hold an empty population, instead of
+  raising `KeyError` or `IndexError` (a 500 from `/api/runs/saved`).
+- Declared `pydantic` in the `web` extra of `pyproject.toml`:
+  `web/app.py` imports it.
+- Added tests: 4 in `tests/unit/web/test_runs.py`, 8 in
+  `tests/integration/web/test_app.py`.
+
+
 ### v5.10.3 - 17th October 2026
 
 - `web/app.py`:

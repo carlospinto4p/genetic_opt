@@ -421,22 +421,34 @@ def saved_run(
         )
     ]
     parameters = result["fit_parameters"]
-    if len(generations) - 1 >= parameters["n_generations"]:
-        stop_reason = "completed"
-    elif result["metrics"][-1].n_uniques < parameters["min_population_size"]:
-        stop_reason = "min_population"
-    else:
-        stop_reason = "stopped"
-    calls = result["fit_metrics"]["fitness_func_calls"]
-    if isinf(calls["space_points"]):
-        calls = calls | {"space_points": None}
+    # `load_fit_result` checks the files hold these keys, not what is
+    # under them: a truncated run is refused here
+    try:
+        if len(generations) - 1 >= parameters["n_generations"]:
+            stop_reason = "completed"
+        elif (
+            result["metrics"][-1].n_uniques
+            < parameters["min_population_size"]
+        ):
+            stop_reason = "min_population"
+        else:
+            stop_reason = "stopped"
+        calls = result["fit_metrics"]["fitness_func_calls"]
+        if isinf(calls["space_points"]):
+            calls = calls | {"space_points": None}
+        chromosome_length = len(generations[0]["population"][0]["genes"])
+        version = result["fit_metrics"]["genetic_opt_version"]
+    except (IndexError, KeyError, TypeError) as error:
+        raise ValidationException(
+            f"`{folder}` is not a saved run: {error!r}"
+        ) from error
     return {
-        "chromosome_length": len(generations[0]["population"][0]["genes"]),
+        "chromosome_length": chromosome_length,
         "minimize": None,
         "generations": generations,
         "stop_reason": stop_reason,
         "fit_metrics": calls,
         "folder": str(folder),
         "fit_parameters": parameters,
-        "genetic_opt_version": result["fit_metrics"]["genetic_opt_version"],
+        "genetic_opt_version": version,
     }

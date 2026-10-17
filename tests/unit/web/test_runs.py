@@ -1,3 +1,4 @@
+import json
 from itertools import pairwise
 from pathlib import Path
 
@@ -364,6 +365,30 @@ def test_saved_run_refuses_a_run_outside_the_root(tmp_path, through):
         path = str(link)
     with pytest.raises(ValidationException, match="is not inside"):
         saved_run(path, root=str(root))
+
+
+@pytest.mark.parametrize(
+    "truncate",
+    [
+        lambda raw: raw["fit_parameters"].pop("n_generations"),
+        # Read only for a run that ended early
+        lambda raw: raw["fit_parameters"].update(
+            n_generations=100, min_population_size=None
+        ),
+        lambda raw: raw.update(fit_parameters=[]),
+        lambda raw: raw.update(population=[]),
+    ],
+    ids=["n_generations", "min_population_size", "parameters", "empty"],
+)
+def test_saved_run_refuses_a_truncated_run(tmp_path, truncate):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    fit_saved(algorithm, n_generations=1)
+    for file in (Path(algorithm.save_path) / "fit_data").iterdir():
+        raw = json.loads(file.read_text())
+        truncate(raw)
+        file.write_text(json.dumps(raw))
+    with pytest.raises(ValidationException, match="not a saved run"):
+        saved_run(algorithm.save_path)
 
 
 @pytest.mark.parametrize("make", ["missing", "file", "empty"])

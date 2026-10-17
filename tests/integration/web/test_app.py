@@ -1,9 +1,12 @@
+import json
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
 from genetic_opt import __version__
 from genetic_opt.algorithms import FitConfig
-from genetic_opt.web.app import MAX_POPULATION, app
+from genetic_opt.web.app import MAX_INTERVAL_END, MAX_POPULATION, app
 from tests.unit.conftest import ones_algorithm
 
 
@@ -82,6 +85,41 @@ def test_run_function_refuses_an_empty_interval(client):
     assert client.post("/api/runs/function", json=body).status_code == 422
 
 
+@pytest.mark.parametrize(
+    "interval",
+    [
+        '{"low": NaN}',
+        '{"high": Infinity}',
+        f'{{"low": {-MAX_INTERVAL_END * 10}}}',
+        # Their difference is infinite
+        '{"low": -1e308, "high": 1e308}',
+    ],
+)
+def test_run_function_refuses_an_interval_without_finite_ends(
+    client, interval
+):
+    response = client.post(
+        "/api/runs/function",
+        content=interval,
+        headers={"content-type": "application/json"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"weights": [10, -1], "values": [1, 2]},
+        {"weights": [10, 20], "values": [1, -2]},
+        {"fit": {"min_population_size": MAX_POPULATION + 1}},
+    ],
+    ids=["weight", "value", "min_population_size"],
+)
+def test_run_knapsack_refuses_values_out_of_range(client, body):
+    response = client.post("/api/runs/knapsack", json=body)
+    assert response.status_code == 422
+
+
 def test_open_a_saved_run(client, tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=True)
     algorithm.fit(FitConfig(n_generations=2, population_size=20, n_jobs=1))
@@ -105,6 +143,19 @@ def test_open_a_saved_run_refuses_one_outside_the_runs_root(
     response = client.post("/api/runs/saved", json=body)
     assert response.status_code == 422
     assert "is not inside" in response.json()["detail"]
+
+
+def test_open_a_saved_run_refuses_a_truncated_run(client, tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    algorithm.fit(FitConfig(n_generations=1, population_size=20, n_jobs=1))
+    for file in (Path(algorithm.save_path) / "fit_data").iterdir():
+        raw = json.loads(file.read_text())
+        del raw["fit_parameters"]["n_generations"]
+        file.write_text(json.dumps(raw))
+    body = {"path": algorithm.save_path}
+    response = client.post("/api/runs/saved", json=body)
+    assert response.status_code == 422
+    assert "is not a saved run" in response.json()["detail"]
 
 
 def test_open_a_saved_run_refuses_a_missing_folder(client, tmp_path):

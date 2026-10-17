@@ -4,10 +4,6 @@
 
 #### Security
 
-- [ ] `web/runs.py:401-411` — `parameters["n_generations"]`, `["min_population_size"]`, `calls["space_points"]` and `generations[0]["population"][0]` are indexed outside `_refuse_malformed`, so a truncated run gives a 500 instead of a 422 — LOW — S
-- [ ] `web/app.py:84-85` — `FunctionRequest.low`/`high` accept NaN/Infinity and unbounded magnitudes; `1e308 - -1e308` is infinite and the response fails to encode (500); use `allow_inf_nan=False` plus a bound — LOW — S
-- [ ] `web/app.py:47,69-79` — `min_population_size` has no upper bound; knapsack `weights`/`values` elements and `capacity` allow negatives — LOW — S
-- [ ] `web/app.py:12` — `pydantic` imported directly but not declared in `pyproject.toml` (arrives only through fastapi) — LOW — S
 - [ ] `.gitlab-ci.yml:22` — publish job holds `CI_JOB_TOKEN` on `python:3.14-slim`, not pinned to a digest — LOW — S
 
 #### Performance
