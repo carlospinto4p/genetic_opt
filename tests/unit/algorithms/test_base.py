@@ -1,10 +1,15 @@
 import gc
 import logging
+import os
+import subprocess
+import sys
 import weakref
 from os import cpu_count
+from pathlib import Path
 
 import pytest
 from joblib import Parallel
+from numpy import array
 
 from genetic_opt.algorithms import FitConfig
 from genetic_opt.algorithms import base as algorithms
@@ -456,6 +461,71 @@ def test_another_seed_gives_another_run():
     assert _bag_run_genes(n_jobs=1) != _bag_run_genes(
         n_jobs=1, random_seed=7, gene_space_random_seed=8
     )
+
+
+WORDS = [f"w{number}" for number in range(40)]
+
+
+class WordsGeneSpace(AbstractGeneSpace):
+    """Gene space of 40 words, "w0" to "w39"."""
+
+    def __len__(self) -> int:
+        return len(WORDS)
+
+    def select_random(self, n=None):
+        picks = self.random_state.randint(len(WORDS), size=n)
+        return WORDS[picks] if n is None else array(WORDS)[picks].tolist()
+
+
+class WordsAlgorithm(NumbersAlgorithm):
+    """
+    `NumbersAlgorithm` with 40 numbers written as words. Python orders a
+    set of strings by a hash seed it draws at each launch.
+    """
+
+    def __init__(self):
+        super().__init__(minimize=False)
+        self.gene_space = WordsGeneSpace(random_seed=5)
+        self.decode_func = lambda chromosome: sorted(chromosome.genes)
+        self.fitness_func = lambda chromosome: Score(
+            value=sum(int(word[1:]) for word in chromosome.genes)
+        )
+
+
+def _words_run_genes() -> list[list[list[str]]]:
+    """The genes of each population of a run of `WordsAlgorithm`."""
+    result = WordsAlgorithm().fit(
+        FitConfig(
+            n_generations=10,
+            population_size=30,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+    )
+    return [
+        [sorted(chromosome.genes) for _, chromosome in population]
+        for population in result["history"]
+    ]
+
+
+def test_one_seed_gives_the_same_set_run_with_any_hash_seed():
+    code = (
+        "from tests.unit.algorithms.test_base import _words_run_genes; "
+        "print(_words_run_genes())"
+    )
+    runs = [
+        subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=Path(__file__).parents[3],
+            env={**os.environ, "PYTHONHASHSEED": hash_seed},
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        for hash_seed in ("1", "2")
+    ]
+    assert runs[0].startswith("[[[")
+    assert runs[0] == runs[1]
 
 
 def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():

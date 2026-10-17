@@ -229,7 +229,9 @@ class GeneSet(GeneCollection):
         :param random_state: numpy RandomState object to handle randomness.
         :return: a new GeneSet object with the mutated genes.
         """
-        genes = list(self.genes)
+        # The order of a set of strings changes with the hash seed that
+        # Python draws at each launch, so a seed would not give one run
+        genes = sorted(self.genes)
         mutates = (
             random_state.random(len(genes)) < gene_mutate_prob
         ).tolist()

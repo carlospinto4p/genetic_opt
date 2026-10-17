@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.5 - 17th October 2026
+
+- Fixed: a seed gives the same run of set Chromosomes in every launch
+  of Python. `GeneSet.random_mutate` in `gene_collection.py` decided
+  which genes mutate in the order of the set, and the order of a set
+  of strings changes with the hash seed Python draws at each launch.
+  It now takes the genes sorted, as `Chromosome.__repr__` already
+  does. A seed gives a different set run than it did before.
+- Added `test_one_seed_gives_the_same_set_run_with_any_hash_seed` in
+  `tests/unit/algorithms/test_base.py`: a run of 40 words as sets, in
+  two new processes with different hash seeds.
+- The crate is not affected: it keeps the genes of a set in a
+  `BTreeSet`, which is always sorted.
+
 ### v5.0.4 - 17th October 2026
 
 - Fixed: a fitness function that gives a NaN score stops the run with a

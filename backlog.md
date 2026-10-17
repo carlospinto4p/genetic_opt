@@ -4,7 +4,6 @@
 
 #### Test coverage
 
-- [ ] (MED, S) `src/genetic_opt/gene_collection.py:230`: `GeneSet.random_mutate` iterates `list(self.genes)`, whose order for string genes changes between interpreter launches (hash randomization), so a seed may not reproduce a set-chromosome run. The seed test (`_bag_run_genes` in `tests/unit/algorithms/test_base.py`) covers only int lists.
 - [ ] (MED, S) Python `fit` is never run with `population_size=1`, `crossovers_prop=0`, or `crossovers_prop=besties_prop=1` (`base.py:587-599`); the crate covers these at `tests/algorithm.rs:407`.
 - [ ] (MED, S) `iter_func` (`base.py:348,408,744`) is never passed in any test.
 - [ ] (MED, S) `ones_algorithm` in `tests/unit/conftest.py`: the unit suite saves and loads only list chromosomes; set chromosomes are covered only by the cargo-gated integration suite.
