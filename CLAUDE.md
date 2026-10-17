@@ -38,6 +38,7 @@ cargo clippy --manifest-path crates/genetic_opt/Cargo.toml --all-targets -- -D w
 uv run python -m genetic_opt.web.app
 corepack pnpm --dir frontend dev
 corepack pnpm --dir frontend run check
+corepack pnpm --dir frontend test
 corepack pnpm --dir frontend run build
 ```
 

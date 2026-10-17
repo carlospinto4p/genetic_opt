@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.1 - 17th October 2026
+
+- `frontend/`:
+  - Added Vitest and the `test` script (`corepack pnpm --dir frontend test`).
+  - Added `src/lib/format.test.ts`: 4 tests of `niceTicks`. One takes
+    the best and mean scores of a saved `downstream` run, equal but for
+    the last digit, which looped forever before v5.10.0; the others a
+    range of one value, a range of zero and an ordinary range.
+- Added the front-end test command to `CLAUDE.md`.
+
+
 ### v5.10.0 - 17th October 2026
 
 - Added the explainer page "Open a saved run" (`frontend/src/pages/SavedRun.svelte`).
