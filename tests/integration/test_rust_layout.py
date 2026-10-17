@@ -1,13 +1,19 @@
 import json
 import shutil
 import subprocess
+from dataclasses import fields
 from pathlib import Path
+from typing import get_type_hints, is_typeddict
 
 import pytest
 
+from genetic_opt import __version__
+from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
 from genetic_opt.files import get_files_inside_folder
+from genetic_opt.fit_result import FitMetrics, FitParameters, FitResult
 from genetic_opt.fit_result_io import load_fit_result
+from genetic_opt.metrics import Best, Metric
 from genetic_opt.score import Score
 
 CRATE_MANIFEST = (
@@ -64,6 +70,63 @@ def numbers_example(examples) -> str:
     return examples["numbers"]
 
 
+def assert_typed_dict(value: dict, typed_dict: type) -> None:
+    """Check that `value` has the keys of `typed_dict`, each typed."""
+    assert set(value) == typed_dict.__required_keys__
+    for key, hint in get_type_hints(typed_dict).items():
+        if is_typeddict(hint):
+            assert_typed_dict(value[key], hint)
+        else:
+            assert isinstance(value[key], hint), (key, value[key])
+
+
+def assert_saved_chromosome(chromosome: Chromosome) -> None:
+    """Check what a file holds of a scored Chromosome of the crate."""
+    assert isinstance(chromosome, Chromosome)
+    assert isinstance(chromosome.score, Score)
+    assert isinstance(chromosome.score_time, float)
+    # The default seed of `AlgorithmConfig`
+    assert chromosome.random_seed == 442
+
+
+def assert_fit_result(loaded: FitResult) -> None:
+    """
+    Check every key of a run of the crate loaded in Python, and the type
+    of each value, against the `FitResult` types.
+    """
+    assert set(loaded) == FitResult.__required_keys__
+    assert_typed_dict(loaded["fit_parameters"], FitParameters)
+    assert_typed_dict(loaded["fit_metrics"], FitMetrics)
+    # Kept equal to the one of the crate
+    assert loaded["fit_metrics"]["genetic_opt_version"] == __version__
+
+    bests = loaded["bests"]
+    assert len(bests["scores"]) == len(bests["result"])
+    assert len(bests["scores"]) == len(bests["encoded"])
+    assert all(isinstance(score, Score) for score in bests["scores"])
+    for chromosome in bests["encoded"]:
+        assert_saved_chromosome(chromosome)
+
+    assert len(loaded["metrics"]) == len(loaded["history"])
+    hints = get_type_hints(Metric)
+    for metric in loaded["metrics"]:
+        assert isinstance(metric, Metric)
+        for field in fields(Metric):
+            value = getattr(metric, field.name)
+            assert isinstance(value, hints[field.name]), (field.name, value)
+        assert isinstance(metric.best, Best)
+        assert isinstance(metric.best.score, Score)
+        assert_saved_chromosome(metric.best.encoded)
+
+    for population in loaded["history"]:
+        for score, chromosome in population:
+            assert isinstance(score, Score)
+            assert_saved_chromosome(chromosome)
+    assert len(loaded["last_population"]) == len(loaded["history"][-1])
+    for _, score in loaded["last_population"]:
+        assert isinstance(score, Score)
+
+
 @pytest.mark.parametrize("extension", ["bson", "json"])
 def test_python_loads_a_run_saved_by_the_rust_crate(
     tmp_path, extension, knapsack_example
@@ -84,6 +147,7 @@ def test_python_loads_a_run_saved_by_the_rust_crate(
     loaded = load_fit_result(
         str(run_folder / "fit_data"), knapsack.decode_func
     )
+    assert_fit_result(loaded)
     assert loaded["bests"]["scores"][0] == Score(value=309.0)
     assert loaded["bests"]["result"][0] == [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
     assert loaded["last_population"][0] == (
@@ -115,6 +179,7 @@ def test_python_loads_sets_and_named_scores_saved_by_the_rust_crate(
         str(run_folder / "fit_data"),
         lambda chromosome: sorted(chromosome.genes),
     )
+    assert_fit_result(loaded)
     best = Score(value=30.0, name="sum", extra_metrics={"largest": 11})
     assert loaded["bests"]["scores"][0] == best
     assert loaded["bests"]["result"][0] == [9, 10, 11]

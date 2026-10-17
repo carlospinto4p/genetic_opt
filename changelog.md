@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.1 - 17th October 2026
+
+- `tests/integration/test_rust_layout.py`: a run of the crate loaded in
+  Python is checked against the `FitResult` types: every key of
+  `fit_parameters` and `fit_metrics` and the type of each value, every
+  `Metric` field, each chromosome's `score`, `score_time` and
+  `random_seed`, and `genetic_opt_version` equal to the package's.
+
 ### v5.0.0 - 17th October 2026
 
 - Removed the `processing_object` parameter and attribute of
