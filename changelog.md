@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.4.0 - 17th October 2026
+
+- The Rust crate writes the progress of a run through the `log` crate,
+  at level `info`, as the Python package does through its logger.
+  Nothing is written until the program sets up a logger. It writes:
+  - the run's parameters when it starts;
+  - the best score, mean, median, different chromosomes and time of
+    each generation;
+  - why the run stopped.
+- Added `log` to the crate's dependencies.
+- Added tests in `crates/genetic_opt/tests/algorithm.rs`: the lines of
+  a run, and each reason to stop.
+- Updated `README.md`.
+
+
 ### v5.3.0 - 17th October 2026
 
 - Added `save_fit_plots` to `src/genetic_opt/algorithms/plots.py`: it

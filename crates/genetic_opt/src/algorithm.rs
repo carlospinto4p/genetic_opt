@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::thread::available_parallelism;
 use std::time::Instant;
 
+use log::info;
 use rand::SeedableRng;
 use rand::seq::{IndexedRandom, SliceRandom};
 use rayon::prelude::*;
@@ -298,6 +299,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
         if let Some(folder) = &save_folder {
             write_experiment_config(folder, &fit_parameters, self.problem.experiment_config())?;
         }
+        info!(
+            "starting a run of {}: {fit_parameters:?}",
+            self.experiment_name
+        );
 
         for generation in 0..=config.n_generations {
             let start = Instant::now();
@@ -329,16 +334,36 @@ impl<P: Problem> GeneticAlgorithm<P> {
             self.history.push(self.population.clone());
             self.metrics
                 .push(self.measure(start.elapsed().as_secs_f64()));
+            let metric = &self.metrics[generation];
+            info!(
+                "generation {generation}: best score {}, mean {}, median {}, \
+                 {} different chromosomes, took {}",
+                metric.best.score.value,
+                metric.mean,
+                metric.median,
+                metric.n_uniques,
+                format_seconds(metric.fitting_seconds)
+            );
 
             let stop = on_generation(self);
             if let (Some(folder), Some(save)) = (&save_folder, &self.config.save) {
                 self.save_generation(folder, save, &fit_parameters)?;
             }
-            let uniques = self.metrics[generation].n_uniques;
-            if stop
-                || uniques < config.min_population_size
-                || (config.stop_without_improvement && self.mean_stalled())
-            {
+            // In the order the Python package checks them.
+            let reason = if self.metrics[generation].n_uniques < config.min_population_size {
+                Some(format!(
+                    "fewer than {} different chromosomes",
+                    config.min_population_size
+                ))
+            } else if config.stop_without_improvement && self.mean_stalled() {
+                Some("the mean score did not change".to_string())
+            } else if stop {
+                Some("on_generation asked to stop".to_string())
+            } else {
+                None
+            };
+            if let Some(reason) = reason {
+                info!("the run stopped after generation {generation}: {reason}");
                 break;
             }
         }

@@ -2,10 +2,6 @@
 
 ### 2026.10.17 (v5.1.0 improvements review)
 
-- [ ] Report progress from the Rust crate. It writes nothing during a
-  run, where the Python package logs each generation's metrics to the
-  `genetic_opt` logger. Use the `log` crate, which writes nothing until
-  the program sets up a logger. Impact MEDIUM, effort Low.
 - [ ] Stop a run after a number of seconds: a new `FitConfig` field in
   both implementations, checked after each generation. Impact MEDIUM,
   effort Low.

@@ -1,9 +1,11 @@
+use std::cell::RefCell;
 use std::collections::{BTreeSet, HashSet};
 use std::fs::{File, read_dir};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread::{available_parallelism, sleep};
 use std::time::Duration;
 
+use log::{LevelFilter, Log, Metadata, Record};
 use rand::SeedableRng;
 
 use genetic_opt::examples::{Knapsack, Numbers};
@@ -273,6 +275,75 @@ fn the_run_stops_below_min_population_size() {
 #[test]
 fn the_run_stops_when_the_mean_score_does_not_change() {
     assert_eq!(fit_zeros(0, true), [1; 2]);
+}
+
+thread_local! {
+    static LOGGED: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Keeps what each test's thread logs, apart from the other tests.
+struct ThreadLogger;
+
+impl Log for ThreadLogger {
+    fn enabled(&self, _metadata: &Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &Record) {
+        let line = format!("{} {}", record.level(), record.args());
+        LOGGED.with(|logged| logged.borrow_mut().push(line));
+    }
+
+    fn flush(&self) {}
+}
+
+/// The lines logged while `run` runs on this thread.
+fn logged_by(run: impl FnOnce()) -> Vec<String> {
+    static LOGGER: ThreadLogger = ThreadLogger;
+    // Only the first test to get here sets it.
+    if log::set_logger(&LOGGER).is_ok() {
+        log::set_max_level(LevelFilter::Info);
+    }
+    LOGGED.with(|logged| logged.borrow_mut().clear());
+    run();
+    LOGGED.with(|logged| logged.take())
+}
+
+#[test]
+fn a_run_logs_each_generation_and_why_it_stopped() {
+    let lines = logged_by(|| {
+        fit_zeros(0, true);
+    });
+    assert_eq!(lines.len(), 4, "{lines:?}");
+    assert!(lines[0].starts_with("INFO starting a run of ZeroStart: "));
+    assert!(lines[1].starts_with(
+        "INFO generation 0: best score 0, mean 0, median 0, \
+         1 different chromosomes, took "
+    ));
+    assert!(lines[2].starts_with("INFO generation 1: "));
+    assert_eq!(
+        lines[3],
+        "INFO the run stopped after generation 1: the mean score did not change"
+    );
+}
+
+#[test]
+fn the_log_names_each_reason_to_stop() {
+    let last_line = |run: &dyn Fn()| logged_by(run).pop().unwrap();
+    assert_eq!(
+        last_line(&|| {
+            fit_zeros(2, false);
+        }),
+        "INFO the run stopped after generation 0: fewer than 2 different chromosomes"
+    );
+    assert_eq!(
+        last_line(&|| {
+            let mut config = FitConfig::new(5, 20);
+            config.min_population_size = 0;
+            algorithm(ZeroStart).fit_with(&config, |_| true).unwrap();
+        }),
+        "INFO the run stopped after generation 0: on_generation asked to stop"
+    );
 }
 
 #[test]

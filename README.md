@@ -194,6 +194,11 @@ metrics, and its run has an `extra_config`. It takes the same
 arguments. A format other than `json` or
 `bson` stops either example with an error.
 
+The crate writes the progress of a run through the `log` crate, at
+level `info`: the parameters when it starts, the metrics of each
+generation and why it stopped. As in the Python package, nothing is
+written until the program sets up a logger.
+
 Differences with the Python package:
 
 - A seed does not give the same run in both: they draw their random

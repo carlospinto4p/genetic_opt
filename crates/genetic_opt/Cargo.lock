@@ -199,10 +199,11 @@ dependencies = [
 
 [[package]]
 name = "genetic_opt"
-version = "5.3.0"
+version = "5.4.0"
 dependencies = [
  "bson",
  "chrono",
+ "log",
  "rand 0.10.3",
  "rand_chacha 0.10.0",
  "rayon",
@@ -289,6 +290,12 @@ name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
+
+[[package]]
+name = "log"
+version = "0.4.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "memchr"
