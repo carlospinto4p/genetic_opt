@@ -333,9 +333,6 @@ class GeneticAlgorithm(ABC):
         self,
         config: FitConfig,
         exit_condition: Callable[[GeneticAlgorithm], bool] | None = None,
-        plot_metrics: bool = True,
-        other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
-        | None = None,
         callback_func: Callable[[GeneticAlgorithm], None] | None = None,
         iter_func: Callable | None = None,
     ) -> FitResult:
@@ -351,13 +348,6 @@ class GeneticAlgorithm(ABC):
             GeneticAlgorithm instance and return True if the exit
             condition is met. If so, the training will end before
             reaching all `n_generations`.
-        :param plot_metrics: whether to save a metrics plot after
-            finishing the training.
-        :param other_metrics_to_plot: dictionary with schema:
-            - <metric name>: function
-            where the functions are applied to the best Chromosome of
-            each population.
-            This parameter only applies if `plot_metrics` is True.
         :param callback_func: function that receives the
             `GeneticAlgorithm` instance as input and is called after
             measuring each generation and before checking the exit
@@ -466,8 +456,8 @@ class GeneticAlgorithm(ABC):
             fit_result = self._get_fitted_data(
                 fit_parameters=fit_parameters, n_jobs=n_jobs
             )
-        if self._saver and plot_metrics:
-            self._saver.save_plots(fit_result, other_metrics_to_plot)
+        if self._saver and self._saver.save.plot_metrics:
+            self._saver.save_plots(fit_result)
         return fit_result
 
     def _fit_parameters(self, config: FitConfig) -> FitParameters:
@@ -529,7 +519,7 @@ class GeneticAlgorithm(ABC):
         self,
         population_size: int,
         iter_func: Callable | None = None,
-        n_jobs: int = -2,
+        n_jobs: int = FitConfig.n_jobs,
     ) -> None:
         """
         Builds and scores the first population of the Algorithm.
@@ -540,7 +530,7 @@ class GeneticAlgorithm(ABC):
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :param n_jobs: number of jobs to use to parallelize the evaluation of
-            each element of the population. Default to -2 (all cpus except one).
+            each element of the population. Default to `FitConfig.n_jobs`.
         :return: None.
         """
         iter_func = iter_func or identity_func
@@ -585,11 +575,11 @@ class GeneticAlgorithm(ABC):
 
     def next_generation_selection(
         self,
-        crossovers_prop: float = 0.7,
-        besties_prop: float = 0.6,
-        mutate_prob: float = 0.05,
+        crossovers_prop: float = FitConfig.crossovers_prop,
+        besties_prop: float = FitConfig.besties_prop,
+        mutate_prob: float = FitConfig.mutate_prob,
         iter_func: Callable | None = None,
-        n_jobs: int = -2,
+        n_jobs: int = FitConfig.n_jobs,
     ) -> None:
         """
         Handles the selection of the next generation.
@@ -603,7 +593,7 @@ class GeneticAlgorithm(ABC):
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :param n_jobs: number of jobs to use to parallelize the evaluation of
-            each element of the population. Default to -2 (all cpus except one).
+            each element of the population. Default to `FitConfig.n_jobs`.
         :return: None.
         """
         init_time = time()
@@ -736,7 +726,9 @@ class GeneticAlgorithm(ABC):
         return iteration_improvement
 
     def _sort_population(
-        self, iter_func: Callable | None = None, n_jobs: int = -2
+        self,
+        iter_func: Callable | None = None,
+        n_jobs: int = FitConfig.n_jobs,
     ) -> None:
         """
         Sort the current `self.population` list using the
@@ -744,7 +736,7 @@ class GeneticAlgorithm(ABC):
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :param n_jobs: number of jobs to use to parallelize the evaluation of
-            each element of the population. Default to -2 (all cpus except one).
+            each element of the population. Default to `FitConfig.n_jobs`.
         :return: None.
         """
         if not self.population:

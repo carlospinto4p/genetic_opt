@@ -1,16 +1,16 @@
 """Genetic Opt submodule that saves a run to a folder."""
 
-from collections.abc import Callable
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from genetic_opt.algorithms.config import SaveConfig
-from genetic_opt.algorithms.plots import plot_genetic_algo_metrics
-from genetic_opt.chromosome import Chromosome
+from genetic_opt.algorithms.plots import (
+    plot_genetic_algo_metrics,
+    save_current_figure,
+)
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import (
     create_new_folder,
     save_bson,
-    save_current_figure,
     save_json,
     save_yaml,
 )
@@ -119,21 +119,15 @@ class FitSaver:
         else:
             save_json(serialized_data, file_path)
 
-    def save_plots(
-        self,
-        fit_result: FitResult,
-        other_metrics_to_plot: dict[str, Callable[[Chromosome], float]]
-        | None = None,
-    ) -> None:
+    def save_plots(self, fit_result: FitResult) -> None:
         """
-        Plot the metrics of a fit result and save them as `fit_plots.jpg`.
+        Plot the metrics of a fit result and save them as `fit_plots.jpg`,
+        with `save.other_metrics_to_plot` too.
         :param fit_result: what `GeneticAlgorithm.fit` returns.
-        :param other_metrics_to_plot: functions applied to the best
-            Chromosome of each population, by the name of their metric.
         """
         plot_genetic_algo_metrics(
             metrics=fit_result["metrics"],
             fit_metrics=fit_result["fit_metrics"],
-            other_keys=other_metrics_to_plot,
+            other_keys=self.save.other_metrics_to_plot,
         )
         save_current_figure(f"{self.folder}/fit_plots")

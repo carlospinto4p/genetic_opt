@@ -20,7 +20,6 @@ def test_load_fit_result_orders_the_generations_by_number(tmp_path):
             stop_without_improvement=False,
             n_jobs=1,
         ),
-        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     # The folder lists `fit_data_10` and `fit_data_11` before `fit_data_2`.
@@ -42,7 +41,6 @@ def test_load_fit_result_reads_a_run_saved_before_0_7_0(tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     fit_result = algorithm.fit(
         FitConfig(n_generations=3, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     # Before 0.7.0 a file held the metrics of every generation up to

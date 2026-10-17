@@ -18,7 +18,6 @@ def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     fit_result = algorithm.fit(
         FitConfig(n_generations=1, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     fit_metrics = fit_result["fit_metrics"]

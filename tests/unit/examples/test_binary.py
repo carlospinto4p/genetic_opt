@@ -76,6 +76,5 @@ def test_the_fitness_function_of_the_bag_travels_without_the_bag():
     sent_bytes = len(cloudpickle.dumps(knapsack.fitness_func))
     knapsack.fit(
         FitConfig(n_generations=5, population_size=50, n_jobs=1),
-        plot_metrics=False,
     )
     assert len(cloudpickle.dumps(knapsack.fitness_func)) == sent_bytes

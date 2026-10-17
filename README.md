@@ -37,6 +37,11 @@ BinaryGeneticAlgorithm(
 )
 ```
 
+A saved run also gets a plot of its metrics, `fit_plots.jpg`.
+`SaveConfig(plot_metrics=False)` leaves it out, and
+`other_metrics_to_plot` adds the functions of the best Chromosome
+of each population to it.
+
 Before 0.11.0 these were loose arguments of `fit` and of the
 algorithm: `n_generations`, `save_path` and the rest.
 

@@ -2,8 +2,14 @@
 
 from collections.abc import Callable
 from operator import itemgetter
+from pathlib import Path
 
 from genetic_opt.chromosome import Chromosome
+from genetic_opt.files import (
+    ensure_file_extension,
+    ensure_folder_exists,
+    log_saved,
+)
 from genetic_opt.fit_result import FitMetrics
 from genetic_opt.metrics import Metric
 
@@ -19,6 +25,13 @@ PYPLOT_RC_PARAMS: dict = {
     "legend.fontsize": 14,
     "xtick.labelsize": 14,
     "ytick.labelsize": 14,
+}
+# Keyword arguments of each legend of the metrics plot
+LEGEND_PARAMS: dict = {
+    "frameon": 1,
+    "facecolor": "white",
+    "edgecolor": "black",
+    "framealpha": 0.3,
 }
 
 
@@ -68,13 +81,7 @@ def plot_genetic_algo_metrics(
     ax1.plot(population_idxs, [m.best.score.value for m in metrics], lw=2.5)
     ax1.plot(population_idxs, [m.median for m in metrics], lw=1.4)
     ax1.plot(population_idxs, [m.mean for m in metrics], lw=1.4)
-    ax1.legend(
-        ["Best", "Median", "Mean"],
-        frameon=1,
-        facecolor="white",
-        edgecolor="black",
-        framealpha=0.3,
-    )
+    ax1.legend(["Best", "Median", "Mean"], **LEGEND_PARAMS)
     if other_keys:
         ax2.set_title("Other scores - Bests in each population")
         for f in other_keys.values():
@@ -83,23 +90,11 @@ def plot_genetic_algo_metrics(
                 [f(m.best.encoded) for m in metrics],
                 lw=1.6,
             )
-        ax2.legend(
-            [name for name in other_keys],
-            frameon=1,
-            facecolor="white",
-            edgecolor="black",
-            framealpha=0.3,
-        )
+        ax2.legend(list(other_keys), **LEGEND_PARAMS)
 
     ax_u.set_title("Uniques in populations")
     ax_u.plot(population_idxs, [m.percent_uniques for m in metrics], lw=2.5)
-    ax_u.legend(
-        ["Percent uniques"],
-        frameon=1,
-        facecolor="white",
-        edgecolor="black",
-        framealpha=0.3,
-    )
+    ax_u.legend(["Percent uniques"], **LEGEND_PARAMS)
 
     ax_t.set_title("Fit times - Seconds")
     fitting_seconds = [m.fitting_seconds for m in metrics]
@@ -128,10 +123,7 @@ def plot_genetic_algo_metrics(
         handles,
         legend_labels,
         handlelength=0,
-        frameon=1,
-        facecolor="white",
-        edgecolor="black",
-        framealpha=0.4,
+        **{**LEGEND_PARAMS, "framealpha": 0.4},
     )
 
     score_name_str = ""
@@ -141,3 +133,20 @@ def plot_genetic_algo_metrics(
     fig.suptitle(f"Genetic Algorithm Metrics{score_name_str}")
     # Good if no `other keys`, let's see otherwise
     plt.subplots_adjust(top=0.94 if other_keys else 0.93)
+
+
+def save_current_figure(path: str, extension: str = "jpg") -> None:
+    """
+    Save the current py-plot figure, then clear and close it, so the
+    plots do not pile up in memory.
+    :param path: output path.
+    :param extension: image extension to use.
+    """
+    import matplotlib.pyplot as plt
+
+    ensure_folder_exists(Path(path).parent)
+    file_path = ensure_file_extension(path, extension)
+    plt.savefig(file_path, bbox_inches="tight")
+    log_saved("image", file_path)
+    plt.clf()
+    plt.close()

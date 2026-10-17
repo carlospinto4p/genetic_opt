@@ -4,10 +4,6 @@
 
 #### Refactoring
 
-- [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:306-315,466`: `plot_metrics` and `other_metrics_to_plot` only apply with a `SaveConfig`; move them into it.
-- [ ] (LOW, S) Repeated defaults: `next_generation_selection` (`base.py:561-568`) repeats 0.7/0.6/0.05 from `FitConfig`; `n_jobs=-2` repeated at `base.py:506,567,714`; `fit_result.py:205` hard-codes "at most 5" instead of citing `N_BESTS`.
-- [ ] (LOW, S) `src/genetic_opt/files.py:143-170`: `save_current_figure` (matplotlib) belongs beside `algorithms/plots.py`; its `clear_fig`/`close_fig` arguments are never passed.
-- [ ] (LOW, S) `src/genetic_opt/algorithms/plots.py:71-135`: the legend keyword arguments are copied four times.
 - [ ] (LOW, S) `src/genetic_opt/gene_collection.py:130,206`: `self.size` set before `super().__init__` sets it again; class docstrings at 52-56, 104-108, 178-182 are near copies.
 - [ ] (LOW, S) `crates/genetic_opt/examples/knapsack.rs:19-38` and `numbers.rs:115-134`: argument parsing and printing copied; an unknown format (`jsno`) silently saves BSON instead of being refused.
 - [ ] (LOW, M) `crates/genetic_opt/tests/algorithm.rs:70-133`: the test `Numbers` problem repeats `examples/numbers.rs:58-107`; five `Problem` impls share boilerplate.

@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v4.0.0 - 17th October 2026
+
+- Moved `plot_metrics` and `other_metrics_to_plot` from
+  `GeneticAlgorithm.fit` to `SaveConfig`: only a saved run gets a
+  plot. Code that passes them to `fit` must pass them to `SaveConfig`.
+- Moved `save_current_figure` from `files.py` to
+  `algorithms/plots.py`. It always clears and closes the figure: its
+  `clear_fig` and `close_fig` arguments were never passed.
+- `files.py`: `_log_saved` is now `log_saved`, as `plots.py` uses it
+  too.
+- `algorithms/plots.py`: the four legends share `LEGEND_PARAMS`.
+- `algorithms/base.py`: the defaults of `next_generation_selection`,
+  `_start_population` and `_sort_population` are the ones of
+  `FitConfig`, no longer copied.
+- `fit_result.py`: the `Bests` docstring cites `N_BESTS` instead of
+  writing 5.
+- `tests/unit/algorithms/test_save.py`: the plot test also runs with
+  `other_metrics_to_plot`.
+
 ### v3.2.0 - 17th October 2026
 
 - Renamed what was left of the `GeneticBag` name of the knapsack

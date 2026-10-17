@@ -24,6 +24,8 @@ def ones_algorithm(
     save_path,
     experiment_name: str = "ones",
     save_as_bson: bool = True,
+    plot_metrics: bool = False,
+    other_metrics_to_plot: dict | None = None,
     **kwargs,
 ) -> BinaryGeneticAlgorithm:
     return BinaryGeneticAlgorithm(
@@ -38,6 +40,8 @@ def ones_algorithm(
             serialize_decoded_chromosome_func=list,
             as_bson=save_as_bson,
             serialize_gene_func=int,
+            plot_metrics=plot_metrics,
+            other_metrics_to_plot=other_metrics_to_plot,
         ),
         **kwargs,
     )
@@ -49,7 +53,6 @@ def saved_run(tmp_path) -> str:
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     algorithm.fit(
         FitConfig(n_generations=1, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     return f"{algorithm.save_path}/fit_data"
 

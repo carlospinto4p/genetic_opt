@@ -17,7 +17,6 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     algorithm = ones_algorithm(tmp_path, save_as_bson=save_as_bson)
     fit_result = algorithm.fit(
         FitConfig(n_generations=3, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
 
     saved_generations = len(algorithm.history)
@@ -46,7 +45,6 @@ def test_each_file_holds_the_metrics_of_its_generation_alone(tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     fit_result = algorithm.fit(
         FitConfig(n_generations=3, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     assert len(fit_result["metrics"]) > 2
@@ -71,7 +69,6 @@ def test_experiment_config_yml_holds_the_parameters_and_the_config(
     algorithm.experiment_config = lambda: {"note": "ones", "length": 12}
     fit_result = algorithm.fit(
         FitConfig(n_generations=1, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     with open(f"{algorithm.save_path}/experiment_config.yml") as file:
         saved = yaml.safe_load(file)
@@ -95,7 +92,6 @@ def test_the_extra_config_is_returned_and_saved_with_each_generation(
     )
     fit_result = algorithm.fit(
         FitConfig(n_generations=2, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     folder = f"{algorithm.save_path}/fit_data"
     assert fit_result["config"] == extra_config
@@ -104,8 +100,15 @@ def test_the_extra_config_is_returned_and_saved_with_each_generation(
         assert load_json(file)["config"] == extra_config
 
 
-def test_fit_saves_the_plot_as_a_jpeg(tmp_path):
-    algorithm = ones_algorithm(tmp_path)
+@pytest.mark.parametrize(
+    "other_metrics_to_plot", [None, {"genes": lambda c: len(c.genes)}]
+)
+def test_fit_saves_the_plot_as_a_jpeg(tmp_path, other_metrics_to_plot):
+    algorithm = ones_algorithm(
+        tmp_path,
+        plot_metrics=True,
+        other_metrics_to_plot=other_metrics_to_plot,
+    )
     algorithm.fit(FitConfig(n_generations=1, population_size=20, n_jobs=1))
     with open(f"{algorithm.save_path}/fit_plots.jpg", "rb") as file:
         # Every JPEG file starts with these bytes.
@@ -113,7 +116,7 @@ def test_fit_saves_the_plot_as_a_jpeg(tmp_path):
 
 
 def test_fit_saves_the_plot_when_the_run_ends(tmp_path):
-    algorithm = ones_algorithm(tmp_path)
+    algorithm = ones_algorithm(tmp_path, plot_metrics=True)
     plot_path = f"{algorithm.save_path}/fit_plots.jpg"
     # The callback runs in each generation, before it is saved.
     plot_seen: list[bool] = []
@@ -140,7 +143,6 @@ def test_runs_started_in_the_same_second_get_a_folder_each(
     for algorithm in (first, second):
         algorithm.fit(
             FitConfig(n_generations=1, population_size=20, n_jobs=1),
-            plot_metrics=False,
         )
         assert get_files_inside_folder(algorithm.save_path, recursive=True)[
             :2
@@ -160,7 +162,6 @@ def test_a_second_fit_saves_in_a_new_folder(tmp_path, monkeypatch):
             FitConfig(
                 n_generations=n_generations, population_size=20, n_jobs=1
             ),
-            plot_metrics=False,
             exit_condition=lambda _: False,
         )
         saved.append(

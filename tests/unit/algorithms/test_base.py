@@ -56,7 +56,6 @@ def test_fit_refuses_a_first_population_without_chromosomes():
     with pytest.raises(ValidationException, match="empty population"):
         EmptyStartAlgorithm().fit(
             FitConfig(n_generations=3, population_size=20, n_jobs=1),
-            plot_metrics=False,
         )
 
 
@@ -64,7 +63,6 @@ def test_fit_with_0_generations_scores_the_first_population_only():
     algorithm = ZeroStartAlgorithm()
     result = algorithm.fit(
         FitConfig(n_generations=0, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     assert len(result["metrics"]) == 1
     assert len(algorithm.history) == 1
@@ -132,7 +130,6 @@ def _fit_numbers(minimize: bool) -> tuple[NumbersAlgorithm, FitResult]:
             stop_without_improvement=False,
             n_jobs=1,
         ),
-        plot_metrics=False,
     )
     return algorithm, result
 
@@ -174,7 +171,6 @@ def test_fit_goes_on_after_a_first_generation_with_mean_score_0():
             min_population_size=0,
             n_jobs=1,
         ),
-        plot_metrics=False,
     )
     assert result["metrics"][0].mean == 0
     assert len(result["metrics"]) > 1
@@ -190,7 +186,6 @@ def test_fit_stops_when_the_mean_score_does_not_change():
             min_population_size=0,
             n_jobs=1,
         ),
-        plot_metrics=False,
     )
     assert len(result["metrics"]) == 2
 
@@ -206,7 +201,6 @@ def test_fit_without_the_improvement_stop_breeds_every_generation():
             stop_without_improvement=False,
             n_jobs=1,
         ),
-        plot_metrics=False,
     )
     assert len(result["metrics"]) == 6
     assert algorithm.no_improvement_condition()
@@ -229,7 +223,6 @@ def test_fit_stops_below_min_population_size(
             stop_without_improvement=False,
             n_jobs=1,
         ),
-        plot_metrics=False,
     )
     assert [metric.n_uniques for metric in result["metrics"]] == [1] * (
         generations
@@ -258,7 +251,6 @@ def test_fit_scores_each_chromosome_once(tmp_path):
         FitConfig(
             n_generations=5, population_size=50, n_jobs=min(2, cpu_count())
         ),
-        plot_metrics=False,
     )
     calls = calls_log.read_text().splitlines()
     assert calls
@@ -310,7 +302,6 @@ def test_a_broken_invariant_stops_the_run(invariant):
                 mutate_prob=0.5,
                 n_jobs=1,
             ),
-            plot_metrics=False,
         )
 
 
@@ -327,7 +318,6 @@ def test_fit_without_a_save_path_decodes_the_population_once():
     population_size = 50
     result = knapsack.fit(
         FitConfig(n_generations=5, population_size=population_size, n_jobs=1),
-        plot_metrics=False,
     )
     generations = len(result["metrics"])
     assert generations > 1
@@ -361,7 +351,6 @@ def test_fit_metrics_count_the_fitness_calls():
     knapsack, calls = _counting_bag()
     result = knapsack.fit(
         FitConfig(n_generations=5, population_size=50, n_jobs=1),
-        plot_metrics=False,
     )
     counted = result["fit_metrics"]["fitness_func_calls"]
     assert calls
@@ -386,12 +375,12 @@ def test_fit_metrics_count_the_fitness_calls():
 def test_a_second_fit_starts_a_new_run():
     knapsack, calls = _counting_bag()
     config = FitConfig(n_generations=3, population_size=30, n_jobs=1)
-    first = knapsack.fit(config, plot_metrics=False)
+    first = knapsack.fit(config)
     first_calls = len(calls)
     assert first["fit_metrics"]["fitness_func_calls"]["processed"] == (
         first_calls
     )
-    result = knapsack.fit(config, plot_metrics=False)
+    result = knapsack.fit(config)
     generations = len(result["metrics"])
     assert 1 < generations <= 4
     assert len(result["history"]) == generations
@@ -419,7 +408,6 @@ def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
             stop_without_improvement=False,
             n_jobs=n_jobs,
         ),
-        plot_metrics=False,
     )
     return [
         [list(chromosome.genes) for _, chromosome in population]
@@ -451,7 +439,6 @@ def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
             stop_without_improvement=False,
             n_jobs=1,
         ),
-        plot_metrics=False,
         callback_func=seen.append,
         exit_condition=lambda algorithm: len(algorithm.metrics) == 2,
     )
@@ -479,7 +466,6 @@ def test_fit_calls_the_callback_method_of_a_subclass_by_default():
             stop_without_improvement=False,
             n_jobs=1,
         ),
-        plot_metrics=False,
     )
     assert knapsack.callbacks == len(result["metrics"]) == 3
 
@@ -628,7 +614,6 @@ def test_fit_uses_one_job_when_fewer_are_left(monkeypatch, cores, parameters):
     knapsack, _ = _counting_bag()
     result = knapsack.fit(
         FitConfig(n_generations=2, population_size=20, **parameters),
-        plot_metrics=False,
     )
     assert result["fit_parameters"]["n_jobs"] == 1
 
@@ -637,7 +622,6 @@ def test_fit_parameters_are_the_config_with_the_seed_and_the_jobs():
     knapsack, _ = _counting_bag()
     result = knapsack.fit(
         FitConfig(n_generations=2, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     assert result["fit_parameters"] == {
         "n_generations": 2,
@@ -665,12 +649,12 @@ def test_fit_refuses_no_jobs_and_more_jobs_than_cores(monkeypatch, n_jobs):
 def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
     knapsack, _ = _counting_bag()
     config = FitConfig(n_generations=5, population_size=30, n_jobs=1)
-    expected = knapsack.fit(config, plot_metrics=False)["bests"]["scores"]
+    expected = knapsack.fit(config)["bests"]["scores"]
 
     # Every Chromosome gets one id, as two would after a hash collision.
     monkeypatch.setattr(Chromosome, "id", property(lambda self: 1))
     knapsack, _ = _counting_bag()
-    scores = knapsack.fit(config, plot_metrics=False)["bests"]["scores"]
+    scores = knapsack.fit(config)["bests"]["scores"]
     assert [s.value for s in scores] == [s.value for s in expected]
 
 
@@ -678,7 +662,6 @@ def test_scoring_does_not_keep_the_algorithm_alive():
     knapsack, _ = _counting_bag()
     knapsack.fit(
         FitConfig(n_generations=2, population_size=20, n_jobs=1),
-        plot_metrics=False,
     )
     reference = weakref.ref(knapsack)
     del knapsack

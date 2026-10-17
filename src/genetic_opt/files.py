@@ -9,12 +9,12 @@ from typing import Any
 from genetic_opt.functions import format_bytes
 from genetic_opt.logs import logger
 
-# `bson`, `matplotlib` and `yaml` are imported inside the functions that
-# use them: together they take longer to import than the rest of the
-# package, and a run that saves nothing needs none of them.
+# `bson` and `yaml` are imported inside the functions that use them:
+# together they take longer to import than the rest of the package, and
+# a run that saves nothing needs none of them.
 
 
-def _log_saved(kind: str, file_path: str) -> None:
+def log_saved(kind: str, file_path: str) -> None:
     """
     Log that a file was saved, with its size. The size is read from the
     disk only when the line is going to be logged.
@@ -137,37 +137,7 @@ def save_bson(data, file_path: str) -> None:
     bson_data = bson.BSON.encode(data)
     with open(file_path, "wb") as file:
         file.write(bson_data)
-    _log_saved("bson", file_path)
-
-
-def save_current_figure(
-    path: str,
-    extension: str = "jpg",
-    clear_fig: bool = True,
-    close_fig: bool = True,
-) -> None:
-    """
-    Save the current py-plot figure.
-    :param path: output path.
-    :param extension: image extension to use.
-    :param clear_fig: whether to clear the current, saved figure.
-        Clear a figure will delete it.
-    :param close_fig: whether to close the current, saved figure.
-        Close a figure will delete the complete figure window.
-        Use this to save memory, not accumulating the plots in memory.
-        See https://stackoverflow.com/a/8228808/13376096.
-    :return: None.
-    """
-    import matplotlib.pyplot as plt
-
-    ensure_folder_exists(Path(path).parent)
-    file_path = ensure_file_extension(path, extension)
-    plt.savefig(file_path, bbox_inches="tight")
-    _log_saved("image", file_path)
-    if clear_fig:
-        plt.clf()
-    if close_fig:
-        plt.close()
+    log_saved("bson", file_path)
 
 
 def save_json(data, file_path: str, **kwargs) -> None:
@@ -185,7 +155,7 @@ def save_json(data, file_path: str, **kwargs) -> None:
     # `dumps` uses the C one, about 9 times faster on a generation.
     with open(file_path, "w") as file:
         file.write(dumps_json(data, **kwargs))
-    _log_saved("json", file_path)
+    log_saved("json", file_path)
 
 
 def save_yaml(
@@ -225,4 +195,4 @@ def save_yaml(
     )
     with open(file_path, "w", encoding=encoding) as file:
         file.write(text)
-    _log_saved("YAML", file_path)
+    log_saved("YAML", file_path)

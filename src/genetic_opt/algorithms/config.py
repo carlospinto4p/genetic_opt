@@ -4,6 +4,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from genetic_opt.chromosome import Chromosome
+
 
 @dataclass(frozen=True)
 class FitConfig:
@@ -56,9 +58,20 @@ class SaveConfig:
         instead of a json one.
     :param serialize_gene_func: function to get a serializable object
         from each gene.
+    :param plot_metrics: whether to save a plot of the metrics,
+        `fit_plots.jpg`, when the run ends.
+    :param other_metrics_to_plot: dictionary with schema:
+        - <metric name>: function
+        where the functions are applied to the best Chromosome of each
+        population and plotted too. It only applies if `plot_metrics`
+        is True.
     """
 
     path: str
     serialize_decoded_chromosome_func: Callable[[Any], Any]
     as_bson: bool = True
     serialize_gene_func: Callable[[Any], Any] | None = None
+    plot_metrics: bool = True
+    other_metrics_to_plot: dict[str, Callable[[Chromosome], float]] | None = (
+        None
+    )

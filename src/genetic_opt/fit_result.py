@@ -10,7 +10,7 @@ from genetic_opt.score import Score
 class Bests(TypedDict):
     """
     The best Chromosomes of the last population, the best one first: at
-    most 5, each of them different. The three lists go in the same
+    most `algorithms.base.N_BESTS`, each of them different. The three lists go in the same
     order.
     """
 
