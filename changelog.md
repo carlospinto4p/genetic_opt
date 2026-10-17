@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.11.2 - 18th October 2026
+
+- Fixed `test_fast_scores_are_not_sent_to_the_workers` in
+  `tests/unit/algorithms/test_base.py` failing on a busy machine: the
+  test now gives `base.py` a clock where scoring takes no time, so one
+  slow first score no longer sends the other 49 to the workers.
+
+
 ### v5.11.1 - 18th October 2026
 
 - `gene_collection.py`:

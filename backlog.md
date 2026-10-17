@@ -1,9 +1,5 @@
 # Backlog - Genetic-Opt
 
-### 2026.10.18
-
-- [ ] `tests/unit/algorithms/test_base.py:802` — flaky: `test_fast_scores_are_not_sent_to_the_workers` failed once under `pytest tests/unit -n 4` (`CountedParallel.batches == [49]`) and passed alone. `_score_new` (`base.py:947-984`) times the first Chromosome with `perf_counter`; when that one call is slow on a loaded machine, the other 49 go to the workers. Make the timing in the test deterministic (e.g. patch the measured seconds) — MED — S
-
 ### 2026.10.17 (v5.10.2 /scan)
 
 #### Performance

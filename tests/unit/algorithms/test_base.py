@@ -788,6 +788,9 @@ class CountedParallel(Parallel):
 def test_fast_scores_are_not_sent_to_the_workers(monkeypatch):
     monkeypatch.setattr(CountedParallel, "batches", [])
     monkeypatch.setattr(algorithms, "Parallel", CountedParallel)
+    # A clock where scoring takes no time: timed for real, one slow
+    # score on a busy machine sends the rest to the workers
+    monkeypatch.setattr(algorithms, "perf_counter", lambda: 0.0)
     knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
