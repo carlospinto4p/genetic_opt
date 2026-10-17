@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.7.0 - 17th October 2026
+
+- Added `ValuesGeneSpace` to `gene_space.py`: a gene space over any
+  values it is given, each one once, beside `BinaryGeneSpace`. It
+  refuses no values, or a value given twice. The values are drawn by
+  position, so they keep their own types.
+- Added tests:
+  - `tests/unit/test_gene_space.py`: its draws in each shape, the types
+    kept, the seed, a list and a set Chromosome filled from it, and the
+    refused values.
+  - `tests/unit/algorithms/test_base.py`: the set run over 40 words
+    uses it in place of a gene space written in the test.
+
+
 ### v5.6.0 - 17th October 2026
 
 - Added `max_stale_generations` to `FitConfig`, in both

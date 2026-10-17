@@ -2,9 +2,6 @@
 
 ### 2026.10.17 (v5.1.0 improvements review)
 
-- [ ] A Python gene space over any list of values given to it, beside
-  `BinaryGeneSpace`. Today a problem whose genes are not 0 and 1 must
-  write its own `AbstractGeneSpace` subclass. Impact LOW, effort Low.
 - [ ] More ways to cross and to pick parents, in both implementations:
   uniform crossover, and tournament selection beside the current one.
   Impact LOW, effort Medium.

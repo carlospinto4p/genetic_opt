@@ -10,6 +10,17 @@ methodologies in order to tackle different optimization problems.
 There is an example of optimization problem tackled with these classes
 in `examples.binary.Knapsack`.
 
+`GeneticAlgorithm` takes the genes it draws from a gene space.
+`gene_space.BinaryGeneSpace` holds 0 and 1, and
+`gene_space.ValuesGeneSpace` holds any values it is given, each one
+once:
+
+```python
+from genetic_opt.gene_space import ValuesGeneSpace
+
+gene_space = ValuesGeneSpace(["red", "green", "blue"], random_seed=5)
+```
+
 The parameters of a run go in a `FitConfig`. To save the runs, the
 algorithm gets a `SaveConfig`:
 

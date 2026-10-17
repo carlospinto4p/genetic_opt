@@ -10,7 +10,6 @@ from pathlib import Path
 import pytest
 from joblib import Parallel
 from joblib.externals import cloudpickle
-from numpy import array
 
 from genetic_opt.algorithms import FitConfig
 from genetic_opt.algorithms import base as algorithms
@@ -25,7 +24,7 @@ from genetic_opt.fit_result import (
     FitResult,
 )
 from genetic_opt.fit_result_io import load_fit_result
-from genetic_opt.gene_space import AbstractGeneSpace
+from genetic_opt.gene_space import ValuesGeneSpace
 from genetic_opt.metrics import Best, Metric
 from genetic_opt.score import Score
 from tests.unit.conftest import (
@@ -606,17 +605,6 @@ def test_another_seed_gives_another_run():
 WORDS = [f"w{number}" for number in range(40)]
 
 
-class WordsGeneSpace(AbstractGeneSpace):
-    """Gene space of 40 words, "w0" to "w39"."""
-
-    def __len__(self) -> int:
-        return len(WORDS)
-
-    def select_random(self, n=None):
-        picks = self.random_state.randint(len(WORDS), size=n)
-        return WORDS[picks] if n is None else array(WORDS)[picks].tolist()
-
-
 class WordsAlgorithm(NumbersAlgorithm):
     """
     `NumbersAlgorithm` with 40 numbers written as words. Python orders a
@@ -625,7 +613,7 @@ class WordsAlgorithm(NumbersAlgorithm):
 
     def __init__(self):
         super().__init__(minimize=False)
-        self.gene_space = WordsGeneSpace(random_seed=5)
+        self.gene_space = ValuesGeneSpace(WORDS, random_seed=5)
         self.decode_func = lambda chromosome: sorted(chromosome.genes)
         self.fitness_func = lambda chromosome: Score(
             value=sum(int(word[1:]) for word in chromosome.genes)

@@ -1,10 +1,13 @@
 """Genetic Opt Gene Space submodule."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any
 
-from numpy import integer, ndarray
+from numpy import empty, integer, ndarray
 from numpy.random import RandomState
+
+from genetic_opt.exceptions import ValidationException
 
 
 class AbstractGeneSpace(ABC):
@@ -54,3 +57,44 @@ class BinaryGeneSpace(AbstractGeneSpace):
         self, n: int | tuple[int, ...] | None = None
     ) -> integer | ndarray:
         return self.random_state.choice([0, 1], size=n)
+
+
+class ValuesGeneSpace(AbstractGeneSpace):
+    """
+    GeneSpace which uses the values it is given as its symbols.
+    """
+
+    def __init__(self, values: Sequence, random_seed: int = 442) -> None:
+        """
+        Initialize the Gene Space.
+        :param values: the genes, each one once. Their order, with the
+            seed, decides the genes drawn.
+        :param random_seed: random seed to use internally.
+        :raises ValidationException: when `values` is empty or holds a
+            value more than once.
+        """
+        super().__init__(random_seed=random_seed)
+        if not values:
+            raise ValidationException("A gene space needs values")
+        # A repeated value would be counted twice by `len`, which a set
+        # of genes relies on
+        if len(set(values)) != len(values):
+            raise ValidationException(
+                f"The values {values} hold a value more than once"
+            )
+        self.values: list = list(values)
+        # Drawn by position: numpy would turn values of mixed types into
+        # one type, such as `[1, "a"]` into two texts. Filled one by one,
+        # so that a tuple is kept as one value.
+        self._values: ndarray = empty(len(values), dtype=object)
+        for position, value in enumerate(values):
+            self._values[position] = value
+
+    def __len__(self) -> int:
+        return len(self.values)
+
+    def select_random(self, n: int | tuple[int, ...] | None = None) -> Any:
+        positions = self.random_state.choice(len(self.values), size=n)
+        if n is None:
+            return self.values[positions]
+        return self._values[positions]
