@@ -31,7 +31,11 @@ class FitConfig:
         Default to -2 (all cpus except one). A negative number that
         leaves no cpu gives one job.
         With more than one job the fitness function is sent to the
-        worker processes. A bound method, or a function that uses
+        worker processes, for the batches of new Chromosomes expected
+        to take `base.IN_PROCESS_SECONDS` or more to score. The others,
+        and the first Chromosome scored, which times the function, are
+        scored in the process that runs `fit`. A bound method, or a
+        function that uses
         `self`, takes the algorithm with it, without its population,
         history, metrics and scores.
     :param max_seconds: the run stops after the first generation that

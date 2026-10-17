@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.10 - 17th October 2026
+
+- `algorithms/base.py`: new Chromosomes are scored in the process that
+  runs `fit` when the batch is expected to take less than
+  `IN_PROCESS_SECONDS` (0.01 s, what a warm pool of workers took for a
+  batch of any size), and in the worker processes when not. The first
+  Chromosome scored times the fitness function. The README knapsack
+  takes 0.01 s at the default `n_jobs` instead of 1.08 s; a fitness
+  function of 20 ms takes as long as before.
+  - Added `_score_new` and `_score_in_process`.
+  - `config.py`: the `n_jobs` docstring says which batches go to the
+    workers.
+- `tests/unit/algorithms/test_base.py`:
+  - Added `test_fast_scores_are_not_sent_to_the_workers` and
+    `test_slow_scores_are_sent_to_the_workers_after_the_first`.
+  - The tests of the workers set `IN_PROCESS_SECONDS` to 0 through the
+    `score_in_workers` fixture.
+
+
 ### v5.10.9 - 17th October 2026
 
 - Faster saving and a lighter explainer page:

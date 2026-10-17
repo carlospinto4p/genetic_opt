@@ -3,9 +3,11 @@ import logging
 import os
 import subprocess
 import sys
+import time
 import weakref
 from os import cpu_count
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 from joblib import Parallel
@@ -36,6 +38,12 @@ from tests.unit.conftest import (
 )
 
 # ── GeneticAlgorithm Tests ─────────────────────────────────────────────
+
+
+@pytest.fixture
+def score_in_workers(monkeypatch):
+    """Send every batch to the workers, however fast the scores are."""
+    monkeypatch.setattr(algorithms, "IN_PROCESS_SECONDS", 0)
 
 
 class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
@@ -314,7 +322,7 @@ def test_fit_stops_below_min_population_size(
     )
 
 
-def test_fit_scores_each_chromosome_once(tmp_path):
+def test_fit_scores_each_chromosome_once(tmp_path, score_in_workers):
     # The fitness function runs in worker processes, so the calls are
     # counted through a file.
     calls_log = tmp_path / "calls.log"
@@ -350,7 +358,9 @@ def broken_fitness(chromosome):
 
 
 @pytest.mark.parametrize("n_jobs", [1, min(2, cpu_count())])
-def test_an_error_of_the_fitness_function_stops_the_run(tmp_path, n_jobs):
+def test_an_error_of_the_fitness_function_stops_the_run(
+    tmp_path, n_jobs, score_in_workers
+):
     algorithm = ones_algorithm(tmp_path)
     algorithm.fitness_func = broken_fitness
     config = FitConfig(n_generations=2, population_size=20, n_jobs=n_jobs)
@@ -588,7 +598,9 @@ def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
     ]
 
 
-def test_one_seed_gives_the_same_run_with_any_number_of_jobs():
+def test_one_seed_gives_the_same_run_with_any_number_of_jobs(
+    score_in_workers,
+):
     first = _bag_run_genes(n_jobs=1)
     assert len(first) == 6
     assert _bag_run_genes(n_jobs=1) == first
@@ -697,7 +709,9 @@ def test_fit_calls_the_callback_method_of_a_subclass_by_default():
     assert knapsack.callbacks == len(result["metrics"]) == 3
 
 
-def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
+def test_sorting_starts_no_workers_when_no_chromosome_is_new(
+    monkeypatch, score_in_workers
+):
     # Two genes give 4 Chromosomes, so the first population has them all.
     knapsack = Knapsack(weights=[1, 2], values=[3, 4], capacity=3)
     fitness = knapsack.fitness_func
@@ -748,6 +762,60 @@ def test_fit_keeps_one_pool_of_workers_for_the_whole_run(monkeypatch):
     assert knapsack._parallel is None
 
 
+class CountedParallel(Parallel):
+    """A `Parallel` that counts the batches it is given."""
+
+    batches: ClassVar[list[int]] = []
+
+    def __call__(self, iterable):
+        items = list(iterable)
+        self.batches.append(len(items))
+        return super().__call__(items)
+
+
+def test_fast_scores_are_not_sent_to_the_workers(monkeypatch):
+    monkeypatch.setattr(CountedParallel, "batches", [])
+    monkeypatch.setattr(algorithms, "Parallel", CountedParallel)
+    knapsack = Knapsack(
+        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+        capacity=165,
+    )
+    result = knapsack.fit(
+        FitConfig(
+            n_generations=5, population_size=50, n_jobs=min(2, cpu_count())
+        )
+    )
+    assert result["fit_metrics"]["fitness_func_calls"]["processed"] > 50
+    assert CountedParallel.batches == []
+
+
+def test_slow_scores_are_sent_to_the_workers_after_the_first(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(CountedParallel, "batches", [])
+    monkeypatch.setattr(algorithms, "Parallel", CountedParallel)
+    pids_log = tmp_path / "pids.log"
+
+    def slow_ones(chromosome):
+        with open(pids_log, "a") as file:
+            file.write(f"{os.getpid()}\n")
+        time.sleep(0.02)
+        return count_ones(chromosome)
+
+    algorithm = ones_algorithm(tmp_path)
+    algorithm.fitness_func = slow_ones
+    algorithm._start_population(
+        population_size=10, n_jobs=min(2, cpu_count())
+    )
+
+    # The first is scored here, to time it, and the 9 others are
+    # expected to take 0.18 s, more than `IN_PROCESS_SECONDS`
+    pids = pids_log.read_text().splitlines()
+    assert pids[0] == str(os.getpid())
+    assert CountedParallel.batches == [len(pids) - 1]
+
+
 def test_fit_lets_go_of_its_pool_of_workers_when_it_raises():
     knapsack = Knapsack(weights=[1, 2, 3], values=[3, 4, 5], capacity=4)
 
@@ -762,7 +830,9 @@ def test_fit_lets_go_of_its_pool_of_workers_when_it_raises():
     assert knapsack._parallel is None
 
 
-def test_fit_runs_a_fitness_function_that_uses_the_algorithm():
+def test_fit_runs_a_fitness_function_that_uses_the_algorithm(
+    score_in_workers,
+):
     # The function takes the whole algorithm to each worker process, so
     # the algorithm must pickle while its pool of workers is open.
     knapsack = Knapsack(

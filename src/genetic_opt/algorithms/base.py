@@ -1,13 +1,13 @@
 """Genetic Opt base class of the algorithms."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict
 from logging import INFO
 from math import isnan
 from os import cpu_count
-from time import time
+from time import perf_counter, time
 from typing import Any
 
 from joblib import Parallel, delayed
@@ -35,6 +35,11 @@ from genetic_opt.score import Score
 
 # Number of best Chromosomes a `FitResult` reports
 N_BESTS = 5
+# Seconds a batch of new Chromosomes is expected to take to score in
+# this process, below which it is not sent to the worker processes. A
+# warm pool took about 10 ms for a batch of any size, measured on 17th
+# October 2026 with 14 workers. 0 sends every batch to the workers.
+IN_PROCESS_SECONDS = 0.01
 
 
 def _score_chromosome(
@@ -194,6 +199,11 @@ class GeneticAlgorithm(ABC):
         self._scores_before_run: int = 0
         # The workers `fit` keeps for its whole run
         self._parallel: Parallel | None = None
+        # Seconds the Chromosomes scored in this process took, and how
+        # many they were. `Chromosome.score_time` is rounded to 0.01 s,
+        # too coarse to compare with `IN_PROCESS_SECONDS`.
+        self._in_process_seconds: float = 0.0
+        self._in_process_scores: int = 0
 
         # Some logging
         logger.info(
@@ -905,12 +915,8 @@ class GeneticAlgorithm(ABC):
                 new_population.setdefault(chromosome_key, chromosome)
         self._score_requests += len(unscored)
         if new_population:
-            # The workers are other processes and score copies of the
-            # Chromosomes, so the scores must come back as results.
-            parallel = self._parallel or Parallel(n_jobs=n_jobs)
-            scores = parallel(
-                delayed(_score_chromosome)(self.fitness_func, chromosome)
-                for chromosome in iter_func(list(new_population.values()))
+            scores = self._score_new(
+                list(new_population.values()), iter_func, n_jobs
             )
             # Refused before it is cached, so a later run does not take
             # it either
@@ -932,6 +938,63 @@ class GeneticAlgorithm(ABC):
             key=lambda x: x.score.value,
             reverse=not self.minimize,
         )
+
+    def _score_new(
+        self,
+        chromosomes: list[Chromosome],
+        iter_func: Callable,
+        n_jobs: int,
+    ) -> list[tuple[Score, float]]:
+        """
+        Score Chromosomes in this process when that is expected to take
+        less than `IN_PROCESS_SECONDS`, and in the worker processes when
+        not. Until a score has been timed here, the first Chromosome is
+        scored here to time it.
+        :param chromosomes: the Chromosomes to score, none scored yet.
+        :param iter_func: function to keep track of the iterations.
+        :param n_jobs: number of jobs of the workers, when `fit` has no
+            pool of workers open.
+        :return: a tuple (Score, seconds it took to get it) for each
+            Chromosome, in their order.
+        """
+        pending = iter(iter_func(chromosomes))
+        scores = []
+        if not self._in_process_scores and IN_PROCESS_SECONDS > 0:
+            scores = self._score_in_process([next(pending)])
+        n_pending = len(chromosomes) - len(scores)
+        if not n_pending:
+            return scores
+        if (
+            self._in_process_scores
+            and n_pending * self._in_process_seconds / self._in_process_scores
+            < IN_PROCESS_SECONDS
+        ):
+            return scores + self._score_in_process(pending)
+        # The workers are other processes and score copies of the
+        # Chromosomes, so the scores must come back as results.
+        parallel = self._parallel or Parallel(n_jobs=n_jobs)
+        return scores + parallel(
+            delayed(_score_chromosome)(self.fitness_func, chromosome)
+            for chromosome in pending
+        )
+
+    def _score_in_process(
+        self, chromosomes: Iterable[Chromosome]
+    ) -> list[tuple[Score, float]]:
+        """
+        Score Chromosomes in this process, timing them.
+        :param chromosomes: the Chromosomes to score.
+        :return: a tuple (Score, seconds it took to get it) for each
+            Chromosome, in their order.
+        """
+        start = perf_counter()
+        scores = [
+            _score_chromosome(self.fitness_func, chromosome)
+            for chromosome in chromosomes
+        ]
+        self._in_process_seconds += perf_counter() - start
+        self._in_process_scores += len(scores)
+        return scores
 
     def _update_metrics(self, generation_fitting_time: float) -> None:
         """
