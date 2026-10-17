@@ -4,7 +4,6 @@
 
 #### Test coverage
 
-- [ ] (MED, S) `tests/integration/test_rust_layout.py:63-118`: no Rust run with `extra_config` is loaded, `load_fit_result_file` is never called on a Rust file, and `experiment_config.yml` is only checked to exist.
 - [ ] (MED, S) Infinite `space_points` is written as JSON `null` by Rust (`algorithm.rs:583`) and `Infinity` by Python (`metrics.py:192`); Python then loads `None` where its type says float. Decide one form and test it.
 - [ ] (MED, S) NaN fitness is untested in both: Python leaves NaN scores mid-population after sorting (`base.py:753-756`); Rust's reversed `total_cmp` (`algorithm.rs:255-262`) would rank NaN best; `no_improvement_condition` (`base.py:303`) never fires on a NaN mean. Decide the behaviour, then test it.
 - [ ] (MED, S) `src/genetic_opt/gene_collection.py:230`: `GeneSet.random_mutate` iterates `list(self.genes)`, whose order for string genes changes between interpreter launches (hash randomization), so a seed may not reproduce a set-chromosome run. The seed test (`_bag_run_genes` in `tests/unit/algorithms/test_base.py`) covers only int lists.

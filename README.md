@@ -129,8 +129,9 @@ cargo run --manifest-path crates/genetic_opt/Cargo.toml \
 
 The `numbers` example runs `examples::Numbers`, which picks 3 different
 numbers under 12 with the highest sum, or the lowest with `minimize`
-set. Its chromosomes are sets and its scores have a name and extra
-metrics. It takes the same arguments. A format other than `json` or
+set. Its chromosomes are sets, its scores have a name and extra
+metrics, and its run has an `extra_config`. It takes the same
+arguments. A format other than `json` or
 `bson` stops either example with an error.
 
 Differences with the Python package:

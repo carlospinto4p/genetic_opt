@@ -6,13 +6,19 @@ from pathlib import Path
 from typing import get_type_hints, is_typeddict
 
 import pytest
+import yaml
 
 from genetic_opt import __version__
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
 from genetic_opt.files import get_files_inside_folder
-from genetic_opt.fit_result import FitMetrics, FitParameters, FitResult
-from genetic_opt.fit_result_io import load_fit_result
+from genetic_opt.fit_result import (
+    FitMetrics,
+    FitParameters,
+    FitResult,
+    FitResultFile,
+)
+from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
 from genetic_opt.metrics import Best, Metric
 from genetic_opt.score import Score
 
@@ -94,7 +100,7 @@ def assert_fit_result(loaded: FitResult) -> None:
     Check every key of a run of the crate loaded in Python, and the type
     of each value, against the `FitResult` types.
     """
-    assert set(loaded) == FitResult.__required_keys__
+    assert set(loaded) - {"config"} == FitResult.__required_keys__
     assert_typed_dict(loaded["fit_parameters"], FitParameters)
     assert_typed_dict(loaded["fit_metrics"], FitMetrics)
     # Kept equal to the one of the crate
@@ -133,7 +139,6 @@ def test_python_loads_a_run_saved_by_the_rust_crate(
 ):
     subprocess.run([knapsack_example, str(tmp_path), extension], check=True)
     (run_folder,) = (tmp_path / "Knapsack").iterdir()
-    assert (run_folder / "experiment_config.yml").is_file()
     files = get_files_inside_folder(str(run_folder / "fit_data"))
     assert files
     assert all(file.endswith(f".{extension}") for file in files)
@@ -148,6 +153,12 @@ def test_python_loads_a_run_saved_by_the_rust_crate(
         str(run_folder / "fit_data"), knapsack.decode_func
     )
     assert_fit_result(loaded)
+    # Neither the run nor the problem has a configuration of its own
+    assert "config" not in loaded
+    experiment_config = yaml.safe_load(
+        (run_folder / "experiment_config.yml").read_text()
+    )
+    assert experiment_config == {"fit_parameters": loaded["fit_parameters"]}
     assert loaded["bests"]["scores"][0] == Score(value=309.0)
     assert loaded["bests"]["result"][0] == [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
     assert loaded["last_population"][0] == (
@@ -180,6 +191,15 @@ def test_python_loads_sets_and_named_scores_saved_by_the_rust_crate(
         lambda chromosome: sorted(chromosome.genes),
     )
     assert_fit_result(loaded)
+    # The `extra_config` of the run, and the configuration of the problem
+    assert loaded["config"] == {"minimize": False}
+    experiment_config = yaml.safe_load(
+        (run_folder / "experiment_config.yml").read_text()
+    )
+    assert experiment_config == {
+        "fit_parameters": loaded["fit_parameters"],
+        "experiment_config": {"numbers": 12, "picked": 3},
+    }
     best = Score(value=30.0, name="sum", extra_metrics={"largest": 11})
     assert loaded["bests"]["scores"][0] == best
     assert loaded["bests"]["result"][0] == [9, 10, 11]
@@ -193,6 +213,28 @@ def test_python_loads_sets_and_named_scores_saved_by_the_rust_crate(
     assert best_chromosome.score == best
     assert best_chromosome.is_gene_set
     assert best_chromosome.genes == {9, 10, 11}
+
+
+@pytest.mark.parametrize("extension", ["bson", "json"])
+def test_python_loads_one_file_saved_by_the_rust_crate(
+    tmp_path, extension, numbers_example
+):
+    subprocess.run([numbers_example, str(tmp_path), extension], check=True)
+    (run_folder,) = (tmp_path / "Numbers").iterdir()
+    fit_data = str(run_folder / "fit_data")
+    run = load_fit_result(fit_data, lambda chromosome: chromosome.genes)
+    n_files = len(get_files_inside_folder(fit_data))
+
+    loaded = load_fit_result_file(
+        f"{fit_data}/fit_data_{n_files}.{extension}"
+    )
+    assert set(loaded) == FitResultFile.__required_keys__ | {"config"}
+    assert loaded["population_idx"] == n_files
+    assert loaded["population"] == run["history"][-1]
+    # A file of the crate holds the metrics of its own generation only
+    assert loaded["metrics"] == run["metrics"][-1:]
+    for key in ("bests", "fit_metrics", "fit_parameters", "config"):
+        assert loaded[key] == run[key], key
 
 
 def test_the_rust_example_saves_bson_when_no_format_is_given(

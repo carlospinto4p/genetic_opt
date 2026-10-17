@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.2 - 17th October 2026
+
+- The crate's `numbers` example sets `extra_config` to
+  `{"minimize": false}`, so a run of the crate with a `config` is loaded
+  in Python. `README.md` says so.
+- `tests/integration/test_rust_layout.py`:
+  - Checks the `config` of both examples' runs, and the whole content
+    of their `experiment_config.yml`, not only that it exists.
+  - Added `test_python_loads_one_file_saved_by_the_rust_crate`:
+    `load_fit_result_file` on the last file of a run of the crate, in
+    JSON and in BSON.
+
 ### v5.0.1 - 17th October 2026
 
 - `tests/integration/test_rust_layout.py`: a run of the crate loaded in
