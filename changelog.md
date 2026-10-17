@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.6 - 17th October 2026
+
+- `web/runs.py`: replaced `_chromosome` with `_Recorder.shown`, which
+  works out the genes, decoded value and score of a Chromosome once per
+  run. A run at the explainer's limits (40 genes, population 400, 300
+  generations) took 7-8 s instead of 9-11 s, with the same response.
+- Added `test_record_run_decodes_each_chromosome_once` to
+  `tests/unit/web/test_runs.py`.
+
+
 ### v5.10.5 - 17th October 2026
 
 - `.gitlab-ci.yml`: the publish job's `python:3.14-slim` image is

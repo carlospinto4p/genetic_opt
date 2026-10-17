@@ -108,6 +108,25 @@ class _Recorder:
     lets a subclass override, and calls them unchanged.
     """
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        # What `shown` gave for each Chromosome, since one stays in the
+        # population for many generations
+        self._shown: dict[Chromosome, dict[str, Any]] = {}
+
+    def shown(self, chromosome: Chromosome) -> dict[str, Any]:
+        """
+        A scored Chromosome as the explainer reads it, worked out once
+        per run. Equal Chromosomes have the same genes and score.
+        """
+        if (record := self._shown.get(chromosome)) is None:
+            record = self._shown[chromosome] = {
+                "genes": [int(g) for g in chromosome.genes],
+                "decoded": self.decode_func(chromosome),
+                "score": chromosome.score.value,
+            }
+        return record
+
     def next_generation_selection(
         self, crossovers_prop: float, besties_prop: float, **kwargs: Any
     ) -> None:
@@ -156,18 +175,7 @@ def _gene_origins(child: list, a: list, b: list) -> list[str]:
     ]
 
 
-def _chromosome(
-    algorithm: GeneticAlgorithm, chromosome: Chromosome
-) -> dict[str, Any]:
-    """A Chromosome as the explainer reads it."""
-    return {
-        "genes": [int(g) for g in chromosome.genes],
-        "decoded": algorithm.decode_func(chromosome),
-        "score": chromosome.score.value,
-    }
-
-
-def _breeding_record(algorithm: GeneticAlgorithm) -> dict[str, Any]:
+def _breeding_record(algorithm: _Recorder) -> dict[str, Any]:
     """What `_Recorder` kept of the generation that just ended."""
     breeding = algorithm._breeding
     ranks, n_besties = breeding["ranks"], breeding["n_besties"]
@@ -184,7 +192,7 @@ def _breeding_record(algorithm: GeneticAlgorithm) -> dict[str, Any]:
             crossed_genes = [int(g) for g in crossed.genes]
             pair_children.append(
                 {
-                    **_chromosome(algorithm, mutated),
+                    **algorithm.shown(mutated),
                     "crossed": crossed_genes,
                     "origins": _gene_origins(crossed_genes, a_genes, b_genes),
                     "changed": [
@@ -203,7 +211,7 @@ def _breeding_record(algorithm: GeneticAlgorithm) -> dict[str, Any]:
         "n_besties": n_besties,
         "parents": [
             {
-                **_chromosome(algorithm, parent),
+                **algorithm.shown(parent),
                 "rank": ranks[id(parent)],
                 "kind": "best" if ranks[id(parent)] < n_besties else "random",
             }
@@ -277,7 +285,7 @@ def record_run(
         for chromosome in algo.population:
             generation["population"].append(
                 {
-                    **_chromosome(algo, chromosome),
+                    **algo.shown(chromosome),
                     "origin": (
                         "initial"
                         if not generations

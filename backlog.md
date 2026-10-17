@@ -5,7 +5,6 @@
 #### Performance
 
 - [ ] `web/app.py:34-36` — the limits (300 gens, 400 chromosomes, 40 genes) allow a knapsack run of 18.1 s compute / 22.2 s over HTTP and a 96 MB response (function run: 9.9 s, 50.7 MB), which the comment says the limits should prevent; lower them and/or shrink the payload — HIGH — S
-- [ ] `web/runs.py:155-163` (called at 183, 202, 276) — `_chromosome` decodes every chromosome each time it is shown: 311k `decode` calls, 29% of a profiled limit-sized run; cache the decoded value per chromosome for the run — HIGH — S
 - [ ] `web/runs.py:200-207` — each parent is sent with full genes, value and score, all already in the previous generation at its `rank` (~25% of entries); send the rank only, update `BreedingView.svelte` and `Guide.svelte` — MED — M
 - [ ] `frontend/src/lib/store.svelte.ts:29-38,68`, `pages/SavedRun.svelte:16` — runs live in deep `$state`, so every generation/gene array is proxied; runs are only replaced whole, so use `$state.raw` — MED — S
 - [ ] `algorithms/config.py:59` + `base.py:901` — default `n_jobs=-2` sends every generation's few new chromosomes to worker processes; README knapsack takes 0.46 s at `n_jobs=1` vs 1.16-1.74 s at the default; score in-process when the batch is small (changing the default is a user decision) — MED — S

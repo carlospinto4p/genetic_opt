@@ -13,6 +13,7 @@ from genetic_opt.web.runs import (
     function_curve,
     function_run,
     knapsack_run,
+    record_run,
     saved_run,
     wavy_function,
 )
@@ -176,6 +177,43 @@ def test_record_run_counts_the_calls_to_the_fitness_function(run):
     # The first population and the 20 children of each generation
     assert calls["total"] == 30 + 6 * 20
     assert calls["processed"] + calls["cached"] == calls["total"]
+
+
+def test_record_run_decodes_each_chromosome_once():
+    decoded = []
+
+    class CountedFunction(BinaryFunction):
+        def __init__(self, **kwargs) -> None:
+            super().__init__(**kwargs)
+            decode = self.decode_func
+
+            def counted(chromosome: Chromosome) -> float:
+                decoded.append(repr(chromosome))
+                return decode(chromosome)
+
+            self.decode_func = counted
+
+    run = record_run(
+        CountedFunction,
+        FitConfig(
+            n_generations=6,
+            population_size=30,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+        n_bits=10,
+    )
+    shown = [c for g in run["generations"] for c in g["population"]]
+    for generation in run["generations"][1:]:
+        breeding = generation["breeding"]
+        shown += breeding["parents"]
+        shown += [c for p in breeding["pairs"] for c in p["children"]]
+    distinct = {tuple(c["genes"]) for c in shown}
+    # Each distinct Chromosome once to be shown. The algorithm decodes
+    # the best of each of the 7 generations for its metrics, and the 30
+    # of the last population and the 5 bests when `fit` ends.
+    assert len(shown) > 2 * len(distinct)
+    assert len(decoded) <= len(distinct) + 7 + 30 + 5
 
 
 def test_record_run_stops_without_improvement():
