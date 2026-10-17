@@ -2,9 +2,6 @@
 
 ### 2026.10.17 (v5.1.0 improvements review)
 
-- [ ] Stop a run after a number of seconds: a new `FitConfig` field in
-  both implementations, checked after each generation. Impact MEDIUM,
-  effort Low.
 - [ ] Stop after a number of generations without a better best score.
   The default stop today is a mean score exactly equal to the one of the
   generation before: with integer scores (`Knapsack`) one flat generation

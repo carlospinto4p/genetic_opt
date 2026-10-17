@@ -33,6 +33,9 @@ class FitConfig:
         worker processes. A bound method, or a function that uses
         `self`, takes the algorithm with it, without its population,
         history, metrics and scores.
+    :param max_seconds: the run stops after the first generation that
+        ends this many seconds or more after the run started. `None`
+        is no limit. It is not saved with the run.
     """
 
     n_generations: int
@@ -43,6 +46,7 @@ class FitConfig:
     min_population_size: int = 10
     stop_without_improvement: bool = True
     n_jobs: int = -2
+    max_seconds: float | None = None
 
 
 @dataclass(frozen=True)

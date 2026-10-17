@@ -196,6 +196,36 @@ def test_fit_without_the_improvement_stop_breeds_every_generation():
     assert "stop_without_improvement" not in result["fit_parameters"]
 
 
+@pytest.mark.parametrize("max_seconds, generations", [(0, 1), (3600, 6)])
+def test_fit_stops_after_max_seconds(max_seconds, generations):
+    result = ZeroStartAlgorithm().fit(
+        FitConfig(
+            n_generations=5,
+            population_size=20,
+            min_population_size=0,
+            stop_without_improvement=False,
+            n_jobs=1,
+            max_seconds=max_seconds,
+        ),
+    )
+    assert len(result["metrics"]) == generations
+    assert "max_seconds" not in result["fit_parameters"]
+
+
+def test_fit_logs_that_max_seconds_stopped_it(caplog, set_log_level):
+    set_log_level(logging.INFO)
+    ZeroStartAlgorithm().fit(
+        FitConfig(
+            n_generations=5,
+            population_size=20,
+            min_population_size=0,
+            n_jobs=1,
+            max_seconds=0,
+        ),
+    )
+    assert "0 seconds reached!" in caplog.text
+
+
 @pytest.mark.parametrize(
     "min_population_size, generations", [(2, 1), (1, 6), (0, 6)]
 )
@@ -834,6 +864,8 @@ def test_fit_formats_the_metrics_only_when_they_are_logged(
         {"besties_prop": -0.1},
         {"mutate_prob": float("nan")},
         {"min_population_size": 31},
+        {"max_seconds": -1},
+        {"max_seconds": float("nan")},
     ],
 )
 def test_fit_refuses_parameters_out_of_range(parameters):

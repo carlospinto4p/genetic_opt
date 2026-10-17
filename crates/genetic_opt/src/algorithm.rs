@@ -70,6 +70,10 @@ pub struct FitConfig {
     pub stop_without_improvement: bool,
     /// Threads that score chromosomes. `None` is every core but one.
     pub n_jobs: Option<usize>,
+    /// The run stops after the first generation that ends this many
+    /// seconds or more after the run started. `None` is no limit. It is
+    /// not saved with the run.
+    pub max_seconds: Option<f64>,
 }
 
 impl FitConfig {
@@ -83,6 +87,7 @@ impl FitConfig {
             min_population_size: 10,
             stop_without_improvement: true,
             n_jobs: None,
+            max_seconds: None,
         }
     }
 }
@@ -304,6 +309,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             self.experiment_name
         );
 
+        let run_start = Instant::now();
         for generation in 0..=config.n_generations {
             let start = Instant::now();
             let candidates = if generation == 0 {
@@ -357,6 +363,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 ))
             } else if config.stop_without_improvement && self.mean_stalled() {
                 Some("the mean score did not change".to_string())
+            } else if let Some(seconds) = config.max_seconds
+                && run_start.elapsed().as_secs_f64() >= seconds
+            {
+                Some(format!("{seconds} seconds reached"))
             } else if stop {
                 Some("on_generation asked to stop".to_string())
             } else {
@@ -403,6 +413,13 @@ impl<P: Problem> GeneticAlgorithm<P> {
             return Err(Error::Validation(format!(
                 "min_population_size {} is greater than population_size {}",
                 config.min_population_size, config.population_size
+            )));
+        }
+        if let Some(seconds) = config.max_seconds
+            && (seconds.is_nan() || seconds < 0.0)
+        {
+            return Err(Error::Validation(format!(
+                "max_seconds is {seconds}, and it must not be negative"
             )));
         }
         if self.problem.chromosome_as_set()

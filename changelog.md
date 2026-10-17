@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.5.0 - 17th October 2026
+
+- Added `max_seconds` to `FitConfig`, in both implementations: the run
+  stops after the first generation that ends this many seconds or more
+  after the run started. `None`, the default, is no limit. A negative
+  value or a NaN is refused. Like `stop_without_improvement`, it is not
+  saved with the run.
+- Added tests:
+  - `tests/unit/algorithms/test_base.py`: the stop, its log line and the
+    refused values.
+  - `crates/genetic_opt/tests/algorithm.rs`: the same.
+
+
 ### v5.4.0 - 17th October 2026
 
 - The Rust crate writes the progress of a run through the `log` crate,

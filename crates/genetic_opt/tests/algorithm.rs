@@ -277,6 +277,22 @@ fn the_run_stops_when_the_mean_score_does_not_change() {
     assert_eq!(fit_zeros(0, true), [1; 2]);
 }
 
+/// The number of generations of a run of `ZeroStart` with no other stop
+/// than `max_seconds`.
+fn generations_within(max_seconds: f64) -> usize {
+    let mut config = FitConfig::new(5, 20);
+    config.min_population_size = 0;
+    config.stop_without_improvement = false;
+    config.max_seconds = Some(max_seconds);
+    algorithm(ZeroStart).fit(&config).unwrap().metrics.len()
+}
+
+#[test]
+fn the_run_stops_after_max_seconds() {
+    assert_eq!(generations_within(0.0), 1);
+    assert_eq!(generations_within(3600.0), 6);
+}
+
 thread_local! {
     static LOGGED: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
 }
@@ -335,6 +351,12 @@ fn the_log_names_each_reason_to_stop() {
             fit_zeros(2, false);
         }),
         "INFO the run stopped after generation 0: fewer than 2 different chromosomes"
+    );
+    assert_eq!(
+        last_line(&|| {
+            generations_within(0.0);
+        }),
+        "INFO the run stopped after generation 0: 0 seconds reached"
     );
     assert_eq!(
         last_line(&|| {
@@ -582,6 +604,7 @@ fn fit_config_new_sets_the_defaults() {
     assert_eq!(config.min_population_size, 10);
     assert!(config.stop_without_improvement);
     assert_eq!(config.n_jobs, None);
+    assert_eq!(config.max_seconds, None);
 }
 
 #[test]
@@ -889,6 +912,10 @@ fn bad_parameters_are_refused() {
     negative_besties.besties_prop = -0.1;
     let mut mutate_not_a_number = FitConfig::new(5, 30);
     mutate_not_a_number.mutate_prob = f64::NAN;
+    let mut negative_seconds = FitConfig::new(5, 30);
+    negative_seconds.max_seconds = Some(-1.0);
+    let mut seconds_not_a_number = FitConfig::new(5, 30);
+    seconds_not_a_number.max_seconds = Some(f64::NAN);
 
     for config in [
         small_population,
@@ -897,6 +924,8 @@ fn bad_parameters_are_refused() {
         crossovers_over_one,
         negative_besties,
         mutate_not_a_number,
+        negative_seconds,
+        seconds_not_a_number,
     ] {
         assert!(matches!(
             algorithm(knapsack()).fit(&config),

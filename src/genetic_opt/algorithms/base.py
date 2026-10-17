@@ -412,6 +412,7 @@ class GeneticAlgorithm(ABC):
         logger.info(
             f"initializing population. Using:\n{log_format(fit_parameters)}"
         )
+        run_start = time()
         with self._workers(n_jobs):
             for n_generation in iter_func(
                 list(range(config.n_generations + 1))
@@ -469,6 +470,15 @@ class GeneticAlgorithm(ABC):
                         f"Training finished at iteration {n_generation}"
                     )
                     break
+                if (
+                    config.max_seconds is not None
+                    and time() - run_start >= config.max_seconds
+                ):
+                    logger.info(
+                        f"{config.max_seconds} seconds reached!\n\t"
+                        f"Training finished at iteration {n_generation}"
+                    )
+                    break
                 if exit_func(self):
                     logger.info(
                         f"exit condition reached!\n\tTraining "
@@ -513,6 +523,12 @@ class GeneticAlgorithm(ABC):
             raise ValidationException(
                 f"{min_population_size} is greater than {population_size = }"
             )
+        max_seconds = config.max_seconds
+        # Written this way, a NaN is refused too
+        if max_seconds is not None and not max_seconds >= 0:
+            raise ValidationException(
+                f"{max_seconds = } must not be negative"
+            )
         n_jobs = config.n_jobs
         if n_jobs < 0:
             # A negative number leaves cores out, down to one job
@@ -522,8 +538,9 @@ class GeneticAlgorithm(ABC):
                 f"{n_jobs = } received is not valid! {cpu_count() = }"
             )
         parameters = asdict(config)
-        # Not saved, as the crate does not save it either
+        # Not saved, as the crate does not save them either
         del parameters["stop_without_improvement"]
+        del parameters["max_seconds"]
         return {
             **parameters,
             "random_seed": self.random_seed,
