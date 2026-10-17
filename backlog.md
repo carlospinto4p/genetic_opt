@@ -2,14 +2,6 @@
 
 ### 2026.10.17 (v5.1.0 improvements review)
 
-- [ ] Leave the state of a run out of what `fit` sends to the worker
-  processes. `GeneticAlgorithm.__getstate__` drops only `_parallel`, so a
-  bound fitness function takes `population`, `history`, `metrics` and
-  `_chromosome_cache` (every Score with its `extra_metrics`) to the
-  workers, and that grows each generation. `downstream`'s `RuleOptimizer`
-  passes `fitness_func=self.score_rules`. Not measured: first measure
-  the pickled size of a `RuleOptimizer` late in a real run. Impact HIGH,
-  effort Low.
 - [ ] Start a run from a saved one. `fit` takes the genes of a first
   population (for example the last one in `load_fit_result(...)
   ["history"]`), and their saved scores fill the score cache so they are

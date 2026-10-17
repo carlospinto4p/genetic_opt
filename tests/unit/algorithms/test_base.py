@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 from joblib import Parallel
+from joblib.externals import cloudpickle
 from numpy import array
 
 from genetic_opt.algorithms import FitConfig
@@ -696,6 +697,22 @@ def test_fit_runs_a_fitness_function_that_uses_the_algorithm():
         )
     )
     assert result["bests"]["scores"][0].value > 0
+
+
+def test_the_algorithm_pickles_without_its_run():
+    # A fitness function that uses the algorithm takes it to each worker
+    # process: what the run has built so far, which grows each
+    # generation, is left behind.
+    knapsack = Knapsack(
+        weights=[23, 31, 29, 44, 53], values=[92, 57, 49, 68, 60], capacity=80
+    )
+    knapsack.fit(FitConfig(n_generations=5, population_size=20, n_jobs=1))
+    sent = cloudpickle.loads(cloudpickle.dumps(knapsack))
+    assert sent.population == []
+    assert sent.history == []
+    assert sent.metrics == []
+    assert sent._chromosome_cache == {}
+    assert knapsack.history != []
 
 
 @pytest.mark.parametrize(

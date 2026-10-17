@@ -202,12 +202,20 @@ class GeneticAlgorithm(ABC):
 
     def __getstate__(self) -> dict:
         """
-        Leave the workers of a run out when pickling: a fitness function
-        that uses `self` takes the algorithm to each of them, and an open
-        `Parallel` can not be pickled.
+        Leave the run out when pickling: a fitness function that uses
+        `self` takes the algorithm to each worker process. An open
+        `Parallel` can not be pickled, and the population, history,
+        metrics and scores grow each generation.
         :return: the attributes to pickle.
         """
-        return {**self.__dict__, "_parallel": None}
+        return {
+            **self.__dict__,
+            "_parallel": None,
+            "population": [],
+            "history": [],
+            "metrics": [],
+            "_chromosome_cache": {},
+        }
 
     @contextmanager
     def _workers(self, n_jobs: int) -> Iterator[None]:

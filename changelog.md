@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.1.1 - 17th October 2026
+
+- Fixed `GeneticAlgorithm.__getstate__`: it leaves out `population`,
+  `history`, `metrics` and the score cache, as well as the workers. A
+  fitness function that is a method of the algorithm took all of them
+  to the worker processes, and they grow each generation. On a real
+  `downstream` `RuleOptimizer` run (27 price lists, 169 generations, 8
+  jobs) the pickled function grew from 132 KB to 2.0 MB and now stays
+  at 132 KB, and `fit` took 6.5 s instead of 36.8 s.
+- Added `test_the_algorithm_pickles_without_its_run` to
+  `tests/unit/algorithms/test_base.py`.
+
+
 ### v5.1.0 - 17th October 2026
 
 - Added an explainer of the algorithm, a web page in `frontend/`
