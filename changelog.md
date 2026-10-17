@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.13 - 17th October 2026
+
+- `PopulationTable.svelte`: the genes of each member are turned into
+  text once instead of twice to count the copies.
+- `test_one_seed_gives_the_same_set_run_with_any_hash_seed` starts its
+  two interpreters at the same time: 0.37 s instead of 0.75 s.
+- `.pre-commit-config.yaml`: on a push, `cargo-test` runs only when
+  files under `crates/` changed and `frontend-test` only when files
+  under `frontend/` changed.
+
+
 ### v5.10.12 - 17th October 2026
 
 - `gene_space.py`: `BinaryGeneSpace.select_random` draws with

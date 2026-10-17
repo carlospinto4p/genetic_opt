@@ -106,13 +106,13 @@ repos:
         name: cargo test (crates/genetic_opt)
         entry: cargo test --manifest-path crates/genetic_opt/Cargo.toml
         language: system
+        files: ^crates/
         pass_filenames: false
-        always_run: true
         stages: [pre-push]
       - id: frontend-test
         name: vitest (frontend)
         entry: corepack pnpm --dir frontend test
         language: system
+        files: ^frontend/
         pass_filenames: false
-        always_run: true
         stages: [pre-push]

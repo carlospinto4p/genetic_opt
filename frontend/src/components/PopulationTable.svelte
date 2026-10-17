@@ -35,17 +35,15 @@
   type Key = 'rank' | 'score' | 'origin' | 'copies'
 
   let rows: Row[] = $derived.by(() => {
+    const keys = population.map((m) => JSON.stringify(m.genes))
     const counts = new Map<string, number>()
-    for (const m of population) {
-      const key = JSON.stringify(m.genes)
-      counts.set(key, (counts.get(key) ?? 0) + 1)
-    }
+    for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1)
     return population.map((member, i) => ({
       rank: i + 1,
       member,
       score: member.score,
       origin: member.origin ?? '',
-      copies: counts.get(JSON.stringify(member.genes)) ?? 1,
+      copies: counts.get(keys[i]) ?? 1,
       off: binary ? off(member) : [],
     }))
   })

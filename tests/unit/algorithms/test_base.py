@@ -644,17 +644,23 @@ def test_one_seed_gives_the_same_set_run_with_any_hash_seed():
         "from tests.unit.algorithms.test_base import _words_run_genes; "
         "print(_words_run_genes())"
     )
-    runs = [
-        subprocess.run(
+    # Both start before either is waited on, so they run at the same time
+    processes = [
+        subprocess.Popen(
             [sys.executable, "-c", code],
             cwd=Path(__file__).parents[3],
             env={**os.environ, "PYTHONHASHSEED": hash_seed},
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            check=True,
-        ).stdout
+        )
         for hash_seed in ("1", "2")
     ]
+    runs = []
+    for process in processes:
+        stdout, stderr = process.communicate()
+        assert process.returncode == 0, stderr
+        runs.append(stdout)
     assert runs[0].startswith("[[[")
     assert runs[0] == runs[1]
 
