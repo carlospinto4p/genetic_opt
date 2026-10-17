@@ -15,8 +15,8 @@
 # Install dependencies
 uv sync --all-extras
 
-# Run unit tests
-uv run pytest tests/unit -v
+# Run unit tests (`-n 4`: four worker processes; more start slower)
+uv run pytest tests/unit -n 4
 
 # Run the integration tests (they build and run the Rust crate)
 uv run pytest tests/integration -v

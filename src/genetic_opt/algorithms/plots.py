@@ -184,7 +184,8 @@ def save_current_figure(path: str, extension: str = "jpg") -> None:
 
     ensure_folder_exists(Path(path).parent)
     file_path = ensure_file_extension(path, extension)
-    plt.savefig(file_path, bbox_inches="tight")
+    # Not `plt.savefig`, which draws the figure once more after saving
+    plt.gcf().savefig(file_path, bbox_inches="tight")
     log_saved("image", file_path)
     plt.clf()
     plt.close()

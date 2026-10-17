@@ -5,9 +5,6 @@
 #### Performance
 
 - [ ] **[manual]** Check the Knapsack page's breeding view after v5.10.8, which works out the parents and the crossed genes on the page: run `uv run python -m genetic_opt.web.app` and `corepack pnpm --dir frontend dev`, open `http://localhost:5208/#/knapsack`, click "Run the algorithm", stay on the breeding tab of a generation after 0. A pass: each pair shows Parent A and B with a score, a rank and a best/random chip; "crossed" rows have coloured bars under the genes; "mutated" rows ring the same genes that differ from the crossed row; ranks strip above shows picked squares. The "How it works" page was checked headless. Also after v5.10.9 (raw run state, tooltips built on hover): on the population tab, hover a gene square — its tooltip reads "gene N: 0/1", plus "turned off when decoded" on a crossed-out square; on a breeding child, "changed by the mutation" on a ringed square; press Play and the table steps every 700 ms; "Run the algorithm" again replaces the run; "Open a saved run" opens a folder — MED — S
-- [ ] `tests/unit/algorithms/test_plots.py`, `test_save.py` — the 6 plot tests take ~7.6 s of the 14 s unit run (~0.5 s per `savefig`, dpi barely matters) — MED — M
-- [ ] `pyproject.toml` dev group — no `pytest-xdist`; the 10 slowest tests (~11 s of 14 s) are independent and could run with `-n auto` — MED — S
-- [ ] `.claude/rules/testing-areas.md:36-39` — recorded times are stale (185 tests in 3.9 s, 5 integration tests in 0.5 s); measured 2026-10-17: unit 300 tests in 13.96 s (16.0 s wall), integration 21 in 2.96 s (crate built), `cargo test` warm 0.3 s, Vitest 4 tests 1.47 s; slowest are `test_a_saved_run_gets_the_plot_that_fit_saves` (~1.9 s ×2) and `test_one_seed_gives_the_same_set_run_with_any_hash_seed` (1.5-1.8 s); cold `cargo build` not re-measured — MED — S
 - [ ] `web/runs.py:166-209` — `_breeding_record` spends 3.3 s self time at the limits on per-gene `int()` and the `changed` comprehension — LOW — S
 - [ ] `gene_space.py:58` — `random_state.choice([0, 1], size=n)` gives identical draws to `randint(0, 2, size=n)` (checked values and dtype) at 6.5 µs vs 11.5 µs; 73k calls per limit-sized run — LOW — S
 - [ ] `algorithms/base.py:341-358` (called at 498) — `stale_generations` walks all metrics each generation (quadratic); keep a running counter — LOW — S
@@ -66,7 +63,6 @@
 - [ ] `frontend/src/lib/router.svelte.ts:11-14` — no test that an unknown hash falls back to `/` — LOW — S
 - [ ] `tests/unit/algorithms/test_base.py:363` — `assert ...["bests"]["scores"]` only checks non-empty — LOW — S
 - [ ] `tests/unit/algorithms/test_base.py:786` — `value > 0`; compare with the same run at `n_jobs=1` — LOW — S
-- [ ] `tests/unit/algorithms/test_save.py:146-158` — parametrised on `other_metrics_to_plot` but only checks JPEG magic bytes, so the parameter is not verified — LOW — S
 - [ ] `tests/unit/web/test_runs.py:262-266` — BSON run checked only by generation count; compare it to the JSON run — LOW — S
 - [ ] `tests/integration/web/test_app.py:41-45,55-58` — checks only curve length and the 422 status, not the error text — LOW — S
 - [ ] `tests/integration/web/test_app.py:7` — imports `ones_algorithm` from `tests.unit.conftest`; move the shared helper to `tests/conftest.py` — LOW — S

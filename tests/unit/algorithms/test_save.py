@@ -168,21 +168,6 @@ def test_the_extra_config_is_returned_and_saved_with_each_generation(
         assert load_json(file)["config"] == extra_config
 
 
-@pytest.mark.parametrize(
-    "other_metrics_to_plot", [None, {"genes": lambda c: len(c.genes)}]
-)
-def test_fit_saves_the_plot_as_a_jpeg(tmp_path, other_metrics_to_plot):
-    algorithm = ones_algorithm(
-        tmp_path,
-        plot_metrics=True,
-        other_metrics_to_plot=other_metrics_to_plot,
-    )
-    algorithm.fit(FitConfig(n_generations=1, population_size=20, n_jobs=1))
-    with open(f"{algorithm.save_path}/fit_plots.jpg", "rb") as file:
-        # Every JPEG file starts with these bytes.
-        assert file.read(3) == b"\xff\xd8\xff"
-
-
 def test_fit_saves_the_plot_when_the_run_ends(tmp_path):
     algorithm = ones_algorithm(tmp_path, plot_metrics=True)
     plot_path = f"{algorithm.save_path}/fit_plots.jpg"

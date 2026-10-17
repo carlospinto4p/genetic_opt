@@ -2,6 +2,27 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.11 - 17th October 2026
+
+- `algorithms/plots.py`: `save_current_figure` saves through the
+  figure instead of `plt.savefig`, which drew the figure once more
+  after saving. The same image, in 0.28 s instead of 0.41 s.
+- Plot tests: the 5 that save a plot took 3.4 s and the 3 left take
+  1.7 s.
+  - Removed `test_fit_saves_the_plot_as_a_jpeg` from
+    `tests/unit/algorithms/test_save.py`: it checked the plot is a JPEG
+    with the same two parameters that
+    `test_a_saved_run_gets_the_plot_that_fit_saves` runs.
+  - `test_a_saved_run_gets_the_plot_that_fit_saves` checks the JPEG
+    bytes instead.
+- Added `pytest-xdist` to the dev group. The pre-push hook and the
+  command in `CLAUDE.md` run the unit tests with `-n 4`, in 4.3 s
+  instead of 6.8 s; `-n auto` took 6.5 s.
+- `.claude/rules/testing-areas.md`: the recorded times are measured
+  again, with the front-end tests and `cargo test` with nothing to
+  compile.
+
+
 ### v5.10.10 - 17th October 2026
 
 - `algorithms/base.py`: new Chromosomes are scored in the process that

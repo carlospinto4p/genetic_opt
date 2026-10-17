@@ -90,6 +90,8 @@ def test_a_saved_run_gets_the_plot_that_fit_saves(
     algorithm.fit(FitConfig(n_generations=3, population_size=20, n_jobs=1))
     plot_path = Path(algorithm.save_path) / "fit_plots.jpg"
     saved_by_fit = plot_path.read_bytes()
+    # Every JPEG file starts with these bytes.
+    assert saved_by_fit[:3] == b"\xff\xd8\xff"
     plot_path.unlink()
 
     drawn = save_fit_plots(
