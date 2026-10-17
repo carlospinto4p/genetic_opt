@@ -1,6 +1,6 @@
 [project]
 name = "genetic-opt"
-version = "5.0.2"
+version = "5.0.3"
 description = "Genetic algorithm optimizers package."
 authors = [{ name = "Carlos Pinto", email = "carlospinto4p@gmail.com" }]
 readme = "README.md"

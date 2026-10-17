@@ -611,7 +611,5 @@ mod tests {
         assert_eq!(space_points(12, 3, true), 220.0);
         assert_eq!(space_points(12, 12, true), 1.0);
         assert_eq!(space_points(2, 2000, false), f64::INFINITY);
-        // What a JSON file of a run holds for an infinite count.
-        assert!(serde_json::to_value(f64::INFINITY).unwrap().is_null());
     }
 }

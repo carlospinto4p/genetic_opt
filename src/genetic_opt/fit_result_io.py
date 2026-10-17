@@ -2,6 +2,7 @@
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from math import inf, isinf
 from operator import itemgetter
 from os.path import getsize
 from pathlib import Path
@@ -256,6 +257,13 @@ def _load_fit_summary(
     bests, fit_metrics, fit_parameters = itemgetter(
         "bests", "fit_metrics", "fit_parameters"
     )(raw)
+    calls = fit_metrics["fitness_func_calls"]
+    # Saved as `null` when infinite. A JSON file saved before 5.0.3 by
+    # this package holds `Infinity`, which loads as infinite already.
+    if calls["space_points"] is None:
+        fit_metrics = fit_metrics | {
+            "fitness_func_calls": calls | {"space_points": inf}
+        }
     response = {
         "bests": {
             "scores": [Score(**s) for s in bests["scores"]],
@@ -292,7 +300,8 @@ def serialize_fit_result(
     :return: A dictionary with the same schema as the `fit_result`, but
         with serializable elements. It leaves out `last_population`,
         which is `history[-1]` decoded: `load_fit_result` decodes it
-        again.
+        again. An infinite `space_points` is `None`, as the crate saves
+        it: standard JSON has no infinity.
     """
     (
         bests,
@@ -307,6 +316,11 @@ def serialize_fit_result(
         "metrics",
         "fit_parameters",
     )(fit_result.copy())
+    calls = fit_metrics["fitness_func_calls"]
+    if isinf(calls["space_points"]):
+        fit_metrics = fit_metrics | {
+            "fitness_func_calls": calls | {"space_points": None}
+        }
     bests = {
         "scores": [s.to_dict() for s in bests["scores"]],
         "result": [

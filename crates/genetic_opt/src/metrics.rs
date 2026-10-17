@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use crate::{Individual, Score};
 
@@ -45,7 +45,9 @@ pub struct FitnessFuncCalls {
     /// Scores taken from an earlier chromosome with the same genes.
     pub cached: usize,
     /// Number of different chromosomes the problem has. Infinite when it
-    /// does not fit an `f64`, which a JSON file saves as `null`.
+    /// does not fit an `f64`, which a file saves as `null`, JSON or BSON,
+    /// as the Python package does.
+    #[serde(serialize_with = "infinite_as_null")]
     pub space_points: f64,
     /// `100 * processed / space_points`.
     pub exploration_percentage: f64,
@@ -56,6 +58,15 @@ pub struct TotalFitTime {
     pub n_jobs: usize,
     pub raw: f64,
     pub formatted: String,
+}
+
+/// Standard JSON has no infinity, so `null` stands for it.
+fn infinite_as_null<S: Serializer>(value: &f64, serializer: S) -> Result<S::Ok, S::Error> {
+    if value.is_infinite() {
+        serializer.serialize_none()
+    } else {
+        serializer.serialize_f64(*value)
+    }
 }
 
 pub(crate) fn mean(values: &[f64]) -> f64 {
@@ -106,6 +117,29 @@ mod tests {
             assert_eq!(median(values), 2.5);
             assert_eq!(variance(values, 2.5), 0.0);
         }
+    }
+
+    #[test]
+    fn an_infinite_space_is_saved_as_null() {
+        let calls = |space_points| FitnessFuncCalls {
+            total: 2,
+            processed: 1,
+            percent_processed: 50.0,
+            cached: 1,
+            space_points,
+            exploration_percentage: 0.0,
+        };
+        let infinite = calls(f64::INFINITY);
+        let json = serde_json::to_value(&infinite).unwrap();
+        assert!(json["space_points"].is_null());
+        let bson = bson::serialize_to_document(&infinite).unwrap();
+        assert_eq!(bson.get("space_points"), Some(&bson::Bson::Null));
+
+        let finite = calls(1024.0);
+        let json = serde_json::to_value(&finite).unwrap();
+        assert_eq!(json["space_points"], 1024.0);
+        let bson = bson::serialize_to_document(&finite).unwrap();
+        assert_eq!(bson.get("space_points"), Some(&bson::Bson::Double(1024.0)));
     }
 
     #[test]

@@ -1,10 +1,15 @@
+import json
+from math import inf
+
+import bson
 import pytest
 
-from genetic_opt.algorithms import FitConfig
+from genetic_opt.algorithms import FitConfig, SaveConfig
+from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import get_files_inside_folder, load_json, save_json
 from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
-from tests.unit.conftest import decode_genes, ones_algorithm
+from tests.unit.conftest import count_ones, decode_genes, ones_algorithm
 
 # ── load_fit_result Tests ──────────────────────────────────────────────
 
@@ -58,6 +63,72 @@ def test_load_fit_result_reads_a_run_saved_before_0_7_0(tmp_path):
     loaded = load_fit_result(folder, decode_genes)
     assert loaded["metrics"] == fit_result["metrics"]
     assert loaded["history"] == fit_result["history"]
+
+
+def refuse_constant(name: str) -> None:
+    raise ValueError(f"{name} is not standard JSON")
+
+
+@pytest.mark.parametrize("as_bson", [False, True])
+def test_an_infinite_space_is_saved_as_null_and_loaded_infinite(
+    tmp_path, as_bson
+):
+    # 2 ** 1100 Chromosomes do not fit a float
+    algorithm = BinaryGeneticAlgorithm(
+        chromosome_length=1100,
+        chromosome_as_set=False,
+        decode_func=decode_genes,
+        fitness_func=count_ones,
+        minimize=False,
+        save=SaveConfig(
+            path=str(tmp_path),
+            serialize_decoded_chromosome_func=list,
+            as_bson=as_bson,
+            serialize_gene_func=int,
+            plot_metrics=False,
+        ),
+    )
+    fit_result = algorithm.fit(
+        FitConfig(
+            n_generations=0,
+            population_size=4,
+            min_population_size=1,
+            n_jobs=1,
+        ),
+    )
+    assert (
+        fit_result["fit_metrics"]["fitness_func_calls"]["space_points"] == inf
+    )
+
+    folder = f"{algorithm.save_path}/fit_data"
+    if as_bson:
+        with open(f"{folder}/fit_data_1.bson", "rb") as file:
+            raw = bson.decode(file.read())
+    else:
+        with open(f"{folder}/fit_data_1.json") as file:
+            raw = json.load(file, parse_constant=refuse_constant)
+    assert raw["fit_metrics"]["fitness_func_calls"]["space_points"] is None
+
+    loaded = load_fit_result(folder, decode_genes)
+    assert loaded["fit_metrics"] == fit_result["fit_metrics"]
+    extension = "bson" if as_bson else "json"
+    loaded_file = load_fit_result_file(f"{folder}/fit_data_1.{extension}")
+    assert loaded_file["fit_metrics"] == fit_result["fit_metrics"]
+
+
+def test_load_fit_result_reads_an_infinite_space_saved_before_5_0_3(
+    saved_run,
+):
+    # Before 5.0.3 an infinite space was saved as `Infinity`
+    file_path = f"{saved_run}/fit_data_2.json"
+    raw = load_json(file_path)
+    raw["fit_metrics"]["fitness_func_calls"]["space_points"] = inf
+    save_json(raw, file_path)
+    with open(file_path) as file:
+        assert "Infinity" in file.read()
+
+    loaded = load_fit_result(saved_run, decode_genes)
+    assert loaded["fit_metrics"]["fitness_func_calls"]["space_points"] == inf
 
 
 def test_the_saved_scores_keep_their_name_and_extra_metrics(saved_run):

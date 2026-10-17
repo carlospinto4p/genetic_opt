@@ -2,6 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.3 - 17th October 2026
+
+- Fixed: an infinite `space_points` (more different chromosomes than a
+  float holds) is saved as `null` by both implementations, in JSON and
+  in BSON, and `load_fit_result` and `load_fit_result_file` read it
+  back as infinite. Before, Python wrote `Infinity`, which is not
+  standard JSON, and loaded the crate's `null` as `None`.
+  - `fit_result_io.py`: `serialize_fit_result` writes `None`, and the
+    loaders turn it into `inf`. A file with `Infinity` still loads.
+  - `metrics.rs`: `FitnessFuncCalls.space_points` is serialized as
+    `null` when infinite.
+- Added tests:
+  - `test_fit_result_io.py`: a run with 2 ** 1100 chromosomes, saved as
+    JSON and BSON, and a file with `Infinity`.
+  - `metrics.rs`: `an_infinite_space_is_saved_as_null`.
+
 ### v5.0.2 - 17th October 2026
 
 - The crate's `numbers` example sets `extra_config` to
