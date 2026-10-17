@@ -344,6 +344,7 @@ class GeneticAlgorithm(ABC):
         exit_condition: Callable[[GeneticAlgorithm], bool] | None = None,
         callback_func: Callable[[GeneticAlgorithm], None] | None = None,
         iter_func: Callable | None = None,
+        first_population: list[tuple[Score, Chromosome]] | None = None,
     ) -> FitResult:
         """
         Fit the Genetic Algorithm. Each call is a new run: it keeps no
@@ -365,9 +366,18 @@ class GeneticAlgorithm(ABC):
             Default to the method `default_fit_callback`.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
+        :param first_population: the scored Chromosomes of the first
+            population, instead of the ones of `init_population`. For
+            example the last population of a saved run,
+            `load_fit_result(...)["history"][-1]`, to go on with it.
+            Their scores are not computed again. As with
+            `init_population`, its length is the size of every
+            population of the run.
         :return: a `FitResult`.
         :raises ValidationException: when a value of `config` is not
-            valid, or when the fitness function gives a NaN score.
+            valid, when the fitness function gives a NaN score, or when
+            `first_population` is empty, has a Chromosome that does not
+            have `self.chromosome_length` genes, or has a NaN score.
         """
         # Default parameters
         iter_func = iter_func or identity_func
@@ -378,6 +388,11 @@ class GeneticAlgorithm(ABC):
         )
         fit_parameters = self._fit_parameters(config)
         n_jobs = fit_parameters["n_jobs"]
+        first_chromosomes = (
+            self._first_chromosomes(first_population)
+            if first_population is not None
+            else None
+        )
         # What an earlier run left would be mixed into this one
         self.random_state = RandomState(seed=self.random_seed)
         self.population = []
@@ -406,6 +421,7 @@ class GeneticAlgorithm(ABC):
                         config.population_size,
                         iter_func=iter_func,
                         n_jobs=n_jobs,
+                        chromosomes=first_chromosomes,
                     )
                 else:
                     self.next_generation_selection(
@@ -524,11 +540,44 @@ class GeneticAlgorithm(ABC):
             n=(population_size, self.chromosome_length)
         )
 
+    def _first_chromosomes(
+        self, first_population: list[tuple[Score, Chromosome]]
+    ) -> list[Chromosome]:
+        """
+        Build the Chromosomes of a first population given to `fit`, and
+        put their scores in the cache, so they are not scored again.
+        :param first_population: the scored Chromosomes.
+        :return: the Chromosomes, new ones without a score.
+        :raises ValidationException: when a Chromosome does not have
+            `self.chromosome_length` genes, or has a NaN score.
+        """
+        chromosomes, scores = [], []
+        for score, chromosome in first_population:
+            if isnan(score.value):
+                raise ValidationException(
+                    f"the first population gives a NaN score to the "
+                    f"Chromosome {chromosome}"
+                )
+            first = Chromosome(
+                size=self.chromosome_length,
+                genes=list(chromosome.genes),
+                is_gene_set=self.chromosome_as_set,
+                random_seed=self.random_seed,
+            )
+            chromosomes.append(first)
+            scores.append((repr(first), (score, chromosome.score_time)))
+        # Once every Chromosome is checked, so a refused population
+        # leaves nothing in the cache
+        for key, score_and_time in scores:
+            self._chromosome_cache.setdefault(key, score_and_time)
+        return chromosomes
+
     def _start_population(
         self,
         population_size: int,
         iter_func: Callable | None = None,
         n_jobs: int = FitConfig.n_jobs,
+        chromosomes: list[Chromosome] | None = None,
     ) -> None:
         """
         Builds and scores the first population of the Algorithm.
@@ -540,25 +589,29 @@ class GeneticAlgorithm(ABC):
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :param n_jobs: number of jobs to use to parallelize the evaluation of
             each element of the population. Default to `FitConfig.n_jobs`.
+        :param chromosomes: the Chromosomes of the population, instead
+            of the ones of `init_population`.
         :return: None.
         """
         iter_func = iter_func or identity_func
         init_time = time()
 
-        population = []
-        for gene_collection in self.init_population(
-            population_size=population_size
-        ):
-            population.append(
-                Chromosome(
-                    size=self.chromosome_length,
-                    genes=gene_collection,
-                    # A set loses the genes drawn twice, and draws others
-                    gene_space=self.gene_space,
-                    is_gene_set=self.chromosome_as_set,
-                    random_seed=self.random_seed,
+        population = chromosomes or []
+        if chromosomes is None:
+            for gene_collection in self.init_population(
+                population_size=population_size
+            ):
+                population.append(
+                    Chromosome(
+                        size=self.chromosome_length,
+                        genes=gene_collection,
+                        # A set loses the genes drawn twice, and draws
+                        # others
+                        gene_space=self.gene_space,
+                        is_gene_set=self.chromosome_as_set,
+                        random_seed=self.random_seed,
+                    )
                 )
-            )
 
         self.population = population
         logger.info("measuring first population...")

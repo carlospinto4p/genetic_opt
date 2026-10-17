@@ -9,6 +9,7 @@ import pytest
 import yaml
 
 from genetic_opt import __version__
+from genetic_opt.algorithms import FitConfig
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
 from genetic_opt.files import get_files_inside_folder
@@ -235,6 +236,32 @@ def test_python_loads_one_file_saved_by_the_rust_crate(
     assert loaded["metrics"] == run["metrics"][-1:]
     for key in ("bests", "fit_metrics", "fit_parameters", "config"):
         assert loaded[key] == run[key], key
+
+
+def test_python_goes_on_with_a_run_saved_by_the_rust_crate(
+    tmp_path, knapsack_example
+):
+    subprocess.run([knapsack_example, str(tmp_path / "rust")], check=True)
+    (run_folder,) = (tmp_path / "rust" / "Knapsack").iterdir()
+    knapsack = Knapsack(
+        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
+        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
+        capacity=165,
+    )
+    last = load_fit_result(
+        str(run_folder / "fit_data"), knapsack.decode_func
+    )["history"][-1]
+
+    result = knapsack.fit(
+        FitConfig(n_generations=2, population_size=len(last), n_jobs=1),
+        first_population=last,
+    )
+    assert [(s, list(c.genes)) for s, c in knapsack.history[0]] == [
+        (s, list(c.genes)) for s, c in last
+    ]
+    # The best bag of the crate's run stays
+    assert result["bests"]["scores"][0] == Score(value=309.0)
+    assert result["fit_metrics"]["fitness_func_calls"]["cached"] >= len(last)
 
 
 def test_the_rust_example_saves_bson_when_no_format_is_given(

@@ -63,6 +63,19 @@ loaded = load_fit_result("<folder>/fit_data", bag.decode_func)
 It also reads files saved before 2.0.0, which held each population
 decoded as well.
 
+A run that stopped can go on from its last population. `fit` takes it
+as `first_population`, instead of random Chromosomes, and their saved
+scores are not computed again. A run saved by the Rust crate works
+too:
+
+```python
+last = loaded["history"][-1]
+result = bag.fit(
+    FitConfig(n_generations=100, population_size=len(last)),
+    first_population=last,
+)
+```
+
 ## Logs
 
 The package writes the progress of a run to the logger `genetic_opt`
@@ -133,6 +146,18 @@ The settings sit where the Python package has them.
 `AlgorithmConfig` holds what the Python algorithm takes when it is
 created: `experiment_name`, `random_seed`, `extra_config` and `save`.
 `FitConfig` holds the parameters of a run, given to `fit`.
+
+`fit_from` starts a run from a population of genes with their scores,
+the Python `first_population`. The scores are not computed again:
+
+```rust
+let first = algorithm
+    .population()
+    .iter()
+    .map(|i| (i.chromosome.genes().to_vec(), i.score.clone()))
+    .collect();
+let result = algorithm.fit_from(&FitConfig::new(100, 50), Some(first), |_| false)?;
+```
 
 With `AlgorithmConfig::save` set, a run is saved in the layout of the
 Python package: `experiment_config.yml` and one

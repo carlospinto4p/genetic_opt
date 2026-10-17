@@ -2,6 +2,28 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.2.0 - 17th October 2026
+
+- Added starting a run from a population with its scores, instead of
+  random chromosomes, so a run that stopped can go on. The scores are
+  not computed again.
+  - `GeneticAlgorithm.fit` takes `first_population`, a list of
+    `(Score, Chromosome)` such as `load_fit_result(...)["history"][-1]`,
+    for a run saved by either implementation.
+  - The crate's `GeneticAlgorithm::fit_from` takes the genes of each
+    chromosome with its score. `fit_with` calls it with none.
+  - Both refuse an empty population, a chromosome with the wrong number
+    of genes and a NaN score, and keep no score of a refused one.
+- Added tests:
+  - `tests/unit/algorithms/test_base.py`: a run from a saved population,
+    and the three refusals.
+  - `tests/integration/test_rust_layout.py`: Python goes on with a run
+    saved by the crate.
+  - `crates/genetic_opt/tests/algorithm.rs`: the same in Rust, and a
+    run that breeds from the given population.
+- Updated `README.md` with both.
+
+
 ### v5.1.2 - 17th October 2026
 
 - Fixed the docstring of `FitConfig.n_jobs`: since 5.1.1 a fitness

@@ -24,6 +24,7 @@ from genetic_opt.exceptions import (
 from genetic_opt.fit_result import (
     FitResult,
 )
+from genetic_opt.fit_result_io import load_fit_result
 from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
@@ -31,6 +32,7 @@ from tests.unit.conftest import (
     NumbersAlgorithm,
     OnesGeneSpace,
     count_ones,
+    decode_genes,
     ones_algorithm,
 )
 
@@ -713,6 +715,87 @@ def test_the_algorithm_pickles_without_its_run():
     assert sent.metrics == []
     assert sent._chromosome_cache == {}
     assert knapsack.history != []
+
+
+def last_saved_population(tmp_path) -> list[tuple[Score, Chromosome]]:
+    """The last population of a run saved as JSON, loaded back."""
+    saved = ones_algorithm(tmp_path / "saved", save_as_bson=False)
+    saved.fit(
+        FitConfig(
+            n_generations=2,
+            population_size=20,
+            min_population_size=1,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+    )
+    return load_fit_result(
+        f"{saved.save_path}/fit_data",
+        decode_func=decode_genes,
+        load_gene_func=int,
+    )["history"][-1]
+
+
+def test_fit_starts_from_a_saved_population_without_scoring_it(tmp_path):
+    last = last_saved_population(tmp_path)
+    scored = []
+
+    def counted_ones(chromosome: Chromosome) -> Score:
+        scored.append(repr(chromosome))
+        return count_ones(chromosome)
+
+    algorithm = ones_algorithm(tmp_path)
+    algorithm.fitness_func = counted_ones
+    result = algorithm.fit(
+        FitConfig(
+            n_generations=3,
+            population_size=20,
+            min_population_size=1,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+        first_population=last,
+    )
+    assert [(s, list(c.genes)) for s, c in algorithm.history[0]] == [
+        (s, list(c.genes)) for s, c in last
+    ]
+    assert not set(scored) & {repr(c) for _, c in last}
+    calls = result["fit_metrics"]["fitness_func_calls"]
+    assert calls["processed"] == len(scored)
+    assert calls["cached"] >= len(last)
+
+
+@pytest.mark.parametrize(
+    "change, match",
+    [
+        (lambda last: [], "empty population"),
+        (
+            lambda last: [
+                *last[:-1],
+                (Score(value=float("nan")), last[-1][1]),
+            ],
+            "NaN score",
+        ),
+        (
+            lambda last: [
+                *last[:-1],
+                (last[-1][0], Chromosome(size=3, genes=[1, 1, 1])),
+            ],
+            "received 3 genes for a `size` of 12",
+        ),
+    ],
+)
+def test_fit_refuses_a_first_population_that_does_not_fit(
+    tmp_path, change, match
+):
+    last = last_saved_population(tmp_path)
+    algorithm = ones_algorithm(tmp_path)
+    with pytest.raises(ValidationException, match=match):
+        algorithm.fit(
+            FitConfig(n_generations=1, population_size=20, n_jobs=1),
+            first_population=change(last),
+        )
+    assert algorithm._chromosome_cache == {}
 
 
 @pytest.mark.parametrize(

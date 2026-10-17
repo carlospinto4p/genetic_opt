@@ -18,7 +18,7 @@ use crate::save::{
 };
 use crate::{
     Best, Chromosome, Error, FitMetrics, FitnessFuncCalls, Individual, Metric, Problem, Result,
-    Rng, SaveConfig, TotalFitTime,
+    Rng, SaveConfig, Score, TotalFitTime,
 };
 
 /// Number of best chromosomes a [`FitResult`] reports.
@@ -249,6 +249,26 @@ impl<P: Problem> GeneticAlgorithm<P> {
     pub fn fit_with<F>(
         &mut self,
         config: &FitConfig,
+        on_generation: F,
+    ) -> Result<FitResult<P::Gene, P::Solution>>
+    where
+        F: FnMut(&Self) -> bool,
+        P::Solution: Clone,
+    {
+        self.fit_from(config, None, on_generation)
+    }
+
+    /// Run the algorithm as [`Self::fit_with`] does, from
+    /// `first_population` when it is given: the genes of each chromosome
+    /// of the first population with its score, instead of the ones of
+    /// [`Problem::init_population`]. For example the last population of
+    /// an earlier run, to go on with it. The scores are not computed
+    /// again, and the time each one took is taken as 0. As with
+    /// `init_population`, its length is the size of every population.
+    pub fn fit_from<F>(
+        &mut self,
+        config: &FitConfig,
+        first_population: Option<Vec<(Vec<P::Gene>, Score)>>,
         mut on_generation: F,
     ) -> Result<FitResult<P::Gene, P::Solution>>
     where
@@ -256,6 +276,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
         P::Solution: Clone,
     {
         let fit_parameters = self.fit_parameters(config)?;
+        let mut first_chromosomes = match first_population {
+            Some(population) => Some(self.given_chromosomes(population)?),
+            None => None,
+        };
         // What an earlier run left would be mixed into this one.
         self.rng = Rng::seed_from_u64(self.config.random_seed);
         self.population.clear();
@@ -278,7 +302,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
         for generation in 0..=config.n_generations {
             let start = Instant::now();
             let candidates = if generation == 0 {
-                self.first_chromosomes(config.population_size)?
+                match first_chromosomes.take() {
+                    Some(chromosomes) => chromosomes,
+                    None => self.first_chromosomes(config.population_size)?,
+                }
             } else {
                 self.breed(config)?
             };
@@ -397,6 +424,42 @@ impl<P: Problem> GeneticAlgorithm<P> {
             .into_iter()
             .map(|genes| self.chromosome(genes))
             .collect()
+    }
+
+    /// The chromosomes of a first population given to [`Self::fit_from`].
+    /// Their scores are kept, so they are not scored again.
+    fn given_chromosomes(
+        &mut self,
+        population: Vec<(Vec<P::Gene>, Score)>,
+    ) -> Result<Vec<Chromosome<P::Gene>>> {
+        if population.is_empty() {
+            return Err(Error::Validation(
+                "the first population has no chromosomes".into(),
+            ));
+        }
+        let mut individuals = Vec::with_capacity(population.len());
+        for (genes, score) in population {
+            let chromosome = self.chromosome(genes)?;
+            if score.value.is_nan() {
+                let genes = serde_json::to_string(chromosome.genes()).unwrap_or_default();
+                return Err(Error::Validation(format!(
+                    "the first population gives a NaN score to the chromosome {genes}"
+                )));
+            }
+            individuals.push(Individual {
+                chromosome,
+                score,
+                score_time: 0.0,
+                random_seed: self.config.random_seed,
+            });
+        }
+        let chromosomes = individuals.iter().map(|i| i.chromosome.clone()).collect();
+        // Once every chromosome is checked, so a refused population leaves
+        // no score behind. A score kept already stays.
+        for individual in individuals {
+            self.scores.insert(Scored(Arc::new(individual)));
+        }
+        Ok(chromosomes)
     }
 
     /// Cross and mutate the parents of the next generation.

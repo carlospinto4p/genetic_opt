@@ -577,6 +577,103 @@ fn a_run_of_0_generations_scores_the_first_population_only() {
 }
 
 #[test]
+fn a_run_starts_from_a_given_population_without_scoring_it() {
+    let mut saved = algorithm(knapsack());
+    saved.fit(&FitConfig::new(3, 20)).unwrap();
+    // Scores the fitness function would not give, to tell them apart.
+    // Equal chromosomes get equal ones, as they share a score.
+    let first: Vec<(Vec<u8>, Score)> = saved
+        .population()
+        .iter()
+        .map(|individual| {
+            let genes = individual.chromosome.genes().to_vec();
+            (genes, Score::new(1000.0 + individual.score.value))
+        })
+        .collect();
+    let mut algorithm = algorithm(watched(knapsack(), true, true));
+    let result = algorithm
+        .fit_from(&FitConfig::new(0, 20), Some(first.clone()), |_| false)
+        .unwrap();
+
+    let started: Vec<(Vec<u8>, Score)> = algorithm.history()[0]
+        .iter()
+        .map(|i| (i.chromosome.genes().to_vec(), i.score.clone()))
+        .collect();
+    assert_eq!(started, first);
+    assert_eq!(algorithm.problem().fitness_calls.load(Ordering::Relaxed), 0);
+    let calls = result.fit_metrics.fitness_func_calls;
+    assert_eq!(calls.processed, 0);
+    assert_eq!(calls.cached, 20);
+}
+
+#[test]
+fn a_run_from_a_given_population_breeds_from_it() {
+    let first: Vec<(Vec<u8>, Score)> = (0..4)
+        .map(|i| (vec![i, i + 1, i + 2], Score::new(f64::from(3 * i + 3))))
+        .collect();
+    let mut config = FitConfig::new(3, 4);
+    config.min_population_size = 0;
+    config.stop_without_improvement = false;
+    let problem = FirstGenes {
+        first_population: vec![vec![9, 9, 9]; 4],
+        as_set: false,
+        gene_space_size: 12,
+    };
+    let mut algorithm = algorithm(problem);
+    algorithm.fit_from(&config, Some(first), |_| false).unwrap();
+
+    // The genes of `init_population` are never used.
+    assert!(
+        algorithm
+            .history()
+            .iter()
+            .flatten()
+            .all(|i| i.chromosome.genes() != [9, 9, 9])
+    );
+    assert_eq!(algorithm.history().len(), 4);
+}
+
+#[test]
+fn a_given_population_that_does_not_fit_is_refused() {
+    for (first, refused) in [
+        (vec![], "the first population has no chromosomes"),
+        (
+            vec![
+                (vec![0, 1, 2], Score::new(1000.0)),
+                (vec![1, 2], Score::new(3.0)),
+            ],
+            "a chromosome has 2 genes",
+        ),
+        (
+            vec![
+                (vec![0, 1, 2], Score::new(1000.0)),
+                (vec![4, 5, 6], Score::new(f64::NAN)),
+            ],
+            "the first population gives a NaN score to the chromosome [4,5,6]",
+        ),
+    ] {
+        let problem = FirstGenes {
+            first_population: vec![vec![0, 1, 2]],
+            as_set: false,
+            gene_space_size: 12,
+        };
+        let mut algorithm = algorithm(problem);
+        let mut config = FitConfig::new(0, 1);
+        config.min_population_size = 0;
+        let error = algorithm
+            .fit_from(&config, Some(first), |_| false)
+            .unwrap_err();
+        assert!(
+            matches!(&error, Error::Validation(message) if message.starts_with(refused)),
+            "{error:?}"
+        );
+        // No score of a refused population is kept: [0, 1, 2] is scored.
+        algorithm.fit(&config).unwrap();
+        assert_eq!(algorithm.population()[0].score.value, 3.0);
+    }
+}
+
+#[test]
 fn n_jobs_none_is_every_core_but_one() {
     let cores = available_parallelism().map_or(1, |n| n.get());
     let result = algorithm(knapsack()).fit(&FitConfig::new(1, 20)).unwrap();
