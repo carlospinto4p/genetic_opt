@@ -6,7 +6,13 @@ from fastapi.testclient import TestClient
 
 from genetic_opt import __version__
 from genetic_opt.algorithms import FitConfig
-from genetic_opt.web.app import MAX_INTERVAL_END, MAX_POPULATION, app
+from genetic_opt.web.app import (
+    MAX_GENERATIONS,
+    MAX_GENES,
+    MAX_INTERVAL_END,
+    MAX_POPULATION,
+    app,
+)
 from tests.unit.conftest import ones_algorithm
 
 
@@ -78,6 +84,20 @@ def test_run_knapsack_refuses_a_minimum_over_the_population(client):
 def test_run_refuses_a_population_over_the_limit(client):
     body = {"fit": {"population_size": MAX_POPULATION + 1}}
     assert client.post("/api/runs/knapsack", json=body).status_code == 422
+
+
+def test_run_refuses_generations_over_the_limit(client):
+    body = {"fit": {"n_generations": MAX_GENERATIONS + 1}}
+    assert client.post("/api/runs/function", json=body).status_code == 422
+
+
+def test_examples_give_the_limits_of_a_run(client):
+    limits = client.get("/api/examples").json()["limits"]
+    assert limits == {
+        "n_generations": MAX_GENERATIONS,
+        "population_size": MAX_POPULATION,
+        "genes": MAX_GENES,
+    }
 
 
 def test_run_function_refuses_an_empty_interval(client):

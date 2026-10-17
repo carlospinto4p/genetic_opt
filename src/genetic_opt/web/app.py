@@ -37,9 +37,11 @@ DEFAULT_PORT = 5209
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # Upper bounds of a run: every generation goes back in one response,
-# so a large run would hold the server and send megabytes.
-MAX_GENERATIONS = 300
-MAX_POPULATION = 400
+# so a large run would hold the server and send megabytes. At these a
+# run took 2-3 s and sent 34-43 MB (17th October 2026); at 300
+# generations and 400 Chromosomes it took 6-8 s and sent 103-129 MB.
+MAX_GENERATIONS = 200
+MAX_POPULATION = 200
 MAX_GENES = 40
 # Largest magnitude of either end of the interval of the function
 MAX_INTERVAL_END = 1e9

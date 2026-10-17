@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.7 - 17th October 2026
+
+- `web/app.py`: lowered `MAX_GENERATIONS` from 300 to 200 and
+  `MAX_POPULATION` from 400 to 200. The largest run the explainer
+  allows took 2-3 s and sent 34-43 MB, against 6-8 s and 103-129 MB.
+- Added tests to `tests/integration/web/test_app.py`: a run over
+  `MAX_GENERATIONS` is refused, and `/api/examples` gives the limits.
+
+
 ### v5.10.6 - 17th October 2026
 
 - `web/runs.py`: replaced `_chromosome` with `_Recorder.shown`, which
