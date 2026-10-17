@@ -8,7 +8,12 @@ import pytest
 from genetic_opt.algorithms import FitConfig, SaveConfig
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.files import get_files_inside_folder, load_json, save_json
+from genetic_opt.files import (
+    get_files_inside_folder,
+    load_json,
+    save_bson,
+    save_json,
+)
 from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
 from tests.unit.conftest import count_ones, decode_genes, ones_algorithm
 
@@ -191,6 +196,18 @@ def test_load_fit_result_refuses_a_folder_with_another_file(saved_run):
         file.write("a note")
     with pytest.raises(ValidationException, match="notes.txt"):
         load_fit_result(saved_run, decode_genes)
+
+
+def test_load_fit_result_refuses_two_files_of_one_generation(saved_run):
+    # The run saved again as BSON beside its JSON files.
+    save_bson(
+        load_json(f"{saved_run}/fit_data_1.json"),
+        f"{saved_run}/fit_data_1.bson",
+    )
+    with pytest.raises(ValidationException, match="generation 1") as error:
+        load_fit_result(saved_run, decode_genes)
+    assert "fit_data_1.bson" in str(error.value)
+    assert "fit_data_1.json" in str(error.value)
 
 
 def test_load_fit_result_applies_the_load_functions(saved_run):

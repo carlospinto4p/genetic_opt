@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.8 - 17th October 2026
+
+- `load_fit_result` refuses a folder where two files hold the same
+  generation, such as `fit_data_1.json` and `fit_data_1.bson`, naming
+  both. Before, the generation was in `history` and `metrics` twice.
+- Added `test_load_fit_result_refuses_two_files_of_one_generation` in
+  `tests/unit/test_fit_result_io.py`.
+
 ### v5.0.7 - 17th October 2026
 
 - Added tests of saving and loading a run:

@@ -2,6 +2,7 @@
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from itertools import pairwise
 from math import inf, isinf
 from operator import itemgetter
 from os.path import getsize
@@ -46,8 +47,8 @@ def load_fit_result(
         being read. No limit by default, so a file of any size is read
         whole into memory.
     :raises ValidationException: the folder is missing or empty, a file
-        is larger than `max_file_bytes`, or its content is not the one of
-        a fit result file.
+        is larger than `max_file_bytes`, its content is not the one of
+        a fit result file, or two files hold the same generation.
     :return: a `FitResult`, with the keys `GeneticAlgorithm.fit` returns.
         `fit_metrics`, `fit_parameters` and `config` are as the files
         hold them.
@@ -82,6 +83,11 @@ def load_fit_result(
     if not generations:
         raise ValidationException(f"`{folder_path}` has no fit result file")
     generations.sort(key=itemgetter(0))
+    for (idx, file, *_), (next_idx, next_file, *_) in pairwise(generations):
+        if idx == next_idx:
+            raise ValidationException(
+                f"`{file}` and `{next_file}` both hold generation {idx}"
+            )
     with _refuse_malformed(generations[-1][1]):
         response = _load_fit_summary(
             last_raw, load_decoded_chromosome_func, load_gene_func
