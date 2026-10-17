@@ -29,13 +29,13 @@ pub struct Metric<G, S> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct FitMetrics {
-    pub fitness_func_calls: FitnessCalls,
+    pub fitness_func_calls: FitnessFuncCalls,
     pub total_fit_time: TotalFitTime,
     pub genetic_opt_version: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct FitnessCalls {
+pub struct FitnessFuncCalls {
     /// Chromosomes that needed a score.
     pub total: usize,
     /// Times the fitness function ran: once per different chromosome.

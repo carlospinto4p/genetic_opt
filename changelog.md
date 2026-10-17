@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v3.2.0 - 17th October 2026
+
+- Renamed what was left of the `GeneticBag` name of the knapsack
+  example:
+  - `crates/genetic_opt/src/metrics.rs`: `FitnessCalls` is now
+    `FitnessFuncCalls`, the name of the Python type and of the
+    `fitness_func_calls` key it is saved under. Code that uses the
+    crate must rename it too.
+  - `src/genetic_opt/examples/binary.py`: the `Knapsack` functions
+    `decode_bag` and `fit_bag` are now `decode` and `fitness`, the
+    names of the crate's knapsack methods.
+  - The unit tests: `test_genetic_bag` is now
+    `test_knapsack_finds_the_best_bag`, and the `genetic_bag`
+    variables are `knapsack`.
+
 ### v3.1.1 - 17th October 2026
 
 - Split the unit tests so each file tests one source module:

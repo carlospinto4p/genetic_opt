@@ -9,12 +9,12 @@ from genetic_opt.exceptions import ValidationException
 # ── Knapsack Tests ─────────────────────────────────────────────────────
 
 
-def test_genetic_bag():
+def test_knapsack_finds_the_best_bag():
     weights: list[int] = [23, 31, 29, 44, 53, 38, 63, 85, 89, 82]
     values: list[int] = [92, 57, 49, 68, 60, 43, 67, 84, 87, 72]
     capacity: int = 165
-    genetic_bag = Knapsack(weights=weights, values=values, capacity=capacity)
-    opt_data = genetic_bag.fit(
+    knapsack = Knapsack(weights=weights, values=values, capacity=capacity)
+    opt_data = knapsack.fit(
         FitConfig(
             n_generations=100,
             population_size=50,
@@ -51,31 +51,31 @@ KNOWN_BAGS = [
 
 @pytest.mark.parametrize("genes, decoded, value", KNOWN_BAGS)
 def test_the_bag_decodes_and_scores_known_bags(genes, decoded, value):
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
     chromosome = Chromosome(size=10, genes=genes)
-    assert genetic_bag.decode_func(chromosome) == decoded
-    assert genetic_bag.fitness_func(chromosome).value == value
+    assert knapsack.decode_func(chromosome) == decoded
+    assert knapsack.fitness_func(chromosome).value == value
 
 
 def test_the_bag_takes_nothing_after_the_first_object_that_does_not_fit():
-    genetic_bag = Knapsack(weights=[5, 10, 1], values=[1, 1, 1], capacity=12)
+    knapsack = Knapsack(weights=[5, 10, 1], values=[1, 1, 1], capacity=12)
     chromosome = Chromosome(size=3, genes=[1, 1, 1])
-    assert genetic_bag.decode_func(chromosome) == [1, 0, 0]
+    assert knapsack.decode_func(chromosome) == [1, 0, 0]
 
 
 def test_the_fitness_function_of_the_bag_travels_without_the_bag():
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
-    sent_bytes = len(cloudpickle.dumps(genetic_bag.fitness_func))
-    genetic_bag.fit(
+    sent_bytes = len(cloudpickle.dumps(knapsack.fitness_func))
+    knapsack.fit(
         FitConfig(n_generations=5, population_size=50, n_jobs=1),
         plot_metrics=False,
     )
-    assert len(cloudpickle.dumps(genetic_bag.fitness_func)) == sent_bytes
+    assert len(cloudpickle.dumps(knapsack.fitness_func)) == sent_bytes

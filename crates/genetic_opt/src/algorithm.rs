@@ -17,8 +17,8 @@ use crate::save::{
     BestsColumns, GenerationFile, create_run_folder, write_experiment_config, write_generation,
 };
 use crate::{
-    Best, Chromosome, Error, FitMetrics, FitnessCalls, Individual, Metric, Problem, Result, Rng,
-    SaveConfig, TotalFitTime,
+    Best, Chromosome, Error, FitMetrics, FitnessFuncCalls, Individual, Metric, Problem, Result,
+    Rng, SaveConfig, TotalFitTime,
 };
 
 /// Number of best chromosomes a [`FitResult`] reports.
@@ -559,7 +559,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
         );
         let raw = round2(self.metrics.iter().map(|m| m.fitting_seconds).sum());
         let fit_metrics = FitMetrics {
-            fitness_func_calls: FitnessCalls {
+            fitness_func_calls: FitnessFuncCalls {
                 total: self.score_requests,
                 processed,
                 percent_processed: round2(100.0 * processed as f64 / self.score_requests as f64),

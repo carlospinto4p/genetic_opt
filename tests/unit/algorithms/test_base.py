@@ -240,21 +240,21 @@ def test_fit_scores_each_chromosome_once(tmp_path):
     # The fitness function runs in worker processes, so the calls are
     # counted through a file.
     calls_log = tmp_path / "calls.log"
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
-    fit_bag = genetic_bag.fitness_func
+    fitness = knapsack.fitness_func
 
-    def logged_fit_bag(chromosome):
+    def logged_fitness(chromosome):
         with open(calls_log, "a") as file:
             file.write(f"{chromosome!r}\n")
-        return fit_bag(chromosome)
+        return fitness(chromosome)
 
-    genetic_bag.fitness_func = logged_fit_bag
+    knapsack.fitness_func = logged_fitness
     # Two jobs, or the one that a machine with one core allows.
-    result = genetic_bag.fit(
+    result = knapsack.fit(
         FitConfig(
             n_generations=5, population_size=50, n_jobs=min(2, cpu_count())
         ),
@@ -270,27 +270,25 @@ def test_fit_scores_each_chromosome_once(tmp_path):
 
 def test_mutation_differs_between_chromosomes():
     size = 40
-    genetic_bag = Knapsack(weights=[1] * size, values=[1] * size, capacity=10)
-    genetic_bag.gene_space = OnesGeneSpace()
+    knapsack = Knapsack(weights=[1] * size, values=[1] * size, capacity=10)
+    knapsack.gene_space = OnesGeneSpace()
     chromosomes = [Chromosome(size=size, genes=[0] * size) for _ in range(2)]
-    first, second = genetic_bag.mutate_chromosomes(
-        chromosomes, mutate_prob=0.5
-    )
+    first, second = knapsack.mutate_chromosomes(chromosomes, mutate_prob=0.5)
     assert first.genes != second.genes
 
 
 def test_the_mutation_invariant_gets_the_chromosome_before_and_after():
     size = 40
-    genetic_bag = Knapsack(weights=[1] * size, values=[1] * size, capacity=10)
-    genetic_bag.gene_space = OnesGeneSpace()
+    knapsack = Knapsack(weights=[1] * size, values=[1] * size, capacity=10)
+    knapsack.gene_space = OnesGeneSpace()
     pairs: list[tuple[list[int], list[int]]] = []
 
     def record(before: Chromosome, after: Chromosome) -> bool:
         pairs.append((list(before.genes), list(after.genes)))
         return True
 
-    genetic_bag.mutation_invariant = record
-    genetic_bag.mutate_chromosomes(
+    knapsack.mutation_invariant = record
+    knapsack.mutate_chromosomes(
         [Chromosome(size=size, genes=[0] * size)], mutate_prob=0.5
     )
     ((before, after),) = pairs
@@ -302,10 +300,10 @@ def test_the_mutation_invariant_gets_the_chromosome_before_and_after():
     "invariant", ["mutation_invariant", "crossover_invariant"]
 )
 def test_a_broken_invariant_stops_the_run(invariant):
-    genetic_bag, _ = _counting_bag()
-    setattr(genetic_bag, invariant, lambda *_: False)
+    knapsack, _ = _counting_bag()
+    setattr(knapsack, invariant, lambda *_: False)
     with pytest.raises(InvariantException, match="mutated to"):
-        genetic_bag.fit(
+        knapsack.fit(
             FitConfig(
                 n_generations=3,
                 population_size=30,
@@ -317,17 +315,17 @@ def test_a_broken_invariant_stops_the_run(invariant):
 
 
 def test_fit_without_a_save_path_decodes_the_population_once():
-    genetic_bag, _ = _counting_bag()
-    decode_bag = genetic_bag.decode_func
+    knapsack, _ = _counting_bag()
+    decode = knapsack.decode_func
     decoded: list[str] = []
 
-    def counted_decode_bag(chromosome):
+    def counted_decode(chromosome):
         decoded.append(repr(chromosome))
-        return decode_bag(chromosome)
+        return decode(chromosome)
 
-    genetic_bag.decode_func = counted_decode_bag
+    knapsack.decode_func = counted_decode
     population_size = 50
-    result = genetic_bag.fit(
+    result = knapsack.fit(
         FitConfig(n_generations=5, population_size=population_size, n_jobs=1),
         plot_metrics=False,
     )
@@ -342,26 +340,26 @@ def test_fit_without_a_save_path_decodes_the_population_once():
 
 def _counting_bag() -> tuple[Knapsack, list[str]]:
     """A knapsack whose fitness function records each Chromosome it runs on."""
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
     )
-    fit_bag = genetic_bag.fitness_func
+    fitness = knapsack.fitness_func
     calls: list[str] = []
 
-    def counted_fit_bag(chromosome):
+    def counted_fitness(chromosome):
         calls.append(repr(chromosome))
-        return fit_bag(chromosome)
+        return fitness(chromosome)
 
-    genetic_bag.fitness_func = counted_fit_bag
-    return genetic_bag, calls
+    knapsack.fitness_func = counted_fitness
+    return knapsack, calls
 
 
 def test_fit_metrics_count_the_fitness_calls():
     # One process, so the fitness function runs here and `calls` fills.
-    genetic_bag, calls = _counting_bag()
-    result = genetic_bag.fit(
+    knapsack, calls = _counting_bag()
+    result = knapsack.fit(
         FitConfig(n_generations=5, population_size=50, n_jobs=1),
         plot_metrics=False,
     )
@@ -386,14 +384,14 @@ def test_fit_metrics_count_the_fitness_calls():
 
 
 def test_a_second_fit_starts_a_new_run():
-    genetic_bag, calls = _counting_bag()
+    knapsack, calls = _counting_bag()
     config = FitConfig(n_generations=3, population_size=30, n_jobs=1)
-    first = genetic_bag.fit(config, plot_metrics=False)
+    first = knapsack.fit(config, plot_metrics=False)
     first_calls = len(calls)
     assert first["fit_metrics"]["fitness_func_calls"]["processed"] == (
         first_calls
     )
-    result = genetic_bag.fit(config, plot_metrics=False)
+    result = knapsack.fit(config, plot_metrics=False)
     generations = len(result["metrics"])
     assert 1 < generations <= 4
     assert len(result["history"]) == generations
@@ -408,13 +406,13 @@ def test_a_second_fit_starts_a_new_run():
 
 def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
     """The genes of each population of a run of a new knapsack."""
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
         **seeds,
     )
-    result = genetic_bag.fit(
+    result = knapsack.fit(
         FitConfig(
             n_generations=5,
             population_size=30,
@@ -444,9 +442,9 @@ def test_another_seed_gives_another_run():
 
 
 def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
-    genetic_bag, _ = _counting_bag()
+    knapsack, _ = _counting_bag()
     seen: list[Knapsack] = []
-    result = genetic_bag.fit(
+    result = knapsack.fit(
         FitConfig(
             n_generations=5,
             population_size=30,
@@ -459,7 +457,7 @@ def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
     )
     assert len(result["metrics"]) == 2
     assert len(seen) == 2
-    assert all(algorithm is genetic_bag for algorithm in seen)
+    assert all(algorithm is knapsack for algorithm in seen)
 
 
 class CallbackCountingBag(Knapsack):
@@ -470,10 +468,10 @@ class CallbackCountingBag(Knapsack):
 
 
 def test_fit_calls_the_callback_method_of_a_subclass_by_default():
-    genetic_bag = CallbackCountingBag(
+    knapsack = CallbackCountingBag(
         weights=[23, 31, 29, 44], values=[92, 57, 49, 68], capacity=80
     )
-    result = genetic_bag.fit(
+    result = knapsack.fit(
         FitConfig(
             n_generations=2,
             population_size=10,
@@ -483,20 +481,20 @@ def test_fit_calls_the_callback_method_of_a_subclass_by_default():
         ),
         plot_metrics=False,
     )
-    assert genetic_bag.callbacks == len(result["metrics"]) == 3
+    assert knapsack.callbacks == len(result["metrics"]) == 3
 
 
 def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
     # Two genes give 4 Chromosomes, so the first population has them all.
-    genetic_bag = Knapsack(weights=[1, 2], values=[3, 4], capacity=3)
-    fit_bag = genetic_bag.fitness_func
+    knapsack = Knapsack(weights=[1, 2], values=[3, 4], capacity=3)
+    fitness = knapsack.fitness_func
     calls: list[str] = []
 
-    def counted_fit_bag(chromosome):
+    def counted_fitness(chromosome):
         calls.append(repr(chromosome))
-        return fit_bag(chromosome)
+        return fitness(chromosome)
 
-    genetic_bag.fitness_func = counted_fit_bag
+    knapsack.fitness_func = counted_fitness
     parallel_calls: list[dict] = []
 
     def counted_parallel(**kwargs):
@@ -504,17 +502,17 @@ def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
         return Parallel(**kwargs)
 
     monkeypatch.setattr(algorithms, "Parallel", counted_parallel)
-    genetic_bag._start_population(population_size=50, n_jobs=1)
+    knapsack._start_population(population_size=50, n_jobs=1)
     assert len(calls) == 4
-    genetic_bag._start_population(population_size=50, n_jobs=1)
+    knapsack._start_population(population_size=50, n_jobs=1)
     assert len(calls) == 4
     assert parallel_calls == [{"n_jobs": 1}]
-    assert len(genetic_bag.population) == 50
-    assert all(c.score is not None for c in genetic_bag.population)
+    assert len(knapsack.population) == 50
+    assert all(c.score is not None for c in knapsack.population)
 
 
 def test_fit_keeps_one_pool_of_workers_for_the_whole_run(monkeypatch):
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=list(range(1, 21)), values=list(range(20, 0, -1)), capacity=60
     )
     parallel_calls: list[dict] = []
@@ -524,7 +522,7 @@ def test_fit_keeps_one_pool_of_workers_for_the_whole_run(monkeypatch):
         return Parallel(**kwargs)
 
     monkeypatch.setattr(algorithms, "Parallel", counted_parallel)
-    result = genetic_bag.fit(
+    result = knapsack.fit(
         FitConfig(
             n_generations=4,
             population_size=30,
@@ -534,27 +532,27 @@ def test_fit_keeps_one_pool_of_workers_for_the_whole_run(monkeypatch):
     )
     assert len(result["metrics"]) == 5
     assert parallel_calls == [{"n_jobs": 1}]
-    assert genetic_bag._parallel is None
+    assert knapsack._parallel is None
 
 
 def test_fit_lets_go_of_its_pool_of_workers_when_it_raises():
-    genetic_bag = Knapsack(weights=[1, 2, 3], values=[3, 4, 5], capacity=4)
+    knapsack = Knapsack(weights=[1, 2, 3], values=[3, 4, 5], capacity=4)
 
     def failing_callback(_):
         raise RuntimeError("callback failed")
 
     with pytest.raises(RuntimeError, match="callback failed"):
-        genetic_bag.fit(
+        knapsack.fit(
             FitConfig(n_generations=2, population_size=10, n_jobs=1),
             callback_func=failing_callback,
         )
-    assert genetic_bag._parallel is None
+    assert knapsack._parallel is None
 
 
 def test_fit_runs_a_fitness_function_that_uses_the_algorithm():
     # The function takes the whole algorithm to each worker process, so
     # the algorithm must pickle while its pool of workers is open.
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53], values=[92, 57, 49, 68, 60], capacity=80
     )
 
@@ -562,12 +560,12 @@ def test_fit_runs_a_fitness_function_that_uses_the_algorithm():
         return Score(
             value=sum(
                 value * gene
-                for value, gene in zip(genetic_bag.values, chromosome.genes)
+                for value, gene in zip(knapsack.values, chromosome.genes)
             )
         )
 
-    genetic_bag.fitness_func = fit_with_algorithm
-    result = genetic_bag.fit(
+    knapsack.fitness_func = fit_with_algorithm
+    result = knapsack.fit(
         FitConfig(
             n_generations=2, population_size=20, n_jobs=min(2, cpu_count())
         )
@@ -581,7 +579,7 @@ def test_fit_runs_a_fitness_function_that_uses_the_algorithm():
 def test_fit_formats_the_metrics_only_when_they_are_logged(
     monkeypatch, set_log_level, level, logged
 ):
-    genetic_bag = Knapsack(
+    knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         capacity=165,
@@ -595,7 +593,7 @@ def test_fit_formats_the_metrics_only_when_they_are_logged(
 
     monkeypatch.setattr(algorithms, "log_format", counted_log_format)
     set_log_level(level)
-    result = genetic_bag.fit(
+    result = knapsack.fit(
         FitConfig(n_generations=3, population_size=50, n_jobs=1)
     )
     metrics = [d for d in formatted if isinstance(d, Metric)]
@@ -614,10 +612,10 @@ def test_fit_formats_the_metrics_only_when_they_are_logged(
     ],
 )
 def test_fit_refuses_parameters_out_of_range(parameters):
-    genetic_bag, calls = _counting_bag()
+    knapsack, calls = _counting_bag()
     fit_parameters = {"n_generations": 5, "population_size": 30, "n_jobs": 1}
     with pytest.raises(ValidationException):
-        genetic_bag.fit(FitConfig(**(fit_parameters | parameters)))
+        knapsack.fit(FitConfig(**(fit_parameters | parameters)))
     assert not calls
 
 
@@ -627,8 +625,8 @@ def test_fit_refuses_parameters_out_of_range(parameters):
 def test_fit_uses_one_job_when_fewer_are_left(monkeypatch, cores, parameters):
     # Without `n_jobs` it is -2: every core but one.
     monkeypatch.setattr(algorithms, "cpu_count", lambda: cores)
-    genetic_bag, _ = _counting_bag()
-    result = genetic_bag.fit(
+    knapsack, _ = _counting_bag()
+    result = knapsack.fit(
         FitConfig(n_generations=2, population_size=20, **parameters),
         plot_metrics=False,
     )
@@ -636,8 +634,8 @@ def test_fit_uses_one_job_when_fewer_are_left(monkeypatch, cores, parameters):
 
 
 def test_fit_parameters_are_the_config_with_the_seed_and_the_jobs():
-    genetic_bag, _ = _counting_bag()
-    result = genetic_bag.fit(
+    knapsack, _ = _counting_bag()
+    result = knapsack.fit(
         FitConfig(n_generations=2, population_size=20, n_jobs=1),
         plot_metrics=False,
     )
@@ -656,33 +654,33 @@ def test_fit_parameters_are_the_config_with_the_seed_and_the_jobs():
 @pytest.mark.parametrize("n_jobs", [0, 3])
 def test_fit_refuses_no_jobs_and_more_jobs_than_cores(monkeypatch, n_jobs):
     monkeypatch.setattr(algorithms, "cpu_count", lambda: 2)
-    genetic_bag, calls = _counting_bag()
+    knapsack, calls = _counting_bag()
     with pytest.raises(ValidationException, match="n_jobs"):
-        genetic_bag.fit(
+        knapsack.fit(
             FitConfig(n_generations=2, population_size=20, n_jobs=n_jobs)
         )
     assert not calls
 
 
 def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
-    genetic_bag, _ = _counting_bag()
+    knapsack, _ = _counting_bag()
     config = FitConfig(n_generations=5, population_size=30, n_jobs=1)
-    expected = genetic_bag.fit(config, plot_metrics=False)["bests"]["scores"]
+    expected = knapsack.fit(config, plot_metrics=False)["bests"]["scores"]
 
     # Every Chromosome gets one id, as two would after a hash collision.
     monkeypatch.setattr(Chromosome, "id", property(lambda self: 1))
-    genetic_bag, _ = _counting_bag()
-    scores = genetic_bag.fit(config, plot_metrics=False)["bests"]["scores"]
+    knapsack, _ = _counting_bag()
+    scores = knapsack.fit(config, plot_metrics=False)["bests"]["scores"]
     assert [s.value for s in scores] == [s.value for s in expected]
 
 
 def test_scoring_does_not_keep_the_algorithm_alive():
-    genetic_bag, _ = _counting_bag()
-    genetic_bag.fit(
+    knapsack, _ = _counting_bag()
+    knapsack.fit(
         FitConfig(n_generations=2, population_size=20, n_jobs=1),
         plot_metrics=False,
     )
-    reference = weakref.ref(genetic_bag)
-    del genetic_bag
+    reference = weakref.ref(knapsack)
+    del knapsack
     gc.collect()
     assert reference() is None

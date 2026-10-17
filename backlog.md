@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (LOW, S) v1.0.0 rename leftovers: `tests/unit/examples/test_binary.py` `test_genetic_bag` and ~80 `genetic_bag` locals; `decode_bag`/`fit_bag` in `src/genetic_opt/examples/binary.py:46,73`; `FitnessFuncCalls` (`fit_result.py:216`) vs the crate's `FitnessCalls` (`metrics.rs:38`); gitignored `sketches/genetic_bag.py` still imports `GeneticBag`.
 - [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:306-315,466`: `plot_metrics` and `other_metrics_to_plot` only apply with a `SaveConfig`; move them into it.
 - [ ] (LOW, S) Repeated defaults: `next_generation_selection` (`base.py:561-568`) repeats 0.7/0.6/0.05 from `FitConfig`; `n_jobs=-2` repeated at `base.py:506,567,714`; `fit_result.py:205` hard-codes "at most 5" instead of citing `N_BESTS`.
 - [ ] (LOW, S) `src/genetic_opt/files.py:143-170`: `save_current_figure` (matplotlib) belongs beside `algorithms/plots.py`; its `clear_fig`/`close_fig` arguments are never passed.

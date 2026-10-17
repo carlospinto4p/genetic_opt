@@ -120,7 +120,7 @@ pub(crate) fn write_generation<G: Serialize, S: Serialize>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{FitnessCalls, TotalFitTime};
+    use crate::{FitnessFuncCalls, TotalFitTime};
 
     // `/dev/full` opens, but refuses every write. The files here are
     // smaller than the buffer, so the write fails only when the buffer is
@@ -151,7 +151,7 @@ mod tests {
             n_jobs: 1,
         };
         let fit_metrics = FitMetrics {
-            fitness_func_calls: FitnessCalls {
+            fitness_func_calls: FitnessFuncCalls {
                 total: 0,
                 processed: 0,
                 percent_processed: 0.0,

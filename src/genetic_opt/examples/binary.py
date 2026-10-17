@@ -43,7 +43,7 @@ class Knapsack(BinaryGeneticAlgorithm):
         # The two functions below use these arguments and not `self`: a
         # function that uses `self` takes the whole algorithm with it to
         # each worker process.
-        def decode_bag(chromosome: Chromosome) -> list[int]:
+        def decode(chromosome: Chromosome) -> list[int]:
             """
             Transform the Chromosome representation, where 1 means that the
             object in the position `i` goes into the bag, and 0 means that
@@ -70,14 +70,14 @@ class Knapsack(BinaryGeneticAlgorithm):
                     decoded_bag.append(0)
             return decoded_bag
 
-        def fit_bag(chromosome: Chromosome) -> Score:
+        def fitness(chromosome: Chromosome) -> Score:
             """
             Get the bag total value by summing the value of the objects
             that are represented by the Chromosome.
             :param chromosome: Chromosome with a binary list as genes.
             :return: this problem Score.
             """
-            decoded_bag = decode_bag(chromosome)
+            decoded_bag = decode(chromosome)
             score = sum(
                 values[i] * decoded_bag[i] for i in range(chromosome.size)
             )
@@ -86,8 +86,8 @@ class Knapsack(BinaryGeneticAlgorithm):
         super().__init__(
             chromosome_length=len(weights),
             chromosome_as_set=False,
-            decode_func=decode_bag,
-            fitness_func=fit_bag,
+            decode_func=decode,
+            fitness_func=fitness,
             minimize=False,
             random_seed=random_seed,
             gene_space_random_seed=gene_space_random_seed,
