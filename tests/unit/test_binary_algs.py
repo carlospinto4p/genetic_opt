@@ -121,7 +121,6 @@ class NumbersAlgorithm(GeneticAlgorithm):
             ),
             minimize=minimize,
         )
-        self.no_improvement_condition = self.no_exit_condition
 
     def crossover_func(
         self, c1: Chromosome, c2: Chromosome
@@ -149,6 +148,7 @@ def _fit_numbers(minimize: bool) -> tuple[NumbersAlgorithm, FitResult]:
             n_generations=60,
             population_size=30,
             min_population_size=0,
+            stop_without_improvement=False,
             n_jobs=1,
         ),
         plot_metrics=False,
@@ -214,6 +214,24 @@ def test_fit_stops_when_the_mean_score_does_not_change():
     assert len(result["metrics"]) == 2
 
 
+def test_fit_without_the_improvement_stop_breeds_every_generation():
+    algorithm = ZeroStartAlgorithm()
+    result = algorithm.fit(
+        FitConfig(
+            n_generations=5,
+            population_size=20,
+            mutate_prob=0,
+            min_population_size=0,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+        plot_metrics=False,
+    )
+    assert len(result["metrics"]) == 6
+    assert algorithm.no_improvement_condition()
+    assert "stop_without_improvement" not in result["fit_parameters"]
+
+
 @pytest.mark.parametrize(
     "min_population_size, generations", [(2, 1), (1, 6), (0, 6)]
 )
@@ -221,14 +239,13 @@ def test_fit_stops_below_min_population_size(
     min_population_size, generations
 ):
     # Without mutations every Chromosome is all zeros: 1 different one.
-    algorithm = ZeroStartAlgorithm()
-    algorithm.no_improvement_condition = algorithm.no_exit_condition
-    result = algorithm.fit(
+    result = ZeroStartAlgorithm().fit(
         FitConfig(
             n_generations=5,
             population_size=20,
             mutate_prob=0,
             min_population_size=min_population_size,
+            stop_without_improvement=False,
             n_jobs=1,
         ),
         plot_metrics=False,
@@ -660,9 +677,13 @@ def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
         capacity=165,
         **seeds,
     )
-    genetic_bag.no_improvement_condition = genetic_bag.no_exit_condition
     result = genetic_bag.fit(
-        FitConfig(n_generations=5, population_size=30, n_jobs=n_jobs),
+        FitConfig(
+            n_generations=5,
+            population_size=30,
+            stop_without_improvement=False,
+            n_jobs=n_jobs,
+        ),
         plot_metrics=False,
     )
     return [
@@ -687,10 +708,14 @@ def test_another_seed_gives_another_run():
 
 def test_fit_gives_the_algorithm_to_the_callback_and_the_exit_condition():
     genetic_bag, _ = _counting_bag()
-    genetic_bag.no_improvement_condition = genetic_bag.no_exit_condition
     seen: list[Knapsack] = []
     result = genetic_bag.fit(
-        FitConfig(n_generations=5, population_size=30, n_jobs=1),
+        FitConfig(
+            n_generations=5,
+            population_size=30,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
         plot_metrics=False,
         callback_func=seen.append,
         exit_condition=lambda algorithm: len(algorithm.metrics) == 2,
@@ -711,12 +736,12 @@ def test_fit_calls_the_callback_method_of_a_subclass_by_default():
     genetic_bag = CallbackCountingBag(
         weights=[23, 31, 29, 44], values=[92, 57, 49, 68], capacity=80
     )
-    genetic_bag.no_improvement_condition = genetic_bag.no_exit_condition
     result = genetic_bag.fit(
         FitConfig(
             n_generations=2,
             population_size=10,
             min_population_size=2,
+            stop_without_improvement=False,
             n_jobs=1,
         ),
         plot_metrics=False,
@@ -755,7 +780,6 @@ def test_fit_keeps_one_pool_of_workers_for_the_whole_run(monkeypatch):
     genetic_bag = Knapsack(
         weights=list(range(1, 21)), values=list(range(20, 0, -1)), capacity=60
     )
-    genetic_bag.no_improvement_condition = lambda: False
     parallel_calls: list[dict] = []
 
     def counted_parallel(**kwargs):
@@ -764,7 +788,12 @@ def test_fit_keeps_one_pool_of_workers_for_the_whole_run(monkeypatch):
 
     monkeypatch.setattr(algorithms, "Parallel", counted_parallel)
     result = genetic_bag.fit(
-        FitConfig(n_generations=4, population_size=30, n_jobs=1)
+        FitConfig(
+            n_generations=4,
+            population_size=30,
+            stop_without_improvement=False,
+            n_jobs=1,
+        )
     )
     assert len(result["metrics"]) == 5
     assert parallel_calls == [{"n_jobs": 1}]

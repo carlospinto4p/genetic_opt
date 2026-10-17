@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.2.0 - 17th October 2026
+
+- Added `FitConfig.stop_without_improvement` in
+  `src/genetic_opt/algorithms/config.py`, default `True`, like the
+  crate's field of the same name. With `False`, `fit` does not call
+  `no_improvement_condition`, which a subclass can still override.
+  It is left out of the saved `fit_parameters`, as the crate leaves
+  it out.
+- Updated the tests that replaced `no_improvement_condition` on the
+  instance to set `stop_without_improvement=False` instead, in
+  `tests/unit/test_binary_algs.py` and `tests/unit/test_fit_save.py`.
+- Added `test_fit_without_the_improvement_stop_breeds_every_generation`.
+
 ### v2.1.0 - 17th October 2026
 
 - Removed `GeneticAlgorithm.get_chromosome_score` from

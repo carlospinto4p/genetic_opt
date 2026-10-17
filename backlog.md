@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (MED, S) `src/genetic_opt/algorithms/base.py:290-303`: no counterpart to the crate's `FitConfig.stop_without_improvement`; tests turn it off by replacing `no_improvement_condition` on the instance (`tests/unit/test_binary_algs.py:663,690,714`).
 - [ ] (MED, M) Python/crate settings placement differs: `random_seed`, `extra_config`, `experiment_name`, `save` are constructor arguments in Python (`base.py:111-114`, `config.py:131-148`) but `FitConfig`/`SaveConfig` fields in the crate (`algorithm.rs:29-51`, `save.rs:19-24`); `as_bson: bool` vs `format: SaveFormat`. Public API change: decide, then check `downstream`.
 - [ ] (MED, M) `init_population` means different things: Python (`base.py:502`) builds and scores the first population, the crate (`problem.rs:169`) only returns genes, like Python's `get_init_population`. Public API change: decide, then check `downstream`.
 - [ ] (MED, M) Test files do not mirror source modules (`.claude/rules/testing.md`): `tests/unit/test_binary_algs.py` (890 lines) tests chromosome, gene collections, base, examples and metrics; `test_functions.py:95-131` tests exceptions and gene collections; `test_fit_save.py` covers save, fit_result_io and plots. Split into `test_chromosome.py`, `test_gene_collection.py`, `test_fit_result_io.py`, `test_plots.py`, `test_score.py`, `test_exceptions.py`, and add the `# ── Module ──` headers missing in four files.

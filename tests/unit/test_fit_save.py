@@ -103,12 +103,12 @@ def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
 def test_load_fit_result_orders_the_generations_by_number(tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=False)
     # Without the stops, every generation is bred and saved.
-    algorithm.no_improvement_condition = lambda: False
     fit_result = algorithm.fit(
         FitConfig(
             n_generations=10,
             population_size=20,
             min_population_size=1,
+            stop_without_improvement=False,
             n_jobs=1,
         ),
         plot_metrics=False,

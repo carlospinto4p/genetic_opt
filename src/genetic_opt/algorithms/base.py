@@ -323,8 +323,8 @@ class GeneticAlgorithm(ABC):
         By default, will get the mean key of the improvements
         and check if it is 0. The first generation has no improvement
         to check, so it never meets the condition.
-        Replace this method with `GeneticAlgorithm.no_exit_condition`
-        to avoid this default behavior.
+        `FitConfig.stop_without_improvement` set to False makes `fit`
+        skip it.
         """
         return self._get_iteration_improvement().get("mean", -1) == 0
 
@@ -445,7 +445,10 @@ class GeneticAlgorithm(ABC):
                         f"Training finished at iteration {n_generation}"
                     )
                     break
-                if self.no_improvement_condition():
+                if (
+                    config.stop_without_improvement
+                    and self.no_improvement_condition()
+                ):
                     logger.info(
                         f"no more improvement detected!\n\t"
                         f"Training finished at iteration {n_generation}"
@@ -503,8 +506,11 @@ class GeneticAlgorithm(ABC):
             raise ValidationException(
                 f"{n_jobs = } received is not valid! {cpu_count() = }"
             )
+        parameters = asdict(config)
+        # Not saved, as the crate does not save it either
+        del parameters["stop_without_improvement"]
         return {
-            **asdict(config),
+            **parameters,
             "random_seed": self.random_seed,
             "n_jobs": n_jobs,
         }

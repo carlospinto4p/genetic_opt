@@ -20,6 +20,10 @@ class FitConfig:
     :param mutate_prob: probability of each gene of a child to mutate.
     :param min_population_size: the run stops when a population has
         fewer different Chromosomes.
+    :param stop_without_improvement: whether the run stops when
+        `GeneticAlgorithm.no_improvement_condition` is met: by default,
+        when the mean score of a generation equals the one of the
+        generation before. It is not saved with the run.
     :param n_jobs: number of jobs that score the Chromosomes.
         Default to -2 (all cpus except one). A negative number that
         leaves no cpu gives one job.
@@ -35,6 +39,7 @@ class FitConfig:
     besties_prop: float = 0.6
     mutate_prob: float = 0.05
     min_population_size: int = 10
+    stop_without_improvement: bool = True
     n_jobs: int = -2
 
 
