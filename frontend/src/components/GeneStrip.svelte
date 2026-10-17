@@ -23,12 +23,22 @@
 
   const originName = { a: 'parent A', b: 'parent B', both: 'both parents' }
 
+  let changedSet = $derived(new Set(changed))
+  let offSet = $derived(new Set(off))
+
   function title(i: number): string {
     const parts = [`gene ${i + 1}: ${genes[i]}`]
     if (origins) parts.push(`from ${originName[origins[i]]}`)
-    if (changed.includes(i)) parts.push('changed by the mutation')
-    if (off.includes(i)) parts.push('turned off when decoded')
+    if (changedSet.has(i)) parts.push('changed by the mutation')
+    if (offSet.has(i)) parts.push('turned off when decoded')
     return parts.join(', ')
+  }
+
+  // A table can hold thousands of squares, redrawn on every step of
+  // Play: build a square's tooltip only when the pointer reaches it
+  function showTitle(e: PointerEvent) {
+    const gene = (e.target as HTMLElement).closest<HTMLElement>('.gene')
+    if (gene) gene.title = title(Number(gene.dataset.i))
   }
 </script>
 
@@ -37,14 +47,15 @@
   role="img"
   aria-label={label || `genes ${genes.join('')}`}
   style="--size: {size}px"
+  onpointerover={showTitle}
 >
   {#each genes as gene, i (i)}
     <span
       class="gene"
       class:on={gene === 1}
-      class:changed={changed.includes(i)}
-      class:off={off.includes(i)}
-      title={title(i)}
+      class:changed={changedSet.has(i)}
+      class:off={offSet.has(i)}
+      data-i={i}
     >
       {#if origins}
         <span class="origin origin-{origins[i]}"></span>

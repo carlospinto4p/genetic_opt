@@ -4,6 +4,7 @@ import pytest
 import yaml
 
 from genetic_opt.algorithms import FitConfig, SaveConfig
+from genetic_opt.algorithms.base import N_BESTS
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.files import get_files_inside_folder, load_json
 from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
@@ -95,6 +96,30 @@ def test_each_file_holds_the_metrics_of_its_generation_alone(tmp_path):
     for idx, metric in enumerate(fit_result["metrics"], start=1):
         loaded = load_fit_result_file(f"{folder}/fit_data_{idx}.json")
         assert loaded["metrics"] == [metric]
+
+
+def test_saving_decodes_the_population_only_when_the_run_ends(tmp_path):
+    algorithm = ones_algorithm(tmp_path)
+    calls = []
+
+    def counted_decode(chromosome):
+        calls.append(chromosome)
+        return decode_genes(chromosome)
+
+    algorithm.decode_func = counted_decode
+    population_size = 20
+    fit_result = algorithm.fit(
+        FitConfig(n_generations=3, population_size=population_size, n_jobs=1)
+    )
+
+    # Each generation decodes its best for the metrics and the bests for
+    # the saved file; the whole population is decoded once, at the end
+    n_generations = len(fit_result["metrics"])
+    assert n_generations > 1
+    assert len(fit_result["last_population"]) == population_size
+    assert len(calls) <= n_generations * (1 + N_BESTS) + (
+        population_size + N_BESTS
+    )
 
 
 def test_the_files_do_not_hold_the_population_decoded(saved_run):

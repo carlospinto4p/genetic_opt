@@ -2,6 +2,24 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.9 - 17th October 2026
+
+- Faster saving and a lighter explainer page:
+  - `algorithms/base.py`: a run that saves no longer decodes the whole
+    population every generation, which the files leave out. It is
+    decoded once, when the run ends. `_get_fit_result` takes
+    `decode_population`.
+  - `frontend/src/lib/store.svelte.ts`: the runs are kept in raw state,
+    so their generations and genes are no longer proxied. `Lab` and the
+    saved run are classes.
+  - `GeneStrip.svelte` builds a square's tooltip when the pointer
+    reaches it, not on every redraw, and checks the changed and
+    turned-off genes in sets. `PopulationTable.svelte` works out the
+    turned-off genes once per row.
+- Added `test_saving_decodes_the_population_only_when_the_run_ends` to
+  `tests/unit/algorithms/test_save.py`.
+
+
 ### v5.10.8 - 17th October 2026
 
 - Explainer runs send less: a run at the limits (200 generations,

@@ -469,12 +469,16 @@ class GeneticAlgorithm(ABC):
                         f"{format_seconds(self.metrics[-1].fitting_seconds)}"
                     )
                 callback_func(self)
-                # Save result for each iteration
+                # Save result for each iteration. The files leave out the
+                # decoded population, so it is not decoded here
                 if self._saver:
-                    fit_result = self._get_fit_result(
-                        fit_parameters=fit_parameters, n_jobs=n_jobs
+                    self._saver.save_generation(
+                        self._get_fit_result(
+                            fit_parameters=fit_parameters,
+                            n_jobs=n_jobs,
+                            decode_population=False,
+                        )
                     )
-                    self._saver.save_generation(fit_result)
                 # Exit conditions
                 if self.metrics[-1].n_uniques < config.min_population_size:
                     logger.info(
@@ -518,12 +522,10 @@ class GeneticAlgorithm(ABC):
                         f"finished at iteration {n_generation}"
                     )
                     break
-        # With nothing to save, the result is built once, when the run
-        # ends: it decodes the whole population.
-        if not self._saver:
-            fit_result = self._get_fit_result(
-                fit_parameters=fit_parameters, n_jobs=n_jobs
-            )
+        # Built when the run ends, as it decodes the whole population
+        fit_result = self._get_fit_result(
+            fit_parameters=fit_parameters, n_jobs=n_jobs
+        )
         if self._saver and self._saver.save.plot_metrics:
             self._saver.save_plots(fit_result)
         return fit_result
@@ -763,12 +765,17 @@ class GeneticAlgorithm(ABC):
         self._update_metrics(generation_fitting_time=generation_fitting_time)
 
     def _get_fit_result(
-        self, fit_parameters: FitParameters, n_jobs: int
+        self,
+        fit_parameters: FitParameters,
+        n_jobs: int,
+        decode_population: bool = True,
     ) -> FitResult:
         """
         Build the result of the run so far.
         :param fit_parameters: the parameters `fit` runs with.
         :param n_jobs: number of jobs used by `fit`.
+        :param decode_population: whether to decode the population into
+            `last_population`. When false, `last_population` is empty.
         :return: the `FitResult` of the generations measured so far.
         """
         requests = self._score_requests
@@ -814,7 +821,9 @@ class GeneticAlgorithm(ABC):
             "last_population": [
                 (self.decode_func(chromosome), chromosome.score)
                 for chromosome in self.population
-            ],
+            ]
+            if decode_population
+            else [],
             "history": self.history,
             "fit_parameters": fit_parameters,
         }

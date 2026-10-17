@@ -9,32 +9,34 @@ import {
   type SavedRun,
 } from './api'
 
-interface Lab<P, D> {
-  problem: P | null
+// Classes, so the store below does not proxy their fields. A run holds
+// every generation's genes and is only ever replaced whole, so it is
+// kept raw
+class Lab<P, D> {
+  problem = $state<P | null>(null)
   // The problem the run was made with: the form can change after it
-  ran: P | null
-  run: Run<D> | null
-  running: boolean
-  error: string
+  ran = $state.raw<P | null>(null)
+  run = $state.raw<Run<D> | null>(null)
+  running = $state(false)
+  error = $state('')
 }
 
-const lab = <P, D>(): Lab<P, D> => ({
-  problem: null,
-  ran: null,
-  run: null,
-  running: false,
-  error: '',
-})
+// The saved run opened, and the path typed
+class Saved {
+  path = $state('')
+  run = $state.raw<SavedRun | null>(null)
+  loading = $state(false)
+  error = $state('')
+}
 
 export const store = $state({
   examples: null as Examples | null,
   examplesError: '',
-  knapsack: lab<KnapsackProblem, number[]>(),
-  fn: lab<FunctionProblem, number>(),
+  knapsack: new Lab<KnapsackProblem, number[]>(),
+  fn: new Lab<FunctionProblem, number>(),
   // The run of the default Knapsack the guide shows
-  guide: lab<KnapsackProblem, number[]>(),
-  // The saved run opened, and the path typed
-  saved: { path: '', run: null as SavedRun | null, loading: false, error: '' },
+  guide: new Lab<KnapsackProblem, number[]>(),
+  saved: new Saved(),
 })
 
 let loading: Promise<void> | null = null

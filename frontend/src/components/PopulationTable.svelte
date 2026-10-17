@@ -24,7 +24,14 @@
   // Not known for a saved run
   let hasOrigin = $derived(population.some((m) => m.origin))
 
-  type Row = { rank: number; member: Member<D>; score: number; origin: string; copies: number }
+  type Row = {
+    rank: number
+    member: Member<D>
+    score: number
+    origin: string
+    copies: number
+    off: number[]
+  }
   type Key = 'rank' | 'score' | 'origin' | 'copies'
 
   let rows: Row[] = $derived.by(() => {
@@ -39,6 +46,7 @@
       score: member.score,
       origin: member.origin ?? '',
       copies: counts.get(JSON.stringify(member.genes)) ?? 1,
+      off: binary ? off(member) : [],
     }))
   })
 
@@ -85,7 +93,7 @@
           <td class="num">{row.rank}</td>
           <td>
             {#if binary}
-              <GeneStrip genes={row.member.genes} off={off(row.member)} size={16} />
+              <GeneStrip genes={row.member.genes} off={row.off} size={16} />
             {:else}
               <ul class="genes">
                 {#each row.member.genes as gene, i (i)}<li><code>{gene}</code></li>{/each}
