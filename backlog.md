@@ -4,10 +4,6 @@
 
 #### Performance
 
-- [ ] (LOW, S) `crates/genetic_opt/src/algorithm.rs:425-437`: `score` hashes each new chromosome twice and sorts a `Vec` collected from a `HashMap` to restore order. Use a `Vec` plus an index map.
-- [ ] (LOW, S) `tests/unit/test_fit_save.py:74-77`: the save-and-load tests also draw the full metrics JPEG (about 4.2 s of the 8.95 s unit suite across the plot tests). Pass `plot_metrics=False` where the plot is not under test.
-- [ ] (LOW, S) `crates/genetic_opt/Cargo.toml`: no `[profile.dev]`; `debug = "line-tables-only"` (or no debug info for dependencies) would cut build time. Not measured.
-- [ ] (LOW, S) `tests/integration/test_rust_layout.py:24-60`: two session fixtures each run `cargo build --example <name>`; one `cargo build --examples` would do.
 - [ ] (LOW, S) `.claude/rules/testing-areas.md` "Recorded times": measured at v0.7.4 (89 unit tests, 5.2 s); now 177 unit tests in 8.95 s, 5 integration tests, 40 Rust tests. Re-measure all four rows and the slowest-tests note.
 
 #### Refactoring

@@ -74,14 +74,14 @@ def saved_run(tmp_path) -> str:
 def test_fit_saves_each_generation_and_loads_it_back(tmp_path, save_as_bson):
     algorithm = ones_algorithm(tmp_path, save_as_bson=save_as_bson)
     fit_result = algorithm.fit(
-        FitConfig(n_generations=3, population_size=20, n_jobs=1)
+        FitConfig(n_generations=3, population_size=20, n_jobs=1),
+        plot_metrics=False,
     )
 
     saved_generations = len(algorithm.history)
     extension = "bson" if save_as_bson else "json"
     assert get_files_inside_folder(algorithm.save_path) == [
         "experiment_config.yml",
-        "fit_plots.jpg",
     ]
     assert get_files_inside_folder(f"{algorithm.save_path}/fit_data") == [
         f"fit_data_{i}.{extension}" for i in range(1, saved_generations + 1)

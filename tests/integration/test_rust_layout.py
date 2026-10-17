@@ -26,8 +26,9 @@ pytestmark = [
 ]
 
 
-def _build_example(name: str) -> str:
-    """Build an example program of the crate; return its path."""
+@pytest.fixture(scope="session")
+def examples() -> dict[str, str]:
+    """Build the example programs of the crate once; map name to path."""
     built = subprocess.run(
         [
             "cargo",
@@ -35,34 +36,32 @@ def _build_example(name: str) -> str:
             "--quiet",
             "--manifest-path",
             str(CRATE_MANIFEST),
-            "--example",
-            name,
+            "--examples",
             "--message-format=json",
         ],
         check=True,
         capture_output=True,
         text=True,
     )
-    # One JSON message a line; the example's own names its executable.
-    (executable,) = (
-        message["executable"]
+    # One JSON message a line; each example's own names its executable.
+    return {
+        message["target"]["name"]: message["executable"]
         for message in map(json.loads, built.stdout.splitlines())
         if message.get("reason") == "compiler-artifact"
-        and message["target"]["name"] == name
-    )
-    return executable
+        and "example" in message["target"]["kind"]
+    }
 
 
 @pytest.fixture(scope="session")
-def knapsack_example() -> str:
-    """Build the knapsack example of the crate once; return its path."""
-    return _build_example("knapsack")
+def knapsack_example(examples) -> str:
+    """Path of the knapsack example of the crate."""
+    return examples["knapsack"]
 
 
 @pytest.fixture(scope="session")
-def numbers_example() -> str:
-    """Build the numbers example of the crate once; return its path."""
-    return _build_example("numbers")
+def numbers_example(examples) -> str:
+    """Path of the numbers example of the crate."""
+    return examples["numbers"]
 
 
 @pytest.mark.parametrize("extension", ["bson", "json"])

@@ -433,13 +433,18 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 }
             })
             .collect();
-        let mut new: Vec<(Chromosome<P::Gene>, usize)> = new.into_iter().collect();
-        new.sort_unstable_by_key(|(_, position)| *position);
+        let mut by_position: Vec<Option<Chromosome<P::Gene>>> =
+            (0..new.len()).map(|_| None).collect();
+        for (chromosome, position) in new {
+            by_position[position] = Some(chromosome);
+        }
         let problem = &self.problem;
         let random_seed = self.config.random_seed;
         let scored: Vec<Arc<Individual<P::Gene>>> = pool.install(|| {
-            new.into_par_iter()
-                .map(|(chromosome, _)| {
+            by_position
+                .into_par_iter()
+                .flatten()
+                .map(|chromosome| {
                     let start = Instant::now();
                     let score = problem.fitness(chromosome.genes());
                     Arc::new(Individual {

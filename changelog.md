@@ -2,6 +2,26 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.0.2 - 17th October 2026
+
+- `crates/genetic_opt/src/algorithm.rs`: `score` puts the new
+  Chromosomes back in the order they were asked for by placing each at
+  its position, instead of sorting them. Each is still hashed twice,
+  once to look it up among the scored ones and once to find repeats in
+  the batch: the two are different maps.
+- `tests/unit/test_fit_save.py`:
+  `test_fit_saves_each_generation_and_loads_it_back` no longer draws
+  the metrics JPEG, which two other tests check. The unit suite took
+  3.7 s, from 7.6 s.
+- `tests/integration/test_rust_layout.py`: one session fixture,
+  `examples`, builds every example of the crate with one
+  `cargo build --examples`.
+- Measured a `[profile.dev]` with line tables only for the crate and
+  no debug information for dependencies, and left it out. A clean
+  `cargo test --no-run` took 11.35 s against 11.85 s, a rebuild after
+  one edit 0.78 s against 0.90 s; the build folder was 290 MB against
+  498 MB.
+
 ### v2.0.1 - 17th October 2026
 
 - `src/genetic_opt/algorithms/base.py`:
