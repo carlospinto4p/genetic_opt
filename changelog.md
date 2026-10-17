@@ -26,6 +26,7 @@
 - Added `tests/unit/web/test_runs.py` and
   `tests/integration/web/test_app.py`.
 
+
 ### v5.0.12 - 17th October 2026
 
 - Made four tests check values instead of shapes:
@@ -40,6 +41,7 @@
     genes that mutate are the first draws of the seed, in place of the
     size of a pickled numpy `RandomState`.
 
+
 ### v5.0.11 - 17th October 2026
 
 - Added Rust tests the Python package already had:
@@ -51,11 +53,13 @@
     `src/format.rs`.
 - `Watched` in `tests/algorithm.rs` takes a `fitness_delay`.
 
+
 ### v5.0.10 - 17th October 2026
 
 - Added `test_the_plot_title_names_the_score_when_it_has_a_name` in
   `tests/unit/algorithms/test_plots.py`: the title of the metrics plot
   with no score name, with an empty one, and with one of two words.
+
 
 ### v5.0.9 - 17th October 2026
 
@@ -65,6 +69,7 @@
 - Added `tests/unit/test_score.py`: a Score comes back equal from its
   dict, with and without an empty `name` and `extra_metrics`.
 
+
 ### v5.0.8 - 17th October 2026
 
 - `load_fit_result` refuses a folder where two files hold the same
@@ -72,6 +77,7 @@
   both. Before, the generation was in `history` and `metrics` twice.
 - Added `test_load_fit_result_refuses_two_files_of_one_generation` in
   `tests/unit/test_fit_result_io.py`.
+
 
 ### v5.0.7 - 17th October 2026
 
@@ -96,6 +102,7 @@
   `tests/unit/algorithms/test_base.py` to `tests/unit/conftest.py`.
   `NumbersAlgorithm` takes keyword arguments for `GeneticAlgorithm`.
 
+
 ### v5.0.6 - 17th October 2026
 
 - Added tests of `fit` in `tests/unit/algorithms/test_base.py`:
@@ -107,6 +114,7 @@
   - `test_a_population_of_one_breeds_no_children`.
 - Added `a_population_of_one_breeds_no_children` in
   `crates/genetic_opt/tests/algorithm.rs`, the same test for the crate.
+
 
 ### v5.0.5 - 17th October 2026
 
@@ -121,6 +129,7 @@
   two new processes with different hash seeds.
 - The crate is not affected: it keeps the genes of a set in a
   `BTreeSet`, which is always sorted.
+
 
 ### v5.0.4 - 17th October 2026
 
@@ -138,6 +147,7 @@
   `tests/unit/algorithms/test_base.py`, and `a_nan_score_stops_the_run`
   in `crates/genetic_opt/tests/algorithm.rs`.
 
+
 ### v5.0.3 - 17th October 2026
 
 - Fixed: an infinite `space_points` (more different chromosomes than a
@@ -154,6 +164,7 @@
     JSON and BSON, and a file with `Infinity`.
   - `metrics.rs`: `an_infinite_space_is_saved_as_null`.
 
+
 ### v5.0.2 - 17th October 2026
 
 - The crate's `numbers` example sets `extra_config` to
@@ -166,6 +177,7 @@
     `load_fit_result_file` on the last file of a run of the crate, in
     JSON and in BSON.
 
+
 ### v5.0.1 - 17th October 2026
 
 - `tests/integration/test_rust_layout.py`: a run of the crate loaded in
@@ -173,6 +185,7 @@
   `fit_parameters` and `fit_metrics` and the type of each value, every
   `Metric` field, each chromosome's `score`, `score_time` and
   `random_seed`, and `genetic_opt_version` equal to the package's.
+
 
 ### v5.0.0 - 17th October 2026
 
@@ -183,6 +196,7 @@
   `functions.py`. Nothing in the package passed it.
 - Updated the tests that used them: `test_exceptions.py`,
   `test_functions.py` and `test_gene_collection.py`.
+
 
 ### v4.1.2 - 17th October 2026
 
@@ -201,6 +215,7 @@
 - Removed the "Before 0.x.0" history notes from `README.md`; the
   changelog has them. It still says which old files
   `load_fit_result` reads.
+
 
 ### v4.1.1 - 17th October 2026
 
@@ -225,6 +240,7 @@
     `Chromosome.__eq__`, the `data` of `save_bson` and `save_json`, and
     every `**kwargs`.
 
+
 ### v4.1.0 - 17th October 2026
 
 - Added `examples::Numbers` to the crate, beside `examples::Knapsack`:
@@ -241,6 +257,7 @@
 - `README.md` names `examples::Numbers` and says an unknown format
   stops the examples.
 
+
 ### v4.0.2 - 17th October 2026
 
 - Added `crates/genetic_opt/examples/common/mod.rs`: `save_config` and
@@ -252,6 +269,7 @@
 - Added `test_the_rust_examples_refuse_an_unknown_format` to
   `tests/integration/test_rust_layout.py`.
 
+
 ### v4.0.1 - 17th October 2026
 
 - `gene_collection.py`:
@@ -262,6 +280,7 @@
     of genes it is asked for, not `size`.
   - The class docstrings of `GeneList` and `GeneSet` say what each
     one is, instead of repeating the one of `GeneCollection`.
+
 
 ### v4.0.0 - 17th October 2026
 
@@ -282,6 +301,7 @@
 - `tests/unit/algorithms/test_save.py`: the plot test also runs with
   `other_metrics_to_plot`.
 
+
 ### v3.2.0 - 17th October 2026
 
 - Renamed what was left of the `GeneticBag` name of the knapsack
@@ -296,6 +316,7 @@
   - The unit tests: `test_genetic_bag` is now
     `test_knapsack_finds_the_best_bag`, and the `genetic_bag`
     variables are `knapsack`.
+
 
 ### v3.1.1 - 17th October 2026
 
@@ -321,6 +342,7 @@
 - Updated the paths to these tests in `crates/genetic_opt/tests/algorithm.rs`,
   `.claude/rules/testing-areas.md` and `backlog.md`.
 
+
 ### v3.1.0 - 17th October 2026
 
 - `src/genetic_opt/algorithms/base.py`: `init_population` now means
@@ -333,6 +355,7 @@
 - Updated `tests/unit/test_binary_algs.py` for the new names.
 - A subclass that overrides `get_init_population` must rename it to
   `init_population`, or its override stops being called.
+
 
 ### v3.0.0 - 17th October 2026
 
@@ -357,6 +380,7 @@
 - Added the crate tests `algorithm_config_default_sets_the_defaults`
   and `the_experiment_name_defaults_to_the_name_of_the_problem_type`.
 
+
 ### v2.2.0 - 17th October 2026
 
 - Added `FitConfig.stop_without_improvement` in
@@ -369,6 +393,7 @@
   instance to set `stop_without_improvement=False` instead, in
   `tests/unit/test_binary_algs.py` and `tests/unit/test_fit_save.py`.
 - Added `test_fit_without_the_improvement_stop_breeds_every_generation`.
+
 
 ### v2.1.0 - 17th October 2026
 
@@ -384,6 +409,7 @@
   - `test_chromosomes_sharing_an_id_keep_their_own_scores` keeps only
     its check through `fit`.
 
+
 ### v2.0.6 - 17th October 2026
 
 - `src/genetic_opt/algorithms/base.py`: `fit` checks its `FitConfig`
@@ -391,6 +417,7 @@
   like the crate's `fit_parameters`. The checks, their messages and
   the moment they raise are unchanged: in `fit`, not when the
   `FitConfig` is built.
+
 
 ### v2.0.5 - 17th October 2026
 
@@ -400,6 +427,7 @@
   `ValidationException` naming both numbers.
 - Added `test_a_chromosome_short_of_genes_needs_a_gene_space` in
   `tests/unit/test_functions.py`.
+
 
 ### v2.0.4 - 17th October 2026
 
@@ -411,11 +439,13 @@
 - Added `test_an_error_of_a_load_function_is_not_a_refusal_of_the_file`
   in `tests/unit/test_fit_save.py`.
 
+
 ### v2.0.3 - 17th October 2026
 
 - `.claude/rules/testing-areas.md`: "Recorded times" re-measured at
   v2.0.2: 185 unit tests in 3.9 s, 5 integration tests in 0.5 s, a
   clean `cargo build` in 7.8 s, and 42 Rust tests in 5.3 s.
+
 
 ### v2.0.2 - 17th October 2026
 
@@ -437,6 +467,7 @@
   one edit 0.78 s against 0.90 s; the build folder was 290 MB against
   498 MB.
 
+
 ### v2.0.1 - 17th October 2026
 
 - `src/genetic_opt/algorithms/base.py`:
@@ -457,6 +488,7 @@
   - `test_fit_keeps_one_pool_of_workers_for_the_whole_run`.
   - `test_fit_lets_go_of_its_pool_of_workers_when_it_raises`.
   - `test_fit_runs_a_fitness_function_that_uses_the_algorithm`.
+
 
 ### v2.0.0 - 16th October 2026
 
@@ -484,6 +516,7 @@
   Rust run's last population.
 - `README.md`: documented the new argument.
 
+
 ### v1.0.5 - 16th October 2026
 
 - `pyproject.toml`: added `[tool.hatch.build.targets.sdist]`, so the
@@ -495,12 +528,14 @@
   - `tests/unit/test_versions.py`.
   - `tests/integration/test_rust_layout.py`.
 
+
 ### v1.0.4 - 16th October 2026
 
 - `src/genetic_opt/files.py`: `save_json` writes the text of
   `json.dumps` instead of calling `json.dump`, which uses the pure
   Python encoder. Saving one generation's file went from 20.8 ms to
   2.3 ms in the measurement of the v1.0.0 scan.
+
 
 ### v1.0.3 - 16th October 2026
 
