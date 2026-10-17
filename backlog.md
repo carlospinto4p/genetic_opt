@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (LOW, S) `src/genetic_opt/gene_collection.py:130,206`: `self.size` set before `super().__init__` sets it again; class docstrings at 52-56, 104-108, 178-182 are near copies.
 - [ ] (LOW, S) `crates/genetic_opt/examples/knapsack.rs:19-38` and `numbers.rs:115-134`: argument parsing and printing copied; an unknown format (`jsno`) silently saves BSON instead of being refused.
 - [ ] (LOW, M) `crates/genetic_opt/tests/algorithm.rs:70-133`: the test `Numbers` problem repeats `examples/numbers.rs:58-107`; five `Problem` impls share boilerplate.
 - [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:240`: crossover-invariant error says "mutated to"; should say "crossed to".

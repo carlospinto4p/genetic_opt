@@ -111,9 +111,8 @@ class GeneCollection(ABC):
 
 class GeneList(GeneCollection):
     """
-    Represent a list of genes.
-    A single gene is a symbol and can be anything.
-    This class constitutes the Chromosome class for genetic algorithms.
+    A GeneCollection whose genes are a list: they keep their order and
+    a gene can appear more than once.
     """
 
     def __init__(
@@ -136,11 +135,9 @@ class GeneList(GeneCollection):
         if isinstance(genes, ndarray):
             genes = genes.tolist()
         _check_genes_or_gene_space(size, genes, gene_space)
-        self.size = size
-        if not genes and gene_space:
-            genes = self.select_random(gene_space, n=size)
+        genes = genes or []
         if (size_dif := size - len(genes)) > 0:
-            genes = genes + self.select_random(gene_space, n=size_dif)
+            genes = genes + _draw_genes(gene_space, size_dif)
         super().__init__(size=size, genes=genes)
 
     def random_mutate(
@@ -185,9 +182,8 @@ class GeneList(GeneCollection):
 
 class GeneSet(GeneCollection):
     """
-    Represent a set of genes.
-    A single gene is a symbol and can be anything.
-    This class constitutes the Chromosome class for genetic algorithms.
+    A GeneCollection whose genes are a set: they have no order and each
+    gene appears once.
     """
 
     def __init__(
@@ -212,11 +208,8 @@ class GeneSet(GeneCollection):
         if isinstance(genes, list):
             genes = set(genes)
         _check_genes_or_gene_space(size, genes, gene_space)
-        self.size = size
-        if not genes and gene_space:
-            genes = self.select_random(gene_space, n=size)
+        genes = genes or set()
         if size > len(genes):
-            # GeneSpace required
             genes = self._complete_genes(genes, gene_space=gene_space, n=size)
         super().__init__(size=size, genes=genes)
 
@@ -275,13 +268,15 @@ class GeneSet(GeneCollection):
             the GeneSpace.
             Default to the size of the GeneSet.
         :return: a set of genes of size `n`.
+        :raises ValidationException: when the GeneSpace has fewer than
+            `n` genes.
         """
-        if len(gene_space) < self.size:
+        n = n or self.size
+        if len(gene_space) < n:
             raise ValidationException(
-                f"Chromosome received a `size` ({self.size}) greater "
+                f"Chromosome received a `size` ({n}) greater "
                 f"than its `gene_space` ({len(gene_space)})"
             )
-        n = n or self.size
         while (missing := n - len(genes)) > 0:
             genes.update(_draw_genes(gene_space, missing))
         return genes

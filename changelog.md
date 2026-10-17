@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v4.0.1 - 17th October 2026
+
+- `gene_collection.py`:
+  - `GeneList` and `GeneSet` no longer set `size` before
+    `GeneCollection.__init__` sets it. `GeneList` draws its missing
+    genes with `_draw_genes`.
+  - `GeneSet._complete_genes` checks the gene space against the number
+    of genes it is asked for, not `size`.
+  - The class docstrings of `GeneList` and `GeneSet` say what each
+    one is, instead of repeating the one of `GeneCollection`.
+
 ### v4.0.0 - 17th October 2026
 
 - Moved `plot_metrics` and `other_metrics_to_plot` from
