@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import Any
 
-from numpy import empty, integer, ndarray
+from numpy import empty, ndarray
 from numpy.random import RandomState
 
 from genetic_opt.exceptions import ValidationException
@@ -55,8 +55,9 @@ class BinaryGeneSpace(AbstractGeneSpace):
 
     def select_random(
         self, n: int | tuple[int, ...] | None = None
-    ) -> integer | ndarray:
-        return self.random_state.choice([0, 1], size=n)
+    ) -> int | ndarray:
+        # The same draws as `choice([0, 1], size=n)`, in half the time
+        return self.random_state.randint(0, 2, size=n)
 
 
 class ValuesGeneSpace(AbstractGeneSpace):

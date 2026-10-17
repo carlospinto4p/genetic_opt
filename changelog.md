@@ -2,6 +2,29 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.12 - 17th October 2026
+
+- `gene_space.py`: `BinaryGeneSpace.select_random` draws with
+  `randint(0, 2)` instead of `choice([0, 1])`: the same draws, in
+  5.7 µs instead of 11.3 µs. One gene now comes back as an `int`
+  instead of a numpy integer.
+- `Chromosome.random_mutate`, `GeneList.random_mutate` and
+  `GeneSet.random_mutate` copy themselves by their attributes instead
+  of with `copy.copy`, in 0.8 µs instead of 2.9 µs.
+- `algorithms/base.py`: `stale_generations` is counted as each
+  generation's metrics are added, instead of going through every
+  generation each time. At 5,000 generations the old count added up to
+  0.8 s of a run.
+- `web/runs.py`: `_breeding_record` compares the genes of a child one
+  by one only when a mutation changed them.
+- A seeded run of the Knapsack example at the explainer's limits, with
+  and without `max_stale_generations`, gives the same output as before
+  to the byte.
+- `test_a_better_best_score_ends_the_stale_generations` adds each
+  generation through `_update_metrics` instead of appending to
+  `metrics`.
+
+
 ### v5.10.11 - 17th October 2026
 
 - `algorithms/plots.py`: `save_current_figure` saves through the

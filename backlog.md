@@ -5,10 +5,6 @@
 #### Performance
 
 - [ ] **[manual]** Check the Knapsack page's breeding view after v5.10.8, which works out the parents and the crossed genes on the page: run `uv run python -m genetic_opt.web.app` and `corepack pnpm --dir frontend dev`, open `http://localhost:5208/#/knapsack`, click "Run the algorithm", stay on the breeding tab of a generation after 0. A pass: each pair shows Parent A and B with a score, a rank and a best/random chip; "crossed" rows have coloured bars under the genes; "mutated" rows ring the same genes that differ from the crossed row; ranks strip above shows picked squares. The "How it works" page was checked headless. Also after v5.10.9 (raw run state, tooltips built on hover): on the population tab, hover a gene square — its tooltip reads "gene N: 0/1", plus "turned off when decoded" on a crossed-out square; on a breeding child, "changed by the mutation" on a ringed square; press Play and the table steps every 700 ms; "Run the algorithm" again replaces the run; "Open a saved run" opens a folder — MED — S
-- [ ] `web/runs.py:166-209` — `_breeding_record` spends 3.3 s self time at the limits on per-gene `int()` and the `changed` comprehension — LOW — S
-- [ ] `gene_space.py:58` — `random_state.choice([0, 1], size=n)` gives identical draws to `randint(0, 2, size=n)` (checked values and dtype) at 6.5 µs vs 11.5 µs; 73k calls per limit-sized run — LOW — S
-- [ ] `algorithms/base.py:341-358` (called at 498) — `stale_generations` walks all metrics each generation (quadratic); keep a running counter — LOW — S
-- [ ] `chromosome.py:171`, `gene_collection.py:163,244` — `copy.copy` costs 2.0 µs vs 0.5 µs hand-built, two per mutation (~4% of mutation time) — LOW — S
 - [ ] `frontend/src/components/PopulationTable.svelte:33,41` — `JSON.stringify(m.genes)` computed twice per member — LOW — S
 - [ ] `tests/unit/algorithms/test_base.py:644-654` — the two hash-seed subprocesses run serially (~0.9 s each); start both, then wait — LOW — S
 - [ ] `.pre-commit-config.yaml:105-117` — `cargo-test` and `frontend-test` use `always_run: true`; `files: ^crates/` / `^frontend/` would skip them (saves only ~1.8 s per push) — LOW — S

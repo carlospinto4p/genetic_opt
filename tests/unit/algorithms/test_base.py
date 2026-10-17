@@ -27,7 +27,7 @@ from genetic_opt.fit_result import (
 )
 from genetic_opt.fit_result_io import load_fit_result
 from genetic_opt.gene_space import ValuesGeneSpace
-from genetic_opt.metrics import Best, Metric
+from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
 from tests.unit.conftest import (
     NumbersAlgorithm,
@@ -250,20 +250,11 @@ def test_a_better_best_score_ends_the_stale_generations(minimize):
     bests = [5, 3, 3, 6, 1, 1, 1] if minimize else [5, 7, 7, 4, 9, 9, 9]
     stale = []
     for value in bests:
-        algorithm.metrics.append(
-            Metric(
-                best=Best(
-                    score=Score(value=value), encoded=None, result=None
-                ),
-                size=1,
-                mean=value,
-                median=value,
-                var=0,
-                n_uniques=1,
-                percent_uniques=100,
-                fitting_seconds=0,
-            )
-        )
+        # A population of one, whose score is the best of the generation
+        chromosome = Chromosome(size=1, genes={value}, is_gene_set=True)
+        chromosome.score = Score(value=value)
+        algorithm.population = [chromosome]
+        algorithm._update_metrics(generation_fitting_time=0)
         stale.append(algorithm.stale_generations())
     assert stale == [0, 0, 1, 2, 0, 1, 2]
 

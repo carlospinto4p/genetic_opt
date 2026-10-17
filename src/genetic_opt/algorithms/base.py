@@ -185,6 +185,9 @@ class GeneticAlgorithm(ABC):
         self.history: list[list[tuple[Score, Chromosome]]] = []
         # History of the metrics of each generation
         self.metrics: list[Metric] = []
+        # Counted as each Metric is added, read by `stale_generations`
+        self._stale_generations: int = 0
+        self._best_value: float | None = None
         # Extra configuration of the experiment, that depends on the custom,
         # child classes.
         self.extra_config: dict = extra_config or {}
@@ -356,16 +359,7 @@ class GeneticAlgorithm(ABC):
         :return: 0 when the last generation found a better best score,
             or is the first one.
         """
-        stale, best = 0, None
-        for metric in self.metrics:
-            value = metric.best.score.value
-            if best is None or (
-                value < best if self.minimize else value > best
-            ):
-                stale, best = 0, value
-            else:
-                stale += 1
-        return stale
+        return self._stale_generations
 
     @time_it_with_logger(logger)
     def fit(
@@ -428,6 +422,7 @@ class GeneticAlgorithm(ABC):
         self.population = []
         self.history = []
         self.metrics = []
+        self._stale_generations, self._best_value = 0, None
         # The scores stay: scoring is the costly part of a run
         self._scores_before_run = len(self._chromosome_cache)
         self._score_requests = 0
@@ -999,7 +994,7 @@ class GeneticAlgorithm(ABC):
     def _update_metrics(self, generation_fitting_time: float) -> None:
         """
         Add the current population to `self.history` and its `Metric`
-        to `self.metrics`.
+        to `self.metrics`, and count it in `stale_generations`.
         :param generation_fitting_time: fitting time of the last generation,
             in seconds.
         :return: None.
@@ -1013,3 +1008,8 @@ class GeneticAlgorithm(ABC):
             fitting_seconds=generation_fitting_time,
         )
         self.metrics.append(population_metrics)
+        value, best = population_metrics.best.score.value, self._best_value
+        if best is None or (value < best if self.minimize else value > best):
+            self._stale_generations, self._best_value = 0, value
+        else:
+            self._stale_generations += 1

@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Collection
-from copy import copy
 
 from numpy import generic, ndarray
 from numpy.random import RandomState
@@ -160,7 +159,9 @@ class GeneList(GeneCollection):
             random_state.random(len(self.genes)) < gene_mutate_prob
         ).tolist()
         new_genes = iter(_draw_genes(gene_space, sum(mutates)))
-        mutated = copy(self)
+        # What `copy.copy` does, in a quarter of the time
+        mutated = object.__new__(type(self))
+        mutated.__dict__.update(self.__dict__)
         mutated.genes = [
             next(new_genes) if gene_mutates else gene
             for gene, gene_mutates in zip(self.genes, mutates)
@@ -241,7 +242,9 @@ class GeneSet(GeneCollection):
             if not gene_mutates
         }
         new_genes.update(_draw_genes(gene_space, sum(mutates)))
-        mutated = copy(self)
+        # What `copy.copy` does, in a quarter of the time
+        mutated = object.__new__(type(self))
+        mutated.__dict__.update(self.__dict__)
         mutated.genes = self._complete_genes(
             genes=new_genes, gene_space=gene_space
         )

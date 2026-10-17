@@ -181,16 +181,21 @@ def _breeding_record(algorithm: _Recorder) -> dict[str, Any]:
         pair_children = []
         for crossed in children:
             mutated = next(mutations)
+            before, after = crossed.genes, mutated.genes
             pair_children.append(
                 {
                     **algorithm.shown(mutated),
-                    "changed": [
-                        j
-                        for j, (g, m) in enumerate(
-                            zip(crossed.genes, mutated.genes)
-                        )
-                        if g != m
-                    ],
+                    # Most children have no gene mutated, and comparing
+                    # the whole lists is quicker than gene by gene
+                    "changed": (
+                        []
+                        if before == after
+                        else [
+                            j
+                            for j, (g, m) in enumerate(zip(before, after))
+                            if g != m
+                        ]
+                    ),
                     "stayed": id(mutated) in stayed,
                 }
             )

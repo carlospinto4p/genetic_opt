@@ -1,7 +1,6 @@
 """Genetic Opt Chromosome submodule."""
 
 from collections.abc import Callable, Collection
-from copy import copy
 from hashlib import md5
 from time import time
 from typing import Any
@@ -168,7 +167,9 @@ class Chromosome:
         """
         # Before the copy, so that it gets a state built here
         random_state = random_state or self.random_state
-        mutated = copy(self)
+        # What `copy.copy` does, in a quarter of the time
+        mutated = object.__new__(type(self))
+        mutated.__dict__.update(self.__dict__)
         mutated.gene_collection = self.gene_collection.random_mutate(
             gene_space=gene_space,
             gene_mutate_prob=gene_mutate_prob,
