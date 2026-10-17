@@ -427,6 +427,72 @@ def test_a_second_fit_starts_a_new_run():
     assert counted["processed"] == len(calls) - first_calls
 
 
+def test_fit_gives_iter_func_the_generations_and_the_chromosomes_to_score():
+    # One process, so the fitness function runs here and `calls` fills.
+    knapsack, calls = _counting_bag()
+    wrapped: list[list] = []
+
+    def record(items: list) -> list:
+        wrapped.append(items)
+        return items
+
+    knapsack.fit(
+        FitConfig(
+            n_generations=3,
+            population_size=30,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+        iter_func=record,
+    )
+    assert wrapped[0] == [0, 1, 2, 3]
+    scored = [chromosome for items in wrapped[1:] for chromosome in items]
+    assert all(isinstance(chromosome, Chromosome) for chromosome in scored)
+    assert [repr(chromosome) for chromosome in scored] == calls
+
+
+@pytest.mark.parametrize(
+    ("crossovers_prop", "besties_prop", "children"),
+    [(1.0, 1.0, 30), (1.0, 0.0, 30), (0.0, 1.0, 0)],
+)
+def test_proportions_at_0_and_1_breed_without_error(
+    crossovers_prop, besties_prop, children
+):
+    # With both at 1 every Chromosome is a parent and the rest is empty.
+    knapsack, _ = _counting_bag()
+    result = knapsack.fit(
+        FitConfig(
+            n_generations=4,
+            population_size=30,
+            crossovers_prop=crossovers_prop,
+            besties_prop=besties_prop,
+            min_population_size=0,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+    )
+    assert len(result["metrics"]) == 5
+    assert [len(population) for population in result["history"]] == [30] * 5
+    counted = result["fit_metrics"]["fitness_func_calls"]
+    assert counted["total"] == 30 + children * 4
+
+
+def test_a_population_of_one_breeds_no_children():
+    knapsack, _ = _counting_bag()
+    result = knapsack.fit(
+        FitConfig(
+            n_generations=4,
+            population_size=1,
+            min_population_size=0,
+            stop_without_improvement=False,
+            n_jobs=1,
+        ),
+    )
+    assert [len(population) for population in result["history"]] == [1] * 5
+    assert result["fit_metrics"]["fitness_func_calls"]["total"] == 1
+    assert len(result["bests"]["scores"]) == 1
+
+
 def _bag_run_genes(n_jobs: int, **seeds: int) -> list[list[list[int]]]:
     """The genes of each population of a run of a new knapsack."""
     knapsack = Knapsack(

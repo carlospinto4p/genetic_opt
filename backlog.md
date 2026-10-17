@@ -4,8 +4,6 @@
 
 #### Test coverage
 
-- [ ] (MED, S) Python `fit` is never run with `population_size=1`, `crossovers_prop=0`, or `crossovers_prop=besties_prop=1` (`base.py:587-599`); the crate covers these at `tests/algorithm.rs:407`.
-- [ ] (MED, S) `iter_func` (`base.py:348,408,744`) is never passed in any test.
 - [ ] (MED, S) `ones_algorithm` in `tests/unit/conftest.py`: the unit suite saves and loads only list chromosomes; set chromosomes are covered only by the cargo-gated integration suite.
 - [ ] (MED, S) `load_fit_result_file` (`tests/unit/test_fit_result.py`, `tests/unit/algorithms/test_save.py`) is tested only on JSON, never with `remove_duplicates`, `max_file_bytes`, BSON or a malformed file.
 - [ ] (MED, S) `test_fit_saves_each_generation_and_loads_it_back` in `tests/unit/algorithms/test_save.py`: history equality relies on `Chromosome.__eq__` (genes only), so losing `score_time` or `random_seed` on save would pass. Add a direct `Chromosome.to_dict`/`from_dict` round-trip test.

@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.6 - 17th October 2026
+
+- Added tests of `fit` in `tests/unit/algorithms/test_base.py`:
+  - `test_fit_gives_iter_func_the_generations_and_the_chromosomes_to_score`:
+    `iter_func` gets the generation numbers, and then exactly the
+    Chromosomes the fitness function runs on.
+  - `test_proportions_at_0_and_1_breed_without_error`: `crossovers_prop`
+    and `besties_prop` at 0 and 1, counting the children scored.
+  - `test_a_population_of_one_breeds_no_children`.
+- Added `a_population_of_one_breeds_no_children` in
+  `crates/genetic_opt/tests/algorithm.rs`, the same test for the crate.
+
 ### v5.0.5 - 17th October 2026
 
 - Fixed: a seed gives the same run of set Chromosomes in every launch

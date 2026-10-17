@@ -387,6 +387,25 @@ fn proportions_at_0_and_1_breed_without_error() {
 }
 
 #[test]
+fn a_population_of_one_breeds_no_children() {
+    let mut config = FitConfig::new(4, 1);
+    config.stop_without_improvement = false;
+    config.min_population_size = 0;
+    let mut algorithm = algorithm(knapsack());
+    let result = algorithm.fit(&config).unwrap();
+
+    assert!(
+        algorithm
+            .history()
+            .iter()
+            .all(|population| population.len() == 1)
+    );
+    assert_eq!(algorithm.history().len(), 5);
+    assert_eq!(result.fit_metrics.fitness_func_calls.total, 1);
+    assert_eq!(result.bests.len(), 1);
+}
+
+#[test]
 fn a_second_fit_is_the_same_run_again() {
     let mut config = FitConfig::new(4, 30);
     config.stop_without_improvement = false;
