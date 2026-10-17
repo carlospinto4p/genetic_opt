@@ -3,7 +3,11 @@ from joblib.externals import cloudpickle
 
 from genetic_opt.algorithms import FitConfig
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.examples.binary import Knapsack
+from genetic_opt.examples.binary import (
+    BinaryFunction,
+    Knapsack,
+    wavy_function,
+)
 from genetic_opt.exceptions import ValidationException
 
 # ── Knapsack Tests ─────────────────────────────────────────────────────
@@ -78,3 +82,24 @@ def test_the_fitness_function_of_the_bag_travels_without_the_bag():
         FitConfig(n_generations=5, population_size=50, n_jobs=1),
     )
     assert len(cloudpickle.dumps(knapsack.fitness_func)) == sent_bytes
+
+
+# ── BinaryFunction Tests ───────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("bits", "x"), [([0] * 8, -1.0), ([1] * 8, 2.0), ([1] + [0] * 7, 0.5)]
+)
+def test_binary_function_decodes_the_bits_over_the_interval(bits, x):
+    problem = BinaryFunction(n_bits=8)
+    chromosome = Chromosome(size=8, genes=bits)
+    # 10000000 is 128 of 255
+    expected = x if x != 0.5 else -1 + 3 * 128 / 255
+    assert abs(problem.decode_func(chromosome) - expected) < 1e-12
+
+
+def test_binary_function_scores_with_the_wavy_function():
+    problem = BinaryFunction(n_bits=8)
+    chromosome = Chromosome(size=8, genes=[0, 1, 1, 0, 1, 0, 0, 1])
+    x = problem.decode_func(chromosome)
+    assert problem.fitness_func(chromosome).value == wavy_function(x)

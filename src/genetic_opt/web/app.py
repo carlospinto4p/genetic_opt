@@ -16,18 +16,20 @@ from pydantic import BaseModel, Field, NonNegativeInt, model_validator
 
 from genetic_opt import __version__
 from genetic_opt.algorithms.config import FitConfig
-from genetic_opt.exceptions import ValidationException
-from genetic_opt.web.runs import (
+from genetic_opt.examples.binary import (
     FUNCTION_BITS,
     FUNCTION_HIGH,
     FUNCTION_LOW,
+)
+from genetic_opt.exceptions import ValidationException
+from genetic_opt.web.runs import (
     KNAPSACK_CAPACITY,
     KNAPSACK_VALUES,
     KNAPSACK_WEIGHTS,
     function_run,
     knapsack_run,
-    saved_run,
 )
+from genetic_opt.web.saved_runs import saved_run
 
 # Port of the API. The front-end's dev server sends `/api` to it.
 DEFAULT_PORT = 5209

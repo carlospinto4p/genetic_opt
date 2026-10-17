@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `web/runs.py:30-96` — `BinaryFunction`, `wavy_function`, `function_curve` live in the web layer while `Knapsack` is in `examples/binary.py`; `runs.py` also mixes the recorder mixin and the saved-run adapter; split — MED — M
 - [ ] `frontend/src/components/LineChart.svelte:30-51` — padding, scaling and SVG path code duplicated in `FunctionPlot.svelte:14-33`; share a scale helper — MED — M
 - [ ] `frontend/src/pages/Knapsack.svelte:58-62,173` — "server did not answer" block, "Loading the example…" line, `.explain`/`.row` CSS and `reset()` copied in `FunctionLab.svelte:43-47,107` and `Guide.svelte:63-67` — MED — S
 - [ ] `algorithms/plots.py:500`, `algorithms/save.py` — saved-run code sits under `algorithms/`, apart from `fit_result.py`, `fit_result_io.py`, `files.py`; a `runs/` subpackage would group them, but `downstream` imports `genetic_opt.files` and `genetic_opt.fit_result_io` (needs shims or a downstream backlog item) — LOW — M

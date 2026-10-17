@@ -156,7 +156,7 @@ logging.basicConfig(
 lets you step through real runs, generation by generation: the parents
 picked, how each pair was crossed, which genes the mutation changed and
 which children stayed. It shows the `Knapsack` example and
-`genetic_opt.web.runs.BinaryFunction`, which looks for the highest
+`genetic_opt.examples.binary.BinaryFunction`, which looks for the highest
 point of `x · sin(10πx) + 1`. Its page "Open a saved run" steps through
 a run saved by `fit` or by the crate, given the path of its folder: the
 charts and each population, without the breeding, which the files do

@@ -1,9 +1,14 @@
 """Genetic Opt binary examples submodule."""
 
+from math import pi, sin
+
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.score import Score
+
+# Interval and number of bits of `BinaryFunction` when none are given
+FUNCTION_LOW, FUNCTION_HIGH, FUNCTION_BITS = -1.0, 2.0, 16
 
 
 class Knapsack(BinaryGeneticAlgorithm):
@@ -87,6 +92,63 @@ class Knapsack(BinaryGeneticAlgorithm):
 
         super().__init__(
             chromosome_length=len(weights),
+            chromosome_as_set=False,
+            decode_func=decode,
+            fitness_func=fitness,
+            minimize=False,
+            random_seed=random_seed,
+            gene_space_random_seed=gene_space_random_seed,
+        )
+
+
+def wavy_function(x: float) -> float:
+    """
+    The function `BinaryFunction` maximizes: many peaks of growing
+    height, so a search that climbs the nearest one ends on a low peak.
+    :param x: point of the interval.
+    :return: the value of the function at `x`.
+    """
+    return x * sin(10 * pi * x) + 1
+
+
+class BinaryFunction(BinaryGeneticAlgorithm):
+    """
+    Problem: find the `x` of an interval with the highest
+    `wavy_function(x)`.
+
+    A Chromosome is a list of `n_bits` bits, read as a whole number
+    from 0 to `2**n_bits - 1` (the first gene is the highest bit) and
+    stretched over the interval: 0 is `low`, the largest is `high`.
+    """
+
+    def __init__(
+        self,
+        low: float = FUNCTION_LOW,
+        high: float = FUNCTION_HIGH,
+        n_bits: int = FUNCTION_BITS,
+        random_seed: int = 442,
+        gene_space_random_seed: int = 2,
+    ) -> None:
+        """
+        :param low: lowest `x` of the interval.
+        :param high: highest `x` of the interval.
+        :param n_bits: number of genes of each Chromosome.
+        :param random_seed: random seed for the algorithm.
+        :param gene_space_random_seed: random seed for the genes drawn.
+        """
+        self.low, self.high, self.n_bits = low, high, n_bits
+        largest = 2**n_bits - 1
+
+        def decode(chromosome: Chromosome) -> float:
+            """The `x` the bits of a Chromosome stand for."""
+            number = int("".join(str(int(g)) for g in chromosome.genes), 2)
+            return low + (high - low) * number / largest
+
+        def fitness(chromosome: Chromosome) -> Score:
+            return Score(value=wavy_function(decode(chromosome)), name="f(x)")
+
+        super().__init__(
+            chromosome_length=n_bits,
             chromosome_as_set=False,
             decode_func=decode,
             fitness_func=fitness,

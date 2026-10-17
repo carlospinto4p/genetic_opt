@@ -2,6 +2,23 @@
 ## Changelog - Genetic-Opt
 
 
+### v7.0.0 - 18th October 2026
+
+- Moved `BinaryFunction`, `wavy_function` and the `FUNCTION_LOW`,
+  `FUNCTION_HIGH`, `FUNCTION_BITS` defaults from `web/runs.py` to
+  `examples/binary.py`, next to `Knapsack`.
+- Moved `saved_run` and `MAX_SAVED_RUN_BYTES` from `web/runs.py` to the
+  new `web/saved_runs.py`. `web/runs.py` keeps the recorder of the
+  explainer's runs and `function_curve`.
+- Renamed `_metrics` in `web/runs.py` to `generation_metrics`, which
+  both modules use.
+- Moved the tests to match:
+  - `tests/unit/examples/test_binary.py`: the `BinaryFunction` tests.
+  - `tests/unit/web/test_saved_runs.py`: the `saved_run` tests.
+- `downstream` imports neither `genetic_opt.web` nor
+  `genetic_opt.examples`.
+
+
 ### v6.0.0 - 18th October 2026
 
 - `GeneticAlgorithm.next_generation_selection` takes the run's
