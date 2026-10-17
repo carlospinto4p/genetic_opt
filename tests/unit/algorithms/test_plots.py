@@ -44,3 +44,24 @@ def test_the_plot_has_a_panel_for_the_other_keys_when_given(
             ]
     finally:
         plt.close(figure)
+
+
+@pytest.mark.parametrize(
+    "score_name, title",
+    [
+        (None, "Genetic Algorithm Metrics"),
+        ("", "Genetic Algorithm Metrics"),
+        ("ones_left", "Genetic Algorithm Metrics - Ones Left"),
+    ],
+)
+def test_the_plot_title_names_the_score_when_it_has_a_name(
+    saved_run, score_name, title
+):
+    loaded = load_fit_result(saved_run, decode_genes)
+    loaded["metrics"][0].best.score.name = score_name
+    plot_genetic_algo_metrics(loaded["metrics"], loaded["fit_metrics"])
+    figure = plt.gcf()
+    try:
+        assert figure.get_suptitle() == title
+    finally:
+        plt.close(figure)

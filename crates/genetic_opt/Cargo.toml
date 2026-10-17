@@ -2,7 +2,7 @@
 name = "genetic_opt"
 # Kept equal to the version in the repository's `pyproject.toml`, which
 # `tests/unit/test_versions.py` checks.
-version = "5.0.9"
+version = "5.0.10"
 edition = "2024"
 description = "Genetic algorithm optimizers."
 

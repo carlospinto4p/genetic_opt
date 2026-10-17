@@ -2,6 +2,12 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.10 - 17th October 2026
+
+- Added `test_the_plot_title_names_the_score_when_it_has_a_name` in
+  `tests/unit/algorithms/test_plots.py`: the title of the metrics plot
+  with no score name, with an empty one, and with one of two words.
+
 ### v5.0.9 - 17th October 2026
 
 - `Score.to_dict` leaves out `name` and `extra_metrics` only when they
