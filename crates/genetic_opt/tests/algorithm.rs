@@ -287,6 +287,47 @@ fn generations_within(max_seconds: f64) -> usize {
     algorithm(ZeroStart).fit(&config).unwrap().metrics.len()
 }
 
+/// A run of `ZeroStart` without mutations, so its best score never gets
+/// better, with no other stop than `max_stale_generations`.
+fn stale_run(max_stale_generations: usize) -> GeneticAlgorithm<ZeroStart> {
+    let mut config = FitConfig::new(5, 20);
+    config.mutate_prob = 0.0;
+    config.min_population_size = 0;
+    config.stop_without_improvement = false;
+    config.max_stale_generations = Some(max_stale_generations);
+    let mut algorithm = algorithm(ZeroStart);
+    algorithm.fit(&config).unwrap();
+    algorithm
+}
+
+#[test]
+fn the_run_stops_after_max_stale_generations() {
+    for (max_stale_generations, generations) in [(2, 3), (0, 1)] {
+        let algorithm = stale_run(max_stale_generations);
+        assert_eq!(algorithm.metrics().len(), generations);
+        assert_eq!(algorithm.stale_generations(), generations - 1);
+    }
+}
+
+#[test]
+fn stale_generations_count_from_the_last_better_best_score() {
+    for minimize in [false, true] {
+        let mut algorithm = algorithm(numbers(minimize));
+        algorithm.fit(&numbers_config()).unwrap();
+        let bests: Vec<f64> = algorithm
+            .metrics()
+            .iter()
+            .map(|metric| metric.best.score.value)
+            .collect();
+        // The best score never gets worse, so the stale ones are the
+        // last ones equal to the last.
+        let last = bests[bests.len() - 1];
+        let stale = bests.iter().rev().take_while(|b| **b == last).count() - 1;
+        assert!(bests.len() - 1 > stale, "the best never got better");
+        assert_eq!(algorithm.stale_generations(), stale);
+    }
+}
+
 #[test]
 fn the_run_stops_after_max_seconds() {
     assert_eq!(generations_within(0.0), 1);
@@ -357,6 +398,12 @@ fn the_log_names_each_reason_to_stop() {
             generations_within(0.0);
         }),
         "INFO the run stopped after generation 0: 0 seconds reached"
+    );
+    assert_eq!(
+        last_line(&|| {
+            stale_run(2);
+        }),
+        "INFO the run stopped after generation 2: no better best score for 2 generations"
     );
     assert_eq!(
         last_line(&|| {
@@ -605,6 +652,7 @@ fn fit_config_new_sets_the_defaults() {
     assert!(config.stop_without_improvement);
     assert_eq!(config.n_jobs, None);
     assert_eq!(config.max_seconds, None);
+    assert_eq!(config.max_stale_generations, None);
 }
 
 #[test]

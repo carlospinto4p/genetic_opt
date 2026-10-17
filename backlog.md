@@ -2,11 +2,6 @@
 
 ### 2026.10.17 (v5.1.0 improvements review)
 
-- [ ] Stop after a number of generations without a better best score.
-  The default stop today is a mean score exactly equal to the one of the
-  generation before: with integer scores (`Knapsack`) one flat generation
-  ends the run, and with float scores it hardly ever fires. A new
-  `FitConfig` field in both implementations. Impact MEDIUM, effort Medium.
 - [ ] A Python gene space over any list of values given to it, beside
   `BinaryGeneSpace`. Today a problem whose genes are not 0 and 1 must
   write its own `AbstractGeneSpace` subclass. Impact LOW, effort Low.

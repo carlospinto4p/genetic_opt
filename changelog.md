@@ -2,6 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.6.0 - 17th October 2026
+
+- Added `max_stale_generations` to `FitConfig`, in both
+  implementations: the run stops when this many generations in a row
+  have bred no better best score than the generations before them.
+  `None`, the default, is no limit. It is not saved with the run. The
+  default stop, `stop_without_improvement`, is unchanged.
+- Added `stale_generations` to the `GeneticAlgorithm` of both
+  implementations: the count that stop compares.
+- Added tests:
+  - `tests/unit/algorithms/test_base.py`: the stop, its log line, the
+    count when maximizing and minimizing, and a negative value refused.
+  - `crates/genetic_opt/tests/algorithm.rs`: the stop, its log line and
+    the count.
+
+
 ### v5.5.0 - 17th October 2026
 
 - Added `max_seconds` to `FitConfig`, in both implementations: the run

@@ -74,6 +74,10 @@ pub struct FitConfig {
     /// seconds or more after the run started. `None` is no limit. It is
     /// not saved with the run.
     pub max_seconds: Option<f64>,
+    /// The run stops when this many generations in a row have bred no
+    /// better best score than the generations before them. `None` is no
+    /// limit. It is not saved with the run.
+    pub max_stale_generations: Option<usize>,
 }
 
 impl FitConfig {
@@ -88,6 +92,7 @@ impl FitConfig {
             stop_without_improvement: true,
             n_jobs: None,
             max_seconds: None,
+            max_stale_generations: None,
         }
     }
 }
@@ -363,6 +368,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 ))
             } else if config.stop_without_improvement && self.mean_stalled() {
                 Some("the mean score did not change".to_string())
+            } else if let Some(stale) = config.max_stale_generations
+                && self.stale_generations() >= stale
+            {
+                Some(format!("no better best score for {stale} generations"))
             } else if let Some(seconds) = config.max_seconds
                 && run_start.elapsed().as_secs_f64() >= seconds
             {
@@ -644,6 +653,30 @@ impl<P: Problem> GeneticAlgorithm<P> {
             percent_uniques: 100.0 * n_uniques as f64 / values.len() as f64,
             fitting_seconds: round2(fitting_seconds),
         }
+    }
+
+    /// The generations in a row, up to the last one, whose best score is
+    /// no better than the best one of the generations before them: 0 when
+    /// the last generation found a better one, or is the first one.
+    pub fn stale_generations(&self) -> usize {
+        let minimize = self.problem.minimize();
+        let mut stale = 0;
+        let mut best: Option<f64> = None;
+        for metric in &self.metrics {
+            let value = metric.best.score.value;
+            let better = match best {
+                None => true,
+                Some(best) if minimize => value < best,
+                Some(best) => value > best,
+            };
+            if better {
+                stale = 0;
+                best = Some(value);
+            } else {
+                stale += 1;
+            }
+        }
+        stale
     }
 
     fn mean_stalled(&self) -> bool {

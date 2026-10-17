@@ -26,7 +26,7 @@ from genetic_opt.fit_result import (
 )
 from genetic_opt.fit_result_io import load_fit_result
 from genetic_opt.gene_space import AbstractGeneSpace
-from genetic_opt.metrics import Metric
+from genetic_opt.metrics import Best, Metric
 from genetic_opt.score import Score
 from tests.unit.conftest import (
     NumbersAlgorithm,
@@ -210,6 +210,73 @@ def test_fit_stops_after_max_seconds(max_seconds, generations):
     )
     assert len(result["metrics"]) == generations
     assert "max_seconds" not in result["fit_parameters"]
+
+
+@pytest.mark.parametrize(
+    "max_stale_generations, generations", [(2, 3), (0, 1)]
+)
+def test_fit_stops_after_max_stale_generations(
+    max_stale_generations, generations
+):
+    # Without mutations every child is all zeros: no better best score.
+    algorithm = ZeroStartAlgorithm()
+    result = algorithm.fit(
+        FitConfig(
+            n_generations=5,
+            population_size=20,
+            mutate_prob=0,
+            min_population_size=0,
+            stop_without_improvement=False,
+            n_jobs=1,
+            max_stale_generations=max_stale_generations,
+        ),
+    )
+    assert len(result["metrics"]) == generations
+    assert algorithm.stale_generations() == generations - 1
+    assert "max_stale_generations" not in result["fit_parameters"]
+
+
+@pytest.mark.parametrize("minimize", [False, True])
+def test_a_better_best_score_ends_the_stale_generations(minimize):
+    algorithm = NumbersAlgorithm(minimize=minimize)
+    # A worse best score is stale too, as an equal one is.
+    bests = [5, 3, 3, 6, 1, 1, 1] if minimize else [5, 7, 7, 4, 9, 9, 9]
+    stale = []
+    for value in bests:
+        algorithm.metrics.append(
+            Metric(
+                best=Best(
+                    score=Score(value=value), encoded=None, result=None
+                ),
+                size=1,
+                mean=value,
+                median=value,
+                var=0,
+                n_uniques=1,
+                percent_uniques=100,
+                fitting_seconds=0,
+            )
+        )
+        stale.append(algorithm.stale_generations())
+    assert stale == [0, 0, 1, 2, 0, 1, 2]
+
+
+def test_fit_logs_that_max_stale_generations_stopped_it(
+    caplog, set_log_level
+):
+    set_log_level(logging.INFO)
+    ZeroStartAlgorithm().fit(
+        FitConfig(
+            n_generations=5,
+            population_size=20,
+            mutate_prob=0,
+            min_population_size=0,
+            stop_without_improvement=False,
+            n_jobs=1,
+            max_stale_generations=2,
+        ),
+    )
+    assert "no better best score for 2 generations!" in caplog.text
 
 
 def test_fit_logs_that_max_seconds_stopped_it(caplog, set_log_level):
@@ -866,6 +933,7 @@ def test_fit_formats_the_metrics_only_when_they_are_logged(
         {"min_population_size": 31},
         {"max_seconds": -1},
         {"max_seconds": float("nan")},
+        {"max_stale_generations": -1},
     ],
 )
 def test_fit_refuses_parameters_out_of_range(parameters):

@@ -337,6 +337,25 @@ class GeneticAlgorithm(ABC):
         """
         return self._get_iteration_improvement().get("mean", -1) == 0
 
+    def stale_generations(self) -> int:
+        """
+        The generations in a row, up to the last one, whose best score
+        is no better than the best one of the generations before them.
+        `FitConfig.max_stale_generations` stops the run on it.
+        :return: 0 when the last generation found a better best score,
+            or is the first one.
+        """
+        stale, best = 0, None
+        for metric in self.metrics:
+            value = metric.best.score.value
+            if best is None or (
+                value < best if self.minimize else value > best
+            ):
+                stale, best = 0, value
+            else:
+                stale += 1
+        return stale
+
     @time_it_with_logger(logger)
     def fit(
         self,
@@ -470,6 +489,17 @@ class GeneticAlgorithm(ABC):
                         f"Training finished at iteration {n_generation}"
                     )
                     break
+                max_stale = config.max_stale_generations
+                if (
+                    max_stale is not None
+                    and self.stale_generations() >= max_stale
+                ):
+                    logger.info(
+                        f"no better best score for {max_stale} "
+                        f"generations!\n\tTraining finished at iteration "
+                        f"{n_generation}"
+                    )
+                    break
                 if (
                     config.max_seconds is not None
                     and time() - run_start >= config.max_seconds
@@ -529,6 +559,9 @@ class GeneticAlgorithm(ABC):
             raise ValidationException(
                 f"{max_seconds = } must not be negative"
             )
+        max_stale = config.max_stale_generations
+        if max_stale is not None and max_stale < 0:
+            raise ValidationException(f"{max_stale = } must not be negative")
         n_jobs = config.n_jobs
         if n_jobs < 0:
             # A negative number leaves cores out, down to one job
@@ -541,6 +574,7 @@ class GeneticAlgorithm(ABC):
         # Not saved, as the crate does not save them either
         del parameters["stop_without_improvement"]
         del parameters["max_seconds"]
+        del parameters["max_stale_generations"]
         return {
             **parameters,
             "random_seed": self.random_seed,

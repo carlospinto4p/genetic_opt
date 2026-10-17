@@ -36,6 +36,10 @@ class FitConfig:
     :param max_seconds: the run stops after the first generation that
         ends this many seconds or more after the run started. `None`
         is no limit. It is not saved with the run.
+    :param max_stale_generations: the run stops when this many
+        generations in a row have bred no better best score than the
+        generations before them. `None` is no limit. It is not saved
+        with the run.
     """
 
     n_generations: int
@@ -47,6 +51,7 @@ class FitConfig:
     stop_without_improvement: bool = True
     n_jobs: int = -2
     max_seconds: float | None = None
+    max_stale_generations: int | None = None
 
 
 @dataclass(frozen=True)
