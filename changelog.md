@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.11.1 - 18th October 2026
+
+- `gene_collection.py`:
+  - Fixed `GeneSet.__init__` adding the genes it draws to the set it was
+    given: it now copies the genes into a new set.
+  - Fixed `GeneSet.__init__` failing on a tuple or a frozenset that
+    needs more genes.
+  - Fixed `GeneList.__init__` failing on a tuple that needs more genes,
+    and keeping a full one as a tuple, which never equals the same genes
+    as a list.
+- Added 5 tests to `tests/unit/test_gene_collection.py`.
+
+
 ### v5.11.0 - 18th October 2026
 
 - `fit` says why a run ended, in both implementations:

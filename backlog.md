@@ -12,7 +12,6 @@
 
 #### Refactoring
 
-- [ ] `gene_collection.py:411-413` — `GeneSet.__init__` fills the caller's own set in place via `_complete_genes` (`:482-483`); a tuple passes the `list`/`ndarray` conversion (`:406-409`) and fails on `.update` — MED — S
 - [ ] `algorithms/base.py:731-732` — the crossed-parents / best-parents counts are computed in four places (also `web/runs.py:112-115`, `Guide.svelte:46-47`, `algorithm.rs:549-550`); one helper, and Guide reads `breeding.n_crossovers` — MED — S
 - [ ] `algorithms/base.py:702-711` — `next_generation_selection` takes seven loose `FitConfig` fields plus `iter_func`/`n_jobs`; pass `config` (and the override at `web/runs.py:107`) — MED — M
 - [ ] `web/runs.py:30-96` — `BinaryFunction`, `wavy_function`, `function_curve` live in the web layer while `Knapsack` is in `examples/binary.py`; `runs.py` also mixes the recorder mixin and the saved-run adapter; split — MED — M

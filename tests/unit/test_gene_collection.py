@@ -116,6 +116,38 @@ def test_a_gene_drawn_alone_is_a_plain_python_value(is_gene_set):
     assert drawn == Chromosome(size=1, genes=[gene], is_gene_set=is_gene_set)
 
 
+def test_a_set_chromosome_does_not_fill_the_set_it_is_given():
+    genes = {100, 101}
+    chromosome = Chromosome(
+        size=5, genes=genes, gene_space=RangeGeneSpace(), is_gene_set=True
+    )
+    assert genes == {100, 101}
+    assert len(chromosome.genes) == 5
+    assert {100, 101} <= chromosome.genes
+
+
+@pytest.mark.parametrize("given", [tuple, frozenset])
+def test_a_set_chromosome_takes_any_collection_of_genes(given):
+    chromosome = Chromosome(
+        size=5,
+        genes=given([100, 101]),
+        gene_space=RangeGeneSpace(),
+        is_gene_set=True,
+    )
+    assert isinstance(chromosome.genes, set)
+    assert len(chromosome.genes) == 5
+    assert {100, 101} <= chromosome.genes
+
+
+@pytest.mark.parametrize("n_given", [2, 5])
+def test_a_list_chromosome_takes_a_tuple_of_genes(n_given):
+    genes = (1, 0, 1, 1, 0)[:n_given]
+    chromosome = Chromosome(size=5, genes=genes, gene_space=RangeGeneSpace())
+    assert isinstance(chromosome.genes, list)
+    assert chromosome.genes[:n_given] == list(genes)
+    assert len(chromosome.genes) == 5
+
+
 def test_construction_errors_name_the_sizes():
     with pytest.raises(ValidationException) as wrong_size:
         Chromosome(size=2, genes=[1, 0, 1])

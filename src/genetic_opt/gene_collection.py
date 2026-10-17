@@ -117,7 +117,7 @@ class GeneList(GeneCollection):
     def __init__(
         self,
         size: int,
-        genes: list | None = None,
+        genes: Collection | None = None,
         gene_space: AbstractGeneSpace | None = None,
     ) -> None:
         """
@@ -128,11 +128,13 @@ class GeneList(GeneCollection):
         No `gene_space` can be received as long os the length of the received
         genes match the size required.
         :param size: total size of the list.
-        :param genes: list of received genes.
+        :param genes: the received genes, kept as a list.
         :param gene_space: GeneSpace object to get genes from.
         """
         if isinstance(genes, ndarray):
             genes = genes.tolist()
+        elif genes is not None and not isinstance(genes, list):
+            genes = list(genes)
         _check_genes_or_gene_space(size, genes, gene_space)
         genes = genes or []
         if (size_dif := size - len(genes)) > 0:
@@ -190,7 +192,7 @@ class GeneSet(GeneCollection):
     def __init__(
         self,
         size: int,
-        genes: set | None = None,
+        genes: Collection | None = None,
         gene_space: AbstractGeneSpace | None = None,
     ) -> None:
         """
@@ -201,12 +203,14 @@ class GeneSet(GeneCollection):
         No `gene_space` can be received as long os the length of the received
         genes match the size required.
         :param size: total size of the list.
-        :param genes: set of received genes.
+        :param genes: the received genes, copied into a new set.
         :param gene_space: GeneSpace object to get genes from.
         """
         if isinstance(genes, ndarray):
-            genes = set(genes.flatten())
-        if isinstance(genes, list):
+            genes = genes.flatten()
+        # A copy: the genes drawn to complete it go into this set, not the
+        # caller's
+        if genes is not None:
             genes = set(genes)
         _check_genes_or_gene_space(size, genes, gene_space)
         genes = genes or set()
