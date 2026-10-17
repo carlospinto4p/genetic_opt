@@ -2,6 +2,30 @@
 ## Changelog - Genetic-Opt
 
 
+### v3.1.1 - 17th October 2026
+
+- Split the unit tests so each file tests one source module:
+  - `tests/unit/test_binary_algs.py` became
+    `tests/unit/algorithms/test_base.py`,
+    `tests/unit/algorithms/test_binary.py`,
+    `tests/unit/examples/test_binary.py`, `test_chromosome.py` and
+    `test_gene_collection.py`.
+  - `tests/unit/test_fit_save.py` became
+    `tests/unit/algorithms/test_save.py`,
+    `tests/unit/algorithms/test_plots.py`, `test_fit_result.py` and
+    `test_fit_result_io.py`.
+  - The exception and logger tests of `test_functions.py` moved to
+    `test_exceptions.py` and `test_logs.py`; its gene collection tests
+    to `test_gene_collection.py`.
+  - `test_get_space_points_counts_lists_and_sets` moved to
+    `test_metrics.py`.
+- Added `tests/unit/conftest.py` with the helpers the split files
+  share: `ones_algorithm`, `decode_genes`, `count_ones`,
+  `OnesGeneSpace` and the `saved_run` fixture.
+- Every unit test file has its `# ── … Tests ──` section headers.
+- Updated the paths to these tests in `crates/genetic_opt/tests/algorithm.rs`,
+  `.claude/rules/testing-areas.md` and `backlog.md`.
+
 ### v3.1.0 - 17th October 2026
 
 - `src/genetic_opt/algorithms/base.py`: `init_population` now means

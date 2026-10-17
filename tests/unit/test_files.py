@@ -20,6 +20,8 @@ from genetic_opt.files import (
 
 DATA = {"name": "bag", "values": [1, 2.5, "three"], "nested": {"a": None}}
 
+# ── Files Tests ────────────────────────────────────────────────────────
+
 
 def test_save_bson_adds_extension_and_roundtrips(tmp_path):
     save_bson(DATA, f"{tmp_path}/folder/data")

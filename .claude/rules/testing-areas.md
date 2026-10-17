@@ -41,7 +41,8 @@ compared with. One run of each, on a machine with 16 cores.
 - The integration run had the crate built already. Of the 5.3 s of
   `cargo test`, the tests took 0.08 s and the rest was compiling.
 - The slowest unit tests on 17th October 2026
-  (`uv run pytest tests/unit --durations=10`): the two of
-  `test_fit_save.py` that save a plot, 0.75 s and 0.53 s, and
+  (`uv run pytest tests/unit --durations=10`): the two tests that save
+  a plot, now in `tests/unit/algorithms/test_save.py`, 0.75 s and
+  0.53 s, and
   `test_fit_scores_each_chromosome_once`, 0.32 s, which starts worker
   processes. No fixture takes 100 ms.

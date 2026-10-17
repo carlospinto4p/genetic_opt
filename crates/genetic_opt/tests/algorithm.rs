@@ -694,7 +694,7 @@ fn knapsack_sums_do_not_overflow() {
     assert_eq!(valuable.fitness(&[1, 1]).value, 2.0 * f64::from(u32::MAX));
 }
 
-/// The same bags are decoded in `tests/unit/test_binary_algs.py`,
+/// The same bags are decoded in `tests/unit/examples/test_binary.py`,
 /// `KNOWN_BAGS`.
 #[test]
 fn knapsack_decodes_known_bags() {

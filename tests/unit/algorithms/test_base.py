@@ -1,12 +1,10 @@
 import gc
 import logging
-import pickle
 import weakref
 from os import cpu_count
 
 import pytest
 from joblib import Parallel
-from joblib.externals import cloudpickle
 
 from genetic_opt.algorithms import FitConfig
 from genetic_opt.algorithms import base as algorithms
@@ -14,36 +12,19 @@ from genetic_opt.algorithms.base import GeneticAlgorithm
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
-from genetic_opt.exceptions import InvariantException, ValidationException
-from genetic_opt.fit_result import FitResult
+from genetic_opt.exceptions import (
+    InvariantException,
+    ValidationException,
+)
+from genetic_opt.fit_result import (
+    FitResult,
+)
 from genetic_opt.gene_space import AbstractGeneSpace
-from genetic_opt.metrics import Metric, get_space_points
+from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
+from tests.unit.conftest import OnesGeneSpace
 
-
-def test_genetic_bag():
-    weights: list[int] = [23, 31, 29, 44, 53, 38, 63, 85, 89, 82]
-    values: list[int] = [92, 57, 49, 68, 60, 43, 67, 84, 87, 72]
-    capacity: int = 165
-    genetic_bag = Knapsack(weights=weights, values=values, capacity=capacity)
-    opt_data = genetic_bag.fit(
-        FitConfig(
-            n_generations=100,
-            population_size=50,
-            crossovers_prop=0.7,
-            besties_prop=0.6,
-            mutate_prob=0.05,
-            n_jobs=1,
-        )
-    )
-    best_score = opt_data["bests"]["scores"][0].value
-    assert best_score == 309
-    best_bag = opt_data["bests"]["result"][0]
-    assert best_bag == [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
-    # There are different, tied best encodes for this problem, so only
-    # the decoded bag is asserted.
-    # The mean score stops changing long before the 100 generations.
-    assert len(opt_data["metrics"]) == 9
+# ── GeneticAlgorithm Tests ─────────────────────────────────────────────
 
 
 class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
@@ -287,155 +268,6 @@ def test_fit_scores_each_chromosome_once(tmp_path):
     )
 
 
-def test_crossover_cuts_at_every_position_between_two_genes():
-    size = 5
-    genetic_bag = Knapsack(
-        weights=[1] * size, values=[1] * size, capacity=size
-    )
-    zeros = Chromosome(size=size, genes=[0] * size)
-    ones = Chromosome(size=size, genes=[1] * size)
-    cuts = set()
-    for _ in range(200):
-        first, second = genetic_bag.crossover_func(zeros, ones)
-        cut = first.genes.index(1)
-        assert first.genes == [0] * cut + [1] * (size - cut)
-        assert second.genes == [1] * cut + [0] * (size - cut)
-        cuts.add(cut)
-    assert cuts == {1, 2, 3, 4}
-
-
-def test_crossover_of_two_genes_swaps_the_second_one():
-    genetic_bag = Knapsack(weights=[1, 2], values=[3, 4], capacity=3)
-    first, second = genetic_bag.crossover_func(
-        Chromosome(size=2, genes=[0, 0]), Chromosome(size=2, genes=[1, 1])
-    )
-    assert first.genes == [0, 1]
-    assert second.genes == [1, 0]
-
-
-def test_crossover_of_one_gene_returns_the_same_genes():
-    genetic_bag = Knapsack(weights=[1], values=[3], capacity=3)
-    first, second = genetic_bag.crossover_func(
-        Chromosome(size=1, genes=[0]), Chromosome(size=1, genes=[1])
-    )
-    assert first.genes == [0]
-    assert second.genes == [1]
-
-
-def test_crossover_children_carry_the_seed_of_the_run():
-    genetic_bag = Knapsack(
-        weights=[1] * 5, values=[1] * 5, capacity=5, random_seed=7
-    )
-    children = genetic_bag.crossover_func(
-        Chromosome(size=5, genes=[0] * 5), Chromosome(size=5, genes=[1] * 5)
-    )
-    assert [child.random_seed for child in children] == [7, 7]
-    assert [child.is_gene_set for child in children] == [False, False]
-
-
-class OnesGeneSpace(AbstractGeneSpace):
-    """Gene space of one symbol, so a mutated gene is always a 1."""
-
-    def __len__(self) -> int:
-        return 1
-
-    def select_random(self, n=None) -> int | list[int]:
-        return 1 if n is None else [1] * n
-
-
-class RangeGeneSpace(AbstractGeneSpace):
-    """Gene space of the numbers 0 to 19 that records how it is called."""
-
-    def __init__(self):
-        super().__init__(random_seed=7)
-        self.calls: list[int | None] = []
-
-    def __len__(self) -> int:
-        return 20
-
-    def select_random(self, n=None):
-        self.calls.append(n)
-        return self.random_state.choice(20, size=n)
-
-
-def test_list_mutation_draws_its_new_genes_with_one_call():
-    size = 40
-    gene_space = RangeGeneSpace()
-    chromosome = Chromosome(size=size, genes=[-1] * size).random_mutate(
-        gene_space=gene_space, gene_mutate_prob=0.5
-    )
-    n_mutated = sum(gene != -1 for gene in chromosome.genes)
-    assert 1 < n_mutated < size
-    assert gene_space.calls == [n_mutated]
-    assert all(type(gene) is int for gene in chromosome.genes)
-
-
-@pytest.mark.parametrize("probability, n_mutated", [(0, 0), (1, 40)])
-def test_list_mutation_with_probability_0_and_1(probability, n_mutated):
-    gene_space = RangeGeneSpace()
-    chromosome = Chromosome(size=40, genes=[-1] * 40).random_mutate(
-        gene_space=gene_space, gene_mutate_prob=probability
-    )
-    assert sum(gene != -1 for gene in chromosome.genes) == n_mutated
-    assert gene_space.calls == ([n_mutated] if n_mutated else [])
-
-
-def test_set_mutation_with_probability_0_keeps_every_gene():
-    gene_space = RangeGeneSpace()
-    chromosome = Chromosome(
-        size=8, genes=set(range(100, 108)), is_gene_set=True
-    ).random_mutate(gene_space=gene_space, gene_mutate_prob=0)
-    assert chromosome.genes == set(range(100, 108))
-    assert gene_space.calls == []
-
-
-def test_set_mutation_with_probability_1_replaces_every_gene():
-    gene_space = RangeGeneSpace()
-    chromosome = Chromosome(
-        size=8, genes=set(range(100, 108)), is_gene_set=True
-    ).random_mutate(gene_space=gene_space, gene_mutate_prob=1)
-    assert isinstance(chromosome.genes, set)
-    assert len(chromosome.genes) == 8
-    assert chromosome.genes <= set(range(20))
-    # Equal new genes are drawn again until the set has 8.
-    assert gene_space.calls[0] == 8
-
-
-def test_set_mutation_keeps_the_size_of_the_set():
-    gene_space = RangeGeneSpace()
-    unmutated = Chromosome(
-        size=8, genes=set(range(100, 108)), is_gene_set=True
-    )
-    chromosome = unmutated.random_mutate(
-        gene_space=gene_space, gene_mutate_prob=0.5
-    )
-    assert unmutated.genes == set(range(100, 108))
-    assert isinstance(chromosome.genes, set)
-    assert len(chromosome.genes) == 8
-    kept = chromosome.genes & set(range(100, 108))
-    assert 0 < len(kept) < 8
-    assert chromosome.genes - kept <= set(range(20))
-
-
-def test_a_set_as_large_as_its_gene_space_holds_every_gene():
-    gene_space = RangeGeneSpace()
-    chromosome = Chromosome(size=20, gene_space=gene_space, is_gene_set=True)
-    assert isinstance(chromosome.genes, set)
-    assert chromosome.genes == set(range(20))
-    mutated = chromosome.random_mutate(
-        gene_space=gene_space, gene_mutate_prob=0.5
-    )
-    assert mutated.genes == set(range(20))
-
-
-def test_a_chromosome_built_from_a_gene_space_draws_with_one_call():
-    gene_space = RangeGeneSpace()
-    chromosome = Chromosome(size=12, gene_space=gene_space)
-    assert gene_space.calls == [12]
-    assert len(chromosome.genes) == 12
-    assert set(chromosome.genes) <= set(range(20))
-
-
 def test_mutation_differs_between_chromosomes():
     size = 40
     genetic_bag = Knapsack(weights=[1] * size, values=[1] * size, capacity=10)
@@ -445,54 +277,6 @@ def test_mutation_differs_between_chromosomes():
         chromosomes, mutate_prob=0.5
     )
     assert first.genes != second.genes
-
-
-def test_a_chromosome_builds_its_random_state_on_first_use():
-    size = 40
-    unused = Chromosome(size=size, genes=[0] * size)
-    unused_bytes = len(pickle.dumps(unused))
-    # Two Chromosomes with one seed and no state given mutate alike.
-    first, second = (
-        Chromosome(size=size, genes=[0] * size).random_mutate(
-            gene_space=OnesGeneSpace(), gene_mutate_prob=0.5
-        )
-        for _ in range(2)
-    )
-    assert 0 < sum(first.genes) < size
-    assert first.genes == second.genes
-    # The state is some 3 KB of a pickled Chromosome.
-    assert unused_bytes < 1000 < len(pickle.dumps(first))
-
-
-def test_a_mutated_chromosome_gets_a_new_id():
-    size = 40
-    unmutated = Chromosome(size=size, genes=[0] * size)
-    unmutated_id = unmutated.id
-    chromosome = unmutated.random_mutate(
-        gene_space=OnesGeneSpace(), gene_mutate_prob=0.5
-    )
-    assert chromosome.id != unmutated_id
-    same_genes = Chromosome(size=size, genes=list(chromosome.genes))
-    assert chromosome.id == same_genes.id
-    assert hash(chromosome) == hash(same_genes)
-    assert chromosome == same_genes
-
-
-def test_mutation_leaves_the_chromosome_as_it_was():
-    size = 40
-    chromosome = Chromosome(size=size, genes=[0] * size)
-    chromosome.score, chromosome.score_time = Score(value=3), 0.5
-    by_chromosome = {chromosome: "kept"}
-    mutated = chromosome.random_mutate(
-        gene_space=OnesGeneSpace(), gene_mutate_prob=0.5
-    )
-    assert mutated is not chromosome
-    assert 0 < sum(mutated.genes) < size
-    assert mutated.score is None
-    assert mutated.score_time == 0
-    assert chromosome.genes == [0] * size
-    assert chromosome.score.value == 3
-    assert by_chromosome[chromosome] == "kept"
 
 
 def test_the_mutation_invariant_gets_the_chromosome_before_and_after():
@@ -532,39 +316,6 @@ def test_a_broken_invariant_stops_the_run(invariant):
         )
 
 
-def test_the_bag_refuses_weights_and_values_of_different_lengths():
-    with pytest.raises(ValidationException, match="must be the same"):
-        Knapsack(weights=[1, 2], values=[3], capacity=3)
-
-
-# The same bags are decoded in `crates/genetic_opt/tests/algorithm.rs`,
-# `knapsack_decodes_known_bags`.
-KNOWN_BAGS = [
-    ([0] * 10, [0] * 10, 0),
-    ([1, 1, 1, 1, 0, 1, 0, 0, 0, 0], [1, 1, 1, 1, 0, 1, 0, 0, 0, 0], 309),
-    ([1] * 10, [1, 1, 1, 1, 0, 0, 0, 0, 0, 0], 266),
-    ([0, 0, 0, 0, 0, 0, 0, 1, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0], 84),
-]
-
-
-@pytest.mark.parametrize("genes, decoded, value", KNOWN_BAGS)
-def test_the_bag_decodes_and_scores_known_bags(genes, decoded, value):
-    genetic_bag = Knapsack(
-        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
-        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
-        capacity=165,
-    )
-    chromosome = Chromosome(size=10, genes=genes)
-    assert genetic_bag.decode_func(chromosome) == decoded
-    assert genetic_bag.fitness_func(chromosome).value == value
-
-
-def test_the_bag_takes_nothing_after_the_first_object_that_does_not_fit():
-    genetic_bag = Knapsack(weights=[5, 10, 1], values=[1, 1, 1], capacity=12)
-    chromosome = Chromosome(size=3, genes=[1, 1, 1])
-    assert genetic_bag.decode_func(chromosome) == [1, 0, 0]
-
-
 def test_fit_without_a_save_path_decodes_the_population_once():
     genetic_bag, _ = _counting_bag()
     decode_bag = genetic_bag.decode_func
@@ -587,20 +338,6 @@ def test_fit_without_a_save_path_decodes_the_population_once():
     # the last population when the run ends.
     n_bests = len(result["bests"]["result"])
     assert len(decoded) == generations + n_bests + population_size
-
-
-def test_the_fitness_function_of_the_bag_travels_without_the_bag():
-    genetic_bag = Knapsack(
-        weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
-        values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
-        capacity=165,
-    )
-    sent_bytes = len(cloudpickle.dumps(genetic_bag.fitness_func))
-    genetic_bag.fit(
-        FitConfig(n_generations=5, population_size=50, n_jobs=1),
-        plot_metrics=False,
-    )
-    assert len(cloudpickle.dumps(genetic_bag.fitness_func)) == sent_bytes
 
 
 def _counting_bag() -> tuple[Knapsack, list[str]]:
@@ -863,13 +600,6 @@ def test_fit_formats_the_metrics_only_when_they_are_logged(
     )
     metrics = [d for d in formatted if isinstance(d, Metric)]
     assert metrics == (result["metrics"] if logged else [])
-
-
-def test_get_space_points_counts_lists_and_sets():
-    assert get_space_points(2, 10, is_gene_set=False) == 1024
-    assert get_space_points(12, 3, is_gene_set=True) == 220
-    assert get_space_points(12, 12, is_gene_set=True) == 1
-    assert get_space_points(2, 2000, is_gene_set=False) == float("inf")
 
 
 @pytest.mark.parametrize(

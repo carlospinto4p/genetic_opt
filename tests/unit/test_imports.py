@@ -3,6 +3,8 @@ import sys
 
 import pytest
 
+# ── Package Import Tests ───────────────────────────────────────────────
+
 
 @pytest.mark.parametrize(
     "module", ["genetic_opt.algorithms", "genetic_opt.examples.binary"]

@@ -1,15 +1,8 @@
 import logging
 import re
 
-import numpy as np
 import pytest
 
-from genetic_opt.chromosome import Chromosome
-from genetic_opt.exceptions import (
-    GeneticOptException,
-    InvariantException,
-    ValidationException,
-)
 from genetic_opt.functions import (
     format_bytes,
     format_seconds,
@@ -17,13 +10,16 @@ from genetic_opt.functions import (
     now_for_file_path,
     time_it_with_logger,
 )
-from genetic_opt.gene_space import BinaryGeneSpace
-from genetic_opt.logs import log_format
+
+# ── identity_func Tests ────────────────────────────────────────────────
 
 
 def test_identity_func_returns_its_input():
     value = [1, 2]
     assert identity_func(value) is value
+
+
+# ── format_seconds Tests ───────────────────────────────────────────────
 
 
 @pytest.mark.parametrize(
@@ -50,6 +46,9 @@ def test_format_seconds_only_hours():
     assert format_seconds(200_000, only_hours=True) == "55:33:20"
 
 
+# ── format_bytes Tests ─────────────────────────────────────────────────
+
+
 @pytest.mark.parametrize(
     "num_bytes, expected",
     [
@@ -65,8 +64,14 @@ def test_format_bytes(num_bytes, expected):
     assert format_bytes(num_bytes) == expected
 
 
+# ── now_for_file_path Tests ────────────────────────────────────────────
+
+
 def test_now_for_file_path_format():
     assert re.fullmatch(r"\d{8}_\d{6}", now_for_file_path())
+
+
+# ── time_it_with_logger Tests ──────────────────────────────────────────
 
 
 def test_time_it_with_logger_logs_and_returns(caplog):
@@ -82,114 +87,3 @@ def test_time_it_with_logger_logs_and_returns(caplog):
     assert started == "`double` started..."
     # The time is whatever the call took on this machine.
     assert re.fullmatch(r"`double` took \d+\.\d\d seconds", took)
-
-
-def test_log_format_keeps_the_order_of_the_keys():
-    assert log_format({"b": 1, "a": [1, 2]}) == "{'b': 1, 'a': [1, 2]}"
-
-
-def test_log_format_indents_the_lines_it_wraps():
-    assert log_format({"b": 1, "a": 2}, width=1) == "{  'b': 1,\n   'a': 2}"
-
-
-def test_exception_message_includes_the_processing_object():
-    exception = GeneticOptException("bad size", {"size": 3})
-    assert exception.message == "bad size"
-    assert exception.processing_object == {"size": 3}
-    assert str(exception) == (
-        "GeneticOptException: bad size\n\tAt object:\n{'size': 3}"
-    )
-
-
-def test_exception_is_not_logged(caplog):
-    with caplog.at_level(logging.DEBUG, logger="genetic_opt"):
-        GeneticOptException("bad size", {"size": 3})
-    assert caplog.records == []
-
-
-def test_the_package_leaves_logging_to_the_application():
-    logger = logging.getLogger("genetic_opt")
-    assert logger.handlers == []
-    assert logger.propagate
-    assert logger.level == logging.NOTSET
-
-
-def test_construction_errors_name_the_sizes_and_nothing_else():
-    with pytest.raises(ValidationException) as no_genes:
-        Chromosome(size=3)
-    assert no_genes.value.processing_object is None
-
-    with pytest.raises(ValidationException) as wrong_size:
-        Chromosome(size=2, genes=[1, 0, 1])
-    assert wrong_size.value.processing_object is None
-    assert wrong_size.value.message == (
-        "Chromosome size (2) must match the length of the genes (3)"
-    )
-
-    with pytest.raises(ValidationException) as small_space:
-        Chromosome(size=3, gene_space=BinaryGeneSpace(), is_gene_set=True)
-    assert small_space.value.processing_object is None
-    assert small_space.value.message == (
-        "Chromosome received a `size` (3) greater than its `gene_space` (2)"
-    )
-
-
-@pytest.mark.parametrize("is_gene_set", [False, True])
-def test_a_chromosome_needs_genes_or_a_gene_space(is_gene_set):
-    with pytest.raises(ValidationException) as no_genes:
-        Chromosome(size=3, genes=np.array([]), is_gene_set=is_gene_set)
-    assert no_genes.value.message == (
-        "Chromosome must be initialized with the `genes` parameter "
-        "or using a `gene_space`"
-    )
-
-
-@pytest.mark.parametrize("is_gene_set", [False, True])
-def test_a_chromosome_short_of_genes_needs_a_gene_space(is_gene_set):
-    with pytest.raises(ValidationException) as short:
-        Chromosome(size=3, genes=[1], is_gene_set=is_gene_set)
-    assert short.value.message == (
-        "Chromosome received 1 genes for a `size` of 3, and no "
-        "`gene_space` to draw the rest from"
-    )
-
-
-@pytest.mark.parametrize("other", [None, "[1, 0, 1]", [1, 0, 1]])
-def test_a_chromosome_differs_from_what_is_not_a_chromosome(other):
-    chromosome = Chromosome(size=3, genes=[1, 0, 1])
-    assert chromosome != other
-    assert (chromosome == other) is False
-
-
-@pytest.mark.parametrize("is_gene_set", [False, True])
-def test_chromosome_genes_and_size_follow_its_gene_collection(is_gene_set):
-    chromosome = Chromosome(
-        size=2, gene_space=BinaryGeneSpace(), is_gene_set=is_gene_set
-    )
-    mutated = chromosome.random_mutate(
-        gene_space=BinaryGeneSpace(), gene_mutate_prob=1.0
-    )
-    assert mutated.genes is mutated.gene_collection.genes
-    assert mutated.size == mutated.gene_collection.size == 2
-    assert chromosome.genes is chromosome.gene_collection.genes
-
-
-@pytest.mark.parametrize("is_gene_set", [False, True])
-def test_a_gene_drawn_alone_is_a_plain_python_value(is_gene_set):
-    # A single gene is drawn without `n`, and `BinaryGeneSpace` returns
-    # a numpy integer for it. numpy 2 prints that as `np.int64(1)`, so
-    # it gave the Chromosome another `id` than the same genes as `int`.
-    drawn = Chromosome(
-        size=1, gene_space=BinaryGeneSpace(), is_gene_set=is_gene_set
-    )
-    (gene,) = drawn.genes
-    assert type(gene) is int
-    assert drawn == Chromosome(size=1, genes=[gene], is_gene_set=is_gene_set)
-
-
-@pytest.mark.parametrize(
-    "exception_class", [InvariantException, ValidationException]
-)
-def test_exceptions_are_genetic_opt_exceptions(exception_class):
-    with pytest.raises(GeneticOptException, match=exception_class.__name__):
-        raise exception_class("failed")

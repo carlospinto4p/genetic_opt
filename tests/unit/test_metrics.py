@@ -1,7 +1,12 @@
 import pytest
 
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.metrics import Best, Metric, get_population_metrics
+from genetic_opt.metrics import (
+    Best,
+    Metric,
+    get_population_metrics,
+    get_space_points,
+)
 from genetic_opt.score import Score
 
 # ── get_population_metrics Tests ───────────────────────────────────────
@@ -78,3 +83,13 @@ def test_population_metrics_of_equal_scores(scored_genes, n_uniques):
     assert metric.var == 0
     assert metric.n_uniques == n_uniques
     assert metric.percent_uniques == 100 * n_uniques / len(population)
+
+
+# ── get_space_points Tests ─────────────────────────────────────────────
+
+
+def test_get_space_points_counts_lists_and_sets():
+    assert get_space_points(2, 10, is_gene_set=False) == 1024
+    assert get_space_points(12, 3, is_gene_set=True) == 220
+    assert get_space_points(12, 12, is_gene_set=True) == 1
+    assert get_space_points(2, 2000, is_gene_set=False) == float("inf")
