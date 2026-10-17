@@ -1,3 +1,5 @@
+"""Genetic Opt binary algorithm submodule."""
+
 from collections.abc import Callable
 from typing import Any
 

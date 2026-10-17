@@ -2,6 +2,24 @@
 ## Changelog - Genetic-Opt
 
 
+### v4.1.2 - 17th October 2026
+
+- Fixed: `Chromosome.from_dict` and `Metric.from_dict` build the class
+  they are called on, not always the base class. Tested in
+  `test_chromosome.py` and `test_metrics.py`.
+- Docstrings:
+  - Added module docstrings to `fit_result_io.py`, `score.py`,
+    `algorithms/binary.py` and `examples/binary.py`.
+  - Added class docstrings to the three classes of `exceptions.py`.
+  - Fixed `gene_collection.py`, which called itself the Gene Space
+    submodule, `Chromosome.get_score`, which described a `Score` as a
+    tuple, and `Chromosome.to_dict`, which left out `is_gene_set`.
+- Renamed `GeneticAlgorithm._get_fitted_data` to `_get_fit_result`, the
+  name of what it returns.
+- Removed the "Before 0.x.0" history notes from `README.md`; the
+  changelog has them. It still says which old files
+  `load_fit_result` reads.
+
 ### v4.1.1 - 17th October 2026
 
 - Fixed: a broken `crossover_invariant` raises an `InvariantException`

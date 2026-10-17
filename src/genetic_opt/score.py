@@ -1,3 +1,5 @@
+"""Genetic Opt Score submodule."""
+
 from dataclasses import dataclass
 
 

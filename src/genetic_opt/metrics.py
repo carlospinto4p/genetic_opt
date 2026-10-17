@@ -83,7 +83,7 @@ class Metric:
             ),
             result=load_decoded_chromosome_func(result),
         )
-        return Metric(**d)
+        return cls(**d)
 
     def to_dict(
         self,

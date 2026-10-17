@@ -1,4 +1,4 @@
-"""Genetic Opt Gene Space submodule."""
+"""Genetic Opt Gene Collection submodule."""
 
 from abc import ABC, abstractmethod
 from collections.abc import Collection

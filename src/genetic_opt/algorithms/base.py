@@ -423,7 +423,7 @@ class GeneticAlgorithm(ABC):
                 callback_func(self)
                 # Save result for each iteration
                 if self._saver:
-                    fit_result = self._get_fitted_data(
+                    fit_result = self._get_fit_result(
                         fit_parameters=fit_parameters, n_jobs=n_jobs
                     )
                     self._saver.save_generation(fit_result)
@@ -453,7 +453,7 @@ class GeneticAlgorithm(ABC):
         # With nothing to save, the result is built once, when the run
         # ends: it decodes the whole population.
         if not self._saver:
-            fit_result = self._get_fitted_data(
+            fit_result = self._get_fit_result(
                 fit_parameters=fit_parameters, n_jobs=n_jobs
             )
         if self._saver and self._saver.save.plot_metrics:
@@ -625,7 +625,7 @@ class GeneticAlgorithm(ABC):
         generation_fitting_time = round(time() - init_time, 2)
         self._update_metrics(generation_fitting_time=generation_fitting_time)
 
-    def _get_fitted_data(
+    def _get_fit_result(
         self, fit_parameters: FitParameters, n_jobs: int
     ) -> FitResult:
         """

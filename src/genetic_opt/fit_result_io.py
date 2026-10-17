@@ -1,3 +1,5 @@
+"""Genetic Opt submodule to load the runs saved by `fit`."""
+
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from operator import itemgetter

@@ -76,3 +76,12 @@ def test_chromosome_genes_and_size_follow_its_gene_collection(is_gene_set):
     assert mutated.genes is mutated.gene_collection.genes
     assert mutated.size == mutated.gene_collection.size == 2
     assert chromosome.genes is chromosome.gene_collection.genes
+
+
+def test_chromosome_from_dict_builds_the_subclass_it_is_called_on():
+    class NamedChromosome(Chromosome):
+        pass
+
+    chromosome = Chromosome(size=2, genes=[1, 0])
+    loaded = NamedChromosome.from_dict(chromosome.to_dict())
+    assert type(loaded) is NamedChromosome

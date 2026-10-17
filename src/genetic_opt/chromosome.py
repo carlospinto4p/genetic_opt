@@ -94,7 +94,7 @@ class Chromosome:
             genes = {load_genes_func(g) for g in genes}
         else:
             genes = [load_genes_func(g) for g in genes]
-        chromosome = Chromosome(
+        chromosome = cls(
             size=len(genes),
             genes=genes,
             is_gene_set=is_gene_set,
@@ -136,10 +136,10 @@ class Chromosome:
 
     def get_score(self, fitness_func: Callable[[Chromosome], Score]) -> Score:
         """
-        Get a Chromosome score.
-        This score is a tuple [score (float), additional data (dict)].
+        Get a Chromosome score, computed once with `fitness_func` and
+        kept, along with the seconds it took in `score_time`.
         :param fitness_func: function to get the score of a Chromosome.
-        :return: a Score object, a tuple [score, additional data]
+        :return: the Score of this Chromosome.
         """
         if self.score is None:
             init_time = time()
@@ -183,7 +183,8 @@ class Chromosome:
     ) -> dict:
         """
         Get a dictionary that describes the Chromosome.
-        Keys: `genes`, `score`, `score_time`, `random_seed`.
+        Keys: `is_gene_set`, `genes`, `score`, `score_time`,
+        `random_seed`.
         :param serialize_gene_func: function to get a serializable object
             from each gene. If None (default), the identity function will
             be used.

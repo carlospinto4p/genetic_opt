@@ -42,14 +42,10 @@ A saved run also gets a plot of its metrics, `fit_plots.jpg`.
 `other_metrics_to_plot` adds the functions of the best Chromosome
 of each population to it.
 
-Before 0.11.0 these were loose arguments of `fit` and of the
-algorithm: `n_generations`, `save_path` and the rest.
-
 `fit` returns a dictionary, and `fit_result_io.load_fit_result`
 returns one with the same keys for a saved run. Those keys, and the
 ones of a single file loaded with `fit_result_io.load_fit_result_file`,
 are written once, in `fit_result.py`: `FitResult` and `FitResultFile`.
-Before 0.13.0 the module `fit_result_io` was named `utils`.
 
 The saved files hold each population once, as genes. The
 `last_population` of a loaded run is the last population decoded
@@ -61,8 +57,8 @@ from genetic_opt.fit_result_io import load_fit_result
 loaded = load_fit_result("<folder>/fit_data", bag.decode_func)
 ```
 
-Before 2.0.0 every file also held its population decoded, and
-`load_fit_result` took no `decode_func`. It still reads those files.
+It also reads files saved before 2.0.0, which held each population
+decoded as well.
 
 ## Logs
 
@@ -79,9 +75,6 @@ logging.basicConfig(
     datefmt="%Y.%m.%d %H:%M:%S",
 )
 ```
-
-Before 0.9.0 the package added a handler on the standard output when
-it was imported.
 
 ## Rust crate
 
@@ -120,11 +113,10 @@ Python package: `experiment_config.yml` and one
 `fit_result_io.load_fit_result` reads them. It does not save the plot
 `fit_plots.jpg`.
 
-Since 0.7.0 each `fit_data_<n>` file holds the metrics of its own
-generation, in both implementations. Before, it held those of every
-generation up to its own. `fit_result_io.load_fit_result` reads both.
-A version before 0.7.0 that loads a run saved since gets the metrics of
-the last generation only.
+Each `fit_data_<n>` file holds the metrics of its own generation, in
+both implementations. `fit_result_io.load_fit_result` also reads runs
+saved before 0.7.0, whose files held those of every generation up to
+their own.
 
 ```bash
 # Tests

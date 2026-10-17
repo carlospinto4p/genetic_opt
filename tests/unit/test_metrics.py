@@ -56,6 +56,16 @@ def test_population_metrics_survive_to_dict_and_from_dict():
     assert loaded == metric
 
 
+def test_metric_from_dict_builds_the_subclass_it_is_called_on():
+    class NamedMetric(Metric):
+        pass
+
+    metric = get_population_metrics(
+        _population([(4, [1, 1])]), decode_func=_sum_genes, fitting_seconds=0
+    )
+    assert type(NamedMetric.from_dict(metric.to_dict())) is NamedMetric
+
+
 def test_population_metrics_of_an_even_count_take_the_middle_two():
     population = _population(
         [(8.5, [1, 1]), (3, [1, 0]), (2, [0, 1]), (0.25, [0, 0])]

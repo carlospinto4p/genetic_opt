@@ -4,10 +4,7 @@
 
 #### Refactoring
 
-- [ ] (LOW, S) `chromosome.py:99` and `metrics.py:88`: `from_dict` builds the base class instead of `cls(...)`.
-- [ ] (LOW, S) Stale docstrings: `gene_collection.py:1` ("Gene Space submodule"), `chromosome.py:142-144` (Score as a tuple), `chromosome.py:188` (missing `is_gene_set`); no module docstring in `fit_result_io.py`, `algorithms/binary.py`, `examples/binary.py`, `score.py`; no class docstrings in `exceptions.py:8,29,33`; `base.py:613` `_get_fitted_data` returns a `FitResult` and could be named so.
 - [ ] (LOW, S) Dead parameters: `exceptions.py:9-23` `processing_object` and `functions.py:28` `format_seconds(only_hours=...)` are used only by tests.
-- [ ] (LOW, S) `README.md:40-41,47,65-66,98-102,126-127`: "Before 0.x.0" history notes belong in the changelog now that the version is 1.0.0.
 
 #### Test coverage
 

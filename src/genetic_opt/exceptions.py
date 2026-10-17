@@ -6,6 +6,8 @@ from genetic_opt.logs import log_format
 
 
 class GeneticOptException(Exception):
+    """Base class of the exceptions raised by Genetic Opt."""
+
     def __init__(self, message: str, processing_object: Any = None) -> None:
         """
         Initialize the exception. Nothing is logged: the code that
@@ -27,8 +29,8 @@ class GeneticOptException(Exception):
 
 
 class InvariantException(GeneticOptException):
-    pass
+    """Raised when a crossover or a mutation breaks its invariant."""
 
 
 class ValidationException(GeneticOptException):
-    pass
+    """Raised when an argument, a file or a population is not valid."""

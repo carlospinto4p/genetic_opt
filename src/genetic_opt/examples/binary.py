@@ -1,3 +1,5 @@
+"""Genetic Opt binary examples submodule."""
+
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
