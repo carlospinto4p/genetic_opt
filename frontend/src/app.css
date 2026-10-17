@@ -154,6 +154,24 @@ input[type='text'] {
   padding: 1rem 1.2rem;
 }
 
+/* The card that says how a chromosome stands for an answer */
+.card.explain {
+  margin-top: 1rem;
+}
+
+.card.explain h3 {
+  margin-top: 0;
+}
+
+/* The buttons under a form */
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+
 .muted {
   color: var(--text-2);
 }

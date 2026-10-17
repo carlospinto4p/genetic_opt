@@ -57,6 +57,11 @@ export function loadExamples(): Promise<void> {
   return loading
 }
 
+/** Put a lab's problem back to a copy of its default. */
+export function resetLab<P, D>(target: Lab<P, D>, example: P): void {
+  target.problem = structuredClone($state.snapshot(example)) as P
+}
+
 /** Run a lab's problem, keeping a copy of what it ran with. */
 export async function runLab<P, D>(
   target: Lab<P, D>,

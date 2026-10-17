@@ -2,9 +2,10 @@
   import FitForm from '../components/FitForm.svelte'
   import GeneStrip from '../components/GeneStrip.svelte'
   import RunView from '../components/RunView.svelte'
+  import ServerError from '../components/ServerError.svelte'
   import { runKnapsack, type Chromosome } from '../lib/api'
   import { fmt } from '../lib/format'
-  import { loadExamples, runLab, store } from '../lib/store.svelte'
+  import { loadExamples, resetLab, runLab, store } from '../lib/store.svelte'
 
   loadExamples()
 
@@ -22,10 +23,6 @@
   function removeObject(i: number) {
     lab.problem!.weights.splice(i, 1)
     lab.problem!.values.splice(i, 1)
-  }
-
-  function reset() {
-    lab.problem = structuredClone($state.snapshot(store.examples!.knapsack))
   }
 
   let totalWeight = $derived(
@@ -56,10 +53,7 @@
 </div>
 
 {#if store.examplesError}
-  <p class="error">
-    The server did not answer: {store.examplesError}. Start it with
-    <code>uv run python -m genetic_opt.web.app</code>.
-  </p>
+  <ServerError error={store.examplesError} />
 {:else if lab.problem && store.examples}
   <h2>The problem</h2>
   <div class="setup">
@@ -96,12 +90,14 @@
           {/each}
         </tbody>
       </table>
-      <div class="row">
+      <div class="actions">
         <button
           disabled={lab.problem.weights.length >= store.examples.limits.genes}
           onclick={addObject}>Add an object</button
         >
-        <button onclick={reset}>Back to the README example</button>
+        <button onclick={() => resetLab(lab, store.examples!.knapsack)}>
+          Back to the README example
+        </button>
       </div>
     </div>
     <div class="card">
@@ -116,7 +112,7 @@
       </p>
       <h3>Parameters of the run</h3>
       <FitForm bind:params={lab.problem.fit} limits={store.examples.limits} />
-      <div class="row">
+      <div class="actions">
         <button
           class="primary"
           disabled={lab.running}
@@ -174,12 +170,6 @@
 {/if}
 
 <style>
-  .explain {
-    margin-top: 1rem;
-  }
-  .explain h3 {
-    margin-top: 0;
-  }
   .setup {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
@@ -191,13 +181,6 @@
   }
   .setup td input {
     width: 6rem;
-  }
-  .row {
-    display: flex;
-    gap: 0.6rem;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 0.8rem;
   }
   .capacity {
     display: flex;

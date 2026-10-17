@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v7.0.2 - 18th October 2026
+
+- Added `frontend/src/components/ServerError.svelte`: the "server did
+  not answer" message the Knapsack, Find a maximum and How it works
+  pages each had a copy of.
+- Added `resetLab` to `frontend/src/lib/store.svelte.ts`, which replaces
+  the `reset()` of `Knapsack.svelte` and `FunctionLab.svelte`.
+- Moved the `.explain` card style and the form's button row, now
+  `.actions`, from both pages to `frontend/src/app.css`. The button row
+  of Find a maximum now wraps on a narrow screen, as the Knapsack one
+  did.
+
+
 ### v7.0.1 - 18th October 2026
 
 - Added `frontend/src/lib/chart.ts`, the drawing code the two charts of

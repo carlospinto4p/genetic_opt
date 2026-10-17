@@ -1,5 +1,6 @@
 <script lang="ts">
   import GeneStrip from '../components/GeneStrip.svelte'
+  import ServerError from '../components/ServerError.svelte'
   import { runKnapsack, type Gene, type GeneOrigin } from '../lib/api'
   import { crossedGenes, parentAt } from '../lib/breeding'
   import { fmt } from '../lib/format'
@@ -67,10 +68,7 @@
 </p>
 
 {#if store.examplesError || lab.error}
-  <p class="error">
-    The server did not answer: {store.examplesError || lab.error}. Start it with
-    <code>uv run python -m genetic_opt.web.app</code>.
-  </p>
+  <ServerError error={store.examplesError || lab.error} />
 {/if}
 
 <h2>The words</h2>

@@ -3,17 +3,14 @@
   import FunctionPlot from '../components/FunctionPlot.svelte'
   import GeneStrip from '../components/GeneStrip.svelte'
   import RunView from '../components/RunView.svelte'
+  import ServerError from '../components/ServerError.svelte'
   import { runFunction } from '../lib/api'
   import { fmt } from '../lib/format'
-  import { loadExamples, runLab, store } from '../lib/store.svelte'
+  import { loadExamples, resetLab, runLab, store } from '../lib/store.svelte'
 
   loadExamples()
 
   let lab = store.fn
-
-  function reset() {
-    lab.problem = structuredClone($state.snapshot(store.examples!.function))
-  }
 </script>
 
 <h1>Find the highest point of a curve</h1>
@@ -40,10 +37,7 @@
 </div>
 
 {#if store.examplesError}
-  <p class="error">
-    The server did not answer: {store.examplesError}. Start it with
-    <code>uv run python -m genetic_opt.web.app</code>.
-  </p>
+  <ServerError error={store.examplesError} />
 {:else if lab.problem && store.examples}
   <h2>The problem</h2>
   <div class="card">
@@ -65,11 +59,13 @@
           bind:value={lab.problem.n_bits}
         />
       </label>
-      <button onclick={reset}>Back to the defaults</button>
+      <button onclick={() => resetLab(lab, store.examples!.function)}>
+        Back to the defaults
+      </button>
     </div>
     <h3>Parameters of the run</h3>
     <FitForm bind:params={lab.problem.fit} limits={store.examples.limits} />
-    <div class="row">
+    <div class="actions">
       <button class="primary" disabled={lab.running} onclick={() => runLab(lab, runFunction)}>
         {lab.running ? 'Running…' : 'Run the algorithm'}
       </button>
@@ -108,12 +104,6 @@
 {/if}
 
 <style>
-  .explain {
-    margin-top: 1rem;
-  }
-  .explain h3 {
-    margin-top: 0;
-  }
   .interval {
     display: flex;
     flex-wrap: wrap;
@@ -125,12 +115,6 @@
     flex-direction: column;
     gap: 0.2rem;
     width: 12rem;
-  }
-  .row {
-    display: flex;
-    gap: 0.6rem;
-    align-items: center;
-    margin-top: 0.8rem;
   }
   .reading {
     margin-top: 0.4rem;

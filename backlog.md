@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `frontend/src/pages/Knapsack.svelte:58-62,173` — "server did not answer" block, "Loading the example…" line, `.explain`/`.row` CSS and `reset()` copied in `FunctionLab.svelte:43-47,107` and `Guide.svelte:63-67` — MED — S
 - [ ] `algorithms/plots.py:500`, `algorithms/save.py` — saved-run code sits under `algorithms/`, apart from `fit_result.py`, `fit_result_io.py`, `files.py`; a `runs/` subpackage would group them, but `downstream` imports `genetic_opt.files` and `genetic_opt.fit_result_io` (needs shims or a downstream backlog item) — LOW — M
 - [ ] `algorithms/__init__.py:3-14` — re-exports `Chromosome` and `Score` but not `BinaryGeneticAlgorithm`, which the README uses — LOW — S
 - [ ] `algorithms/base.py:568-577` — Rust refuses a gene space too small for a set chromosome at run start (`algorithm.rs:461-469`); Python only fails when the first set chromosome is built (`gene_collection.py:477-481`) — LOW — S
