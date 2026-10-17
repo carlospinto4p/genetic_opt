@@ -2,6 +2,26 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.8.0 - 17th October 2026
+
+- Added uniform crossover, in both implementations: each gene of a
+  child comes from one parent or the other, with even odds, and the
+  other child takes the other gene.
+  - Added `src/genetic_opt/crossover.py`, with `uniform_crossover` and
+    `single_point_crossover`, over two lists of genes.
+  - `BinaryGeneticAlgorithm` takes `crossover`, the function that
+    crosses the genes of two parents. It is `single_point_crossover` by
+    default, which draws the same cuts as before.
+  - Added `uniform_crossover` to the crate, beside
+    `single_point_crossover`, for `Problem::crossover`.
+- Added tests:
+  - `tests/unit/test_crossover.py`: both functions.
+  - `tests/unit/algorithms/test_binary.py`: the `crossover` argument,
+    and a knapsack run crossed with `uniform_crossover`.
+  - `crates/genetic_opt/tests/algorithm.rs`: the function, and the same
+    run.
+
+
 ### v5.7.0 - 17th October 2026
 
 - Added `ValuesGeneSpace` to `gene_space.py`: a gene space over any

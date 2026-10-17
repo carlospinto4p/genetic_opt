@@ -21,6 +21,21 @@ from genetic_opt.gene_space import ValuesGeneSpace
 gene_space = ValuesGeneSpace(["red", "green", "blue"], random_seed=5)
 ```
 
+`BinaryGeneticAlgorithm` crosses two parents with
+`crossover.single_point_crossover`, which cuts both at one random
+position and swaps their tails. `crossover=uniform_crossover` gives
+each gene of a child from one parent or the other, with even odds:
+
+```python
+from genetic_opt.crossover import uniform_crossover
+
+BinaryGeneticAlgorithm(..., crossover=uniform_crossover)
+```
+
+A subclass of `GeneticAlgorithm` can call either function in its
+`crossover_func`. The crate has both, `single_point_crossover` and
+`uniform_crossover`, for `Problem::crossover`.
+
 The parameters of a run go in a `FitConfig`. To save the runs, the
 algorithm gets a `SaveConfig`:
 

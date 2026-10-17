@@ -11,7 +11,7 @@ use rand::SeedableRng;
 use genetic_opt::examples::{Knapsack, Numbers};
 use genetic_opt::{
     AlgorithmConfig, Chromosome, Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig,
-    Score, single_point_crossover,
+    Score, single_point_crossover, uniform_crossover,
 };
 
 /// Two threads, or the one that a machine with one core allows.
@@ -1070,6 +1070,84 @@ fn single_point_crossover_of_different_lengths_cuts_within_the_shorter() {
         cuts.insert(cut);
     }
     assert_eq!(cuts, BTreeSet::from([1, 2]));
+}
+
+#[test]
+fn uniform_crossover_gives_each_gene_to_either_child() {
+    let mut rng = Rng::seed_from_u64(1);
+    let mut swapped = [0; 5];
+    for _ in 0..200 {
+        let (first, second) = uniform_crossover(&[0; 5], &[1; 5], &mut rng);
+        for position in 0..5 {
+            // The two children share the genes of the parents out.
+            assert_eq!(first[position] + second[position], 1);
+            swapped[position] += first[position];
+        }
+    }
+    // Each position is swapped about half of the times.
+    assert!(swapped.iter().all(|count| (60..=140).contains(count)));
+}
+
+#[test]
+fn uniform_crossover_of_different_lengths_keeps_the_longer_tail() {
+    let mut rng = Rng::seed_from_u64(1);
+    for _ in 0..50 {
+        let (first, second) = uniform_crossover(&[0; 2], &[1; 4], &mut rng);
+        assert_eq!(first.len(), 2);
+        assert_eq!(second[2..], [1, 1]);
+        assert_eq!(first[0] + second[0], 1);
+        assert_eq!(first[1] + second[1], 1);
+    }
+    assert_eq!(
+        uniform_crossover::<u8>(&[], &[], &mut rng),
+        (vec![], vec![])
+    );
+}
+
+/// The knapsack, crossed with [`uniform_crossover`].
+struct UniformKnapsack(Knapsack);
+
+impl Problem for UniformKnapsack {
+    type Gene = u8;
+    type Solution = Vec<u8>;
+
+    fn chromosome_length(&self) -> usize {
+        self.0.chromosome_length()
+    }
+
+    fn minimize(&self) -> bool {
+        self.0.minimize()
+    }
+
+    fn gene_space_size(&self) -> usize {
+        self.0.gene_space_size()
+    }
+
+    fn random_gene(&self, rng: &mut Rng) -> u8 {
+        self.0.random_gene(rng)
+    }
+
+    fn fitness(&self, genes: &[u8]) -> Score {
+        self.0.fitness(genes)
+    }
+
+    fn decode(&self, genes: &[u8]) -> Vec<u8> {
+        self.0.decode(genes)
+    }
+
+    fn crossover(&self, first: &[u8], second: &[u8], rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
+        uniform_crossover(first, second, rng)
+    }
+}
+
+#[test]
+fn a_run_crossed_with_uniform_crossover_finds_the_best_bag() {
+    let mut algorithm =
+        GeneticAlgorithm::new(UniformKnapsack(knapsack()), AlgorithmConfig::default());
+    let mut config = FitConfig::new(100, 50);
+    config.n_jobs = Some(1);
+    let result = algorithm.fit(&config).unwrap();
+    assert_eq!(result.bests[0].score.value, 309.0);
 }
 
 #[test]

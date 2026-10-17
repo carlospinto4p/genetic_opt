@@ -23,6 +23,6 @@ pub use chromosome::{Chromosome, Individual};
 pub use error::{Error, Result};
 pub use format::format_seconds;
 pub use metrics::{Best, FitMetrics, FitnessFuncCalls, Metric, TotalFitTime};
-pub use problem::{Problem, Rng, single_point_crossover};
+pub use problem::{Problem, Rng, single_point_crossover, uniform_crossover};
 pub use save::SaveConfig;
 pub use score::Score;

@@ -129,3 +129,17 @@ pub fn single_point_crossover<G: Clone>(
         [&second[..cut], &first[cut..]].concat(),
     )
 }
+
+/// Give each child, at each position, the gene of one parent or the other,
+/// with even odds, and the other child the other gene. Past the length of
+/// the shorter parent, each child keeps the genes of its own parent.
+pub fn uniform_crossover<G: Clone>(first: &[G], second: &[G], rng: &mut Rng) -> (Vec<G>, Vec<G>) {
+    let mut children = (first.to_vec(), second.to_vec());
+    for position in 0..first.len().min(second.len()) {
+        if rng.random::<bool>() {
+            children.0[position] = second[position].clone();
+            children.1[position] = first[position].clone();
+        }
+    }
+    children
+}
