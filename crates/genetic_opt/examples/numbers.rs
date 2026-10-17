@@ -6,14 +6,15 @@
 //! out. `cargo run --example numbers -- [folder] [json|bson]` saves the
 //! run in `folder`, in the layout the Python package reads.
 
+mod common;
+
 use std::collections::BTreeSet;
-use std::env::args;
 use std::error::Error;
 
 use rand::RngExt;
 use serde_json::json;
 
-use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, Score};
+use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm, Problem, Rng, Score};
 
 struct Numbers;
 
@@ -73,22 +74,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     config.min_population_size = 0;
     config.stop_without_improvement = false;
     // The runs are saved in `folder/Numbers`, after the problem's type.
-    let save = args().nth(1).map(|folder| SaveConfig {
-        path: folder.into(),
-        as_bson: args().nth(2).as_deref() != Some("json"),
-    });
     let algorithm_config = AlgorithmConfig {
-        save,
+        save: common::save_config()?,
         ..AlgorithmConfig::default()
     };
     let result = GeneticAlgorithm::new(Numbers, algorithm_config).fit(&config)?;
-
-    let best = &result.bests[0];
-    println!("best sum: {}", best.score.value);
-    println!("best numbers: {:?}", best.result);
-    println!("generations: {}", result.metrics.len());
-    if let Some(folder) = result.save_folder {
-        println!("saved in: {}", folder.display());
-    }
+    common::print_run(&result, "sum", "numbers");
     Ok(())
 }

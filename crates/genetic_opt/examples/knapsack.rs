@@ -3,11 +3,12 @@
 //! `cargo run --example knapsack -- [folder] [json|bson]` saves the run
 //! in `folder`, in the layout the Python package reads.
 
-use std::env::args;
+mod common;
+
 use std::error::Error;
 
 use genetic_opt::examples::Knapsack;
-use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm, SaveConfig};
+use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let knapsack = Knapsack::new(
@@ -16,22 +17,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         165,
     )?;
     // The runs are saved in `folder/Knapsack`, after the problem's type.
-    let save = args().nth(1).map(|folder| SaveConfig {
-        path: folder.into(),
-        as_bson: args().nth(2).as_deref() != Some("json"),
-    });
     let config = AlgorithmConfig {
-        save,
+        save: common::save_config()?,
         ..AlgorithmConfig::default()
     };
     let result = GeneticAlgorithm::new(knapsack, config).fit(&FitConfig::new(100, 50))?;
-
-    let best = &result.bests[0];
-    println!("best value: {}", best.score.value);
-    println!("best bag: {:?}", best.result);
-    println!("generations: {}", result.metrics.len());
-    if let Some(folder) = result.save_folder {
-        println!("saved in: {}", folder.display());
-    }
+    common::print_run(&result, "value", "bag");
     Ok(())
 }

@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v4.0.2 - 17th October 2026
+
+- Added `crates/genetic_opt/examples/common/mod.rs`: `save_config` and
+  `print_run`, the command line and the printing that the `knapsack`
+  and `numbers` examples each had a copy of.
+- Fixed: the Rust examples stop with an error on a format other than
+  `json` or `bson`. Before, any other word, such as `jsno`, saved the
+  run as BSON.
+- Added `test_the_rust_examples_refuse_an_unknown_format` to
+  `tests/integration/test_rust_layout.py`.
+
 ### v4.0.1 - 17th October 2026
 
 - `gene_collection.py`:

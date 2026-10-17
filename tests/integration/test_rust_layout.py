@@ -138,3 +138,18 @@ def test_the_rust_example_saves_bson_when_no_format_is_given(
     files = get_files_inside_folder(str(run_folder / "fit_data"))
     assert files
     assert all(file.endswith(".bson") for file in files)
+
+
+@pytest.mark.parametrize("example", ["knapsack", "numbers"])
+def test_the_rust_examples_refuse_an_unknown_format(
+    tmp_path, examples, example
+):
+    run = subprocess.run(
+        [examples[example], str(tmp_path), "jsno"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert run.returncode != 0
+    assert "unknown format `jsno`" in run.stderr
+    assert not any(tmp_path.iterdir())

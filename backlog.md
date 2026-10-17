@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (LOW, S) `crates/genetic_opt/examples/knapsack.rs:19-38` and `numbers.rs:115-134`: argument parsing and printing copied; an unknown format (`jsno`) silently saves BSON instead of being refused.
 - [ ] (LOW, M) `crates/genetic_opt/tests/algorithm.rs:70-133`: the test `Numbers` problem repeats `examples/numbers.rs:58-107`; five `Problem` impls share boilerplate.
 - [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:240`: crossover-invariant error says "mutated to"; should say "crossed to".
 - [ ] (LOW, S) `src/genetic_opt/files.py:75-81`: `get_file_size` returns `None` by falling off the end.
