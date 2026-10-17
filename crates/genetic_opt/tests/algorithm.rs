@@ -1,7 +1,8 @@
 use std::collections::{BTreeSet, HashSet};
 use std::fs::{File, read_dir};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::thread::available_parallelism;
+use std::thread::{available_parallelism, sleep};
+use std::time::Duration;
 
 use rand::SeedableRng;
 
@@ -32,11 +33,13 @@ fn numbers(minimize: bool) -> Numbers {
     Numbers { minimize }
 }
 
-/// `problem`, counting the calls to its fitness function, and with the
-/// mutation and crossover invariants holding as asked.
+/// `problem`, counting the calls to its fitness function, which takes
+/// at least `fitness_delay`, and with the mutation and crossover
+/// invariants holding as asked.
 struct Watched<P> {
     problem: P,
     fitness_calls: AtomicUsize,
+    fitness_delay: Duration,
     keep_mutations: bool,
     keep_crossovers: bool,
 }
@@ -45,6 +48,7 @@ fn watched<P>(problem: P, keep_mutations: bool, keep_crossovers: bool) -> Watche
     Watched {
         problem,
         fitness_calls: AtomicUsize::new(0),
+        fitness_delay: Duration::ZERO,
         keep_mutations,
         keep_crossovers,
     }
@@ -76,6 +80,7 @@ impl<P: Problem> Problem for Watched<P> {
 
     fn fitness(&self, genes: &[P::Gene]) -> Score {
         self.fitness_calls.fetch_add(1, Ordering::Relaxed);
+        sleep(self.fitness_delay);
         self.problem.fitness(genes)
     }
 
@@ -561,6 +566,17 @@ fn the_algorithm_shows_the_last_population_and_the_metrics_of_the_run() {
 }
 
 #[test]
+fn a_run_of_0_generations_scores_the_first_population_only() {
+    let mut algorithm = algorithm(knapsack());
+    let result = algorithm.fit(&FitConfig::new(0, 20)).unwrap();
+
+    assert_eq!(result.metrics.len(), 1);
+    assert_eq!(algorithm.history().len(), 1);
+    assert_eq!(result.fit_parameters.n_generations, 0);
+    assert_eq!(algorithm.population().len(), 20);
+}
+
+#[test]
 fn n_jobs_none_is_every_core_but_one() {
     let cores = available_parallelism().map_or(1, |n| n.get());
     let result = algorithm(knapsack()).fit(&FitConfig::new(1, 20)).unwrap();
@@ -868,6 +884,27 @@ fn a_run_is_saved_one_file_per_generation() {
         assert_eq!(best["is_gene_set"], false);
         assert_eq!(best["genes"].as_array().unwrap().len(), 10);
         assert_eq!(best["random_seed"], 442);
+    }
+}
+
+#[test]
+fn a_saved_chromosome_keeps_the_time_its_score_took() {
+    let folder = tempfile::tempdir().unwrap();
+    let mut problem = watched(knapsack(), true, true);
+    problem.fitness_delay = Duration::from_millis(20);
+    let mut config = FitConfig::new(0, 3);
+    config.min_population_size = 1;
+    config.n_jobs = Some(1);
+    let mut algorithm = saving_algorithm(problem, folder.path(), "bag");
+    let result = algorithm.fit(&config).unwrap();
+
+    let path = result.save_folder.unwrap().join("fit_data/fit_data_1.json");
+    let saved: serde_json::Value = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+    let population = saved["population"].as_array().unwrap();
+    assert_eq!(population.len(), algorithm.population().len());
+    for (entry, individual) in population.iter().zip(algorithm.population()) {
+        assert!(individual.score_time >= 0.02);
+        assert_eq!(entry[1]["score_time"], individual.score_time);
     }
 }
 

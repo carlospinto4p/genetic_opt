@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.11 - 17th October 2026
+
+- Added Rust tests the Python package already had:
+  - `a_run_of_0_generations_scores_the_first_population_only` in
+    `tests/algorithm.rs`.
+  - `a_saved_chromosome_keeps_the_time_its_score_took` in
+    `tests/algorithm.rs`, with a fitness that takes 20 ms.
+  - The 0, 60 and 3600 second cases of `format_seconds` in
+    `src/format.rs`.
+- `Watched` in `tests/algorithm.rs` takes a `fitness_delay`.
+
 ### v5.0.10 - 17th October 2026
 
 - Added `test_the_plot_title_names_the_score_when_it_has_a_name` in

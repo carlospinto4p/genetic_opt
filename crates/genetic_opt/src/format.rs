@@ -34,8 +34,11 @@ mod tests {
 
     #[test]
     fn format_seconds_matches_the_python_package() {
+        assert_eq!(format_seconds(0.0), "0.00 seconds");
         assert_eq!(format_seconds(12.345), "12.35 seconds");
+        assert_eq!(format_seconds(60.0), "1:00 minutes");
         assert_eq!(format_seconds(75.0), "1:15 minutes");
+        assert_eq!(format_seconds(3_600.0), "1:00:00 hours");
         assert_eq!(format_seconds(3_725.0), "1:02:05 hours");
         assert_eq!(format_seconds(86_400.0), "1 day, 0:00:00 hours");
         assert_eq!(format_seconds(86_405.0), "1 day, 0:00:05 hours");
