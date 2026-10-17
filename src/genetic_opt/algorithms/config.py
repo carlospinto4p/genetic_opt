@@ -31,8 +31,8 @@ class FitConfig:
         leaves no cpu gives one job.
         With more than one job the fitness function is sent to the
         worker processes. A bound method, or a function that uses
-        `self`, takes the whole algorithm with it: its population, its
-        history and its scores.
+        `self`, takes the algorithm with it, without its population,
+        history, metrics and scores.
     """
 
     n_generations: int

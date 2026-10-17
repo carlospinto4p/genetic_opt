@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.1.2 - 17th October 2026
+
+- Fixed the docstring of `FitConfig.n_jobs`: since 5.1.1 a fitness
+  function that uses the algorithm takes it to the workers without its
+  population, history, metrics and scores.
+
+
 ### v5.1.1 - 17th October 2026
 
 - Fixed `GeneticAlgorithm.__getstate__`: it leaves out `population`,

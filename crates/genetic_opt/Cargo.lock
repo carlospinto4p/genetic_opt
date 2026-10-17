@@ -199,7 +199,7 @@ dependencies = [
 
 [[package]]
 name = "genetic_opt"
-version = "5.1.1"
+version = "5.1.2"
 dependencies = [
  "bson",
  "chrono",
