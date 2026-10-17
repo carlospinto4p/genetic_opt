@@ -8,64 +8,10 @@
 
 mod common;
 
-use std::collections::BTreeSet;
 use std::error::Error;
 
-use rand::RngExt;
-use serde_json::json;
-
-use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm, Problem, Rng, Score};
-
-struct Numbers;
-
-impl Problem for Numbers {
-    type Gene = u8;
-    type Solution = Vec<u8>;
-
-    fn chromosome_length(&self) -> usize {
-        3
-    }
-
-    fn chromosome_as_set(&self) -> bool {
-        true
-    }
-
-    fn minimize(&self) -> bool {
-        false
-    }
-
-    fn gene_space_size(&self) -> usize {
-        12
-    }
-
-    fn random_gene(&self, rng: &mut Rng) -> u8 {
-        rng.random_range(0..12)
-    }
-
-    fn fitness(&self, genes: &[u8]) -> Score {
-        let sum: u32 = genes.iter().map(|gene| u32::from(*gene)).sum();
-        Score {
-            value: sum.into(),
-            name: Some("sum".into()),
-            extra_metrics: Some(json!({"largest": genes.iter().max()})),
-        }
-    }
-
-    fn decode(&self, genes: &[u8]) -> Vec<u8> {
-        genes.to_vec()
-    }
-
-    /// The first gene of one set with the others of the other.
-    fn crossover(&self, first: &[u8], second: &[u8], rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
-        let mix = |a: &[u8], b: &[u8]| -> BTreeSet<u8> {
-            a[..1].iter().chain(&b[1..]).copied().collect()
-        };
-        (
-            self.fill_set(mix(first, second), rng),
-            self.fill_set(mix(second, first), rng),
-        )
-    }
-}
+use genetic_opt::examples::Numbers;
+use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut config = FitConfig::new(60, 30);
@@ -78,7 +24,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         save: common::save_config()?,
         ..AlgorithmConfig::default()
     };
-    let result = GeneticAlgorithm::new(Numbers, algorithm_config).fit(&config)?;
+    let problem = Numbers { minimize: false };
+    let result = GeneticAlgorithm::new(problem, algorithm_config).fit(&config)?;
     common::print_run(&result, "sum", "numbers");
     Ok(())
 }

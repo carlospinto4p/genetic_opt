@@ -1,6 +1,9 @@
 //! Example problems.
 
+use std::collections::BTreeSet;
+
 use rand::RngExt;
+use serde_json::json;
 
 use crate::{Error, Problem, Result, Rng, Score, single_point_crossover};
 
@@ -90,5 +93,76 @@ impl Problem for Knapsack {
 
     fn crossover(&self, first: &[u8], second: &[u8], rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
         single_point_crossover(first, second, rng)
+    }
+}
+
+/// Pick [`Numbers::PICKED`] different numbers under [`Numbers::NUMBERS`]
+/// with the highest sum, or the lowest.
+///
+/// A chromosome is a set, and the score has a name and extra metrics, so
+/// a saved run has the parts of the layout [`Knapsack`] leaves out.
+pub struct Numbers {
+    /// Whether the best pick is the one with the lowest sum.
+    pub minimize: bool,
+}
+
+impl Numbers {
+    /// The numbers are picked from 0 to one under this.
+    pub const NUMBERS: u8 = 12;
+    /// How many numbers a pick has.
+    pub const PICKED: usize = 3;
+}
+
+impl Problem for Numbers {
+    type Gene = u8;
+    type Solution = Vec<u8>;
+
+    fn chromosome_length(&self) -> usize {
+        Self::PICKED
+    }
+
+    fn chromosome_as_set(&self) -> bool {
+        true
+    }
+
+    fn minimize(&self) -> bool {
+        self.minimize
+    }
+
+    fn gene_space_size(&self) -> usize {
+        Self::NUMBERS.into()
+    }
+
+    fn random_gene(&self, rng: &mut Rng) -> u8 {
+        rng.random_range(0..Self::NUMBERS)
+    }
+
+    fn fitness(&self, genes: &[u8]) -> Score {
+        let sum: u32 = genes.iter().map(|gene| u32::from(*gene)).sum();
+        Score {
+            value: sum.into(),
+            name: Some("sum".into()),
+            extra_metrics: Some(json!({"largest": genes.iter().max()})),
+        }
+    }
+
+    /// The numbers picked, lowest first.
+    fn decode(&self, genes: &[u8]) -> Vec<u8> {
+        genes.to_vec()
+    }
+
+    /// The first gene of one set with the others of the other.
+    fn crossover(&self, first: &[u8], second: &[u8], rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
+        let mix = |a: &[u8], b: &[u8]| -> BTreeSet<u8> {
+            a[..1].iter().chain(&b[1..]).copied().collect()
+        };
+        (
+            self.fill_set(mix(first, second), rng),
+            self.fill_set(mix(second, first), rng),
+        )
+    }
+
+    fn experiment_config(&self) -> Option<serde_json::Value> {
+        Some(json!({"numbers": Self::NUMBERS, "picked": Self::PICKED}))
     }
 }

@@ -2,6 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v4.1.0 - 17th October 2026
+
+- Added `examples::Numbers` to the crate, beside `examples::Knapsack`:
+  pick 3 different numbers under 12 with the highest sum, or the
+  lowest with `minimize` set. Its `Solution` is the numbers picked, and
+  it saves an `experiment_config`.
+- The `numbers` example runs `examples::Numbers` instead of its own copy.
+- `crates/genetic_opt/tests/algorithm.rs`:
+  - Uses `examples::Numbers` instead of a copy of the example. The
+    tests compare the numbers picked, not their sum.
+  - Replaced `CountedKnapsack` and the invariant switches of the old
+    test `Numbers` with `Watched`, one wrapper around any problem that
+    counts the fitness calls and holds or breaks the invariants.
+- `README.md` names `examples::Numbers` and says an unknown format
+  stops the examples.
+
 ### v4.0.2 - 17th October 2026
 
 - Added `crates/genetic_opt/examples/common/mod.rs`: `save_config` and

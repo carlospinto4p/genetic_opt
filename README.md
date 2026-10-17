@@ -135,9 +135,11 @@ cargo run --manifest-path crates/genetic_opt/Cargo.toml \
     --example knapsack -- <folder> bson
 ```
 
-The `numbers` example picks 3 different numbers under 12 with the
-highest sum. Its chromosomes are sets and its scores have a name and
-extra metrics. It takes the same arguments.
+The `numbers` example runs `examples::Numbers`, which picks 3 different
+numbers under 12 with the highest sum, or the lowest with `minimize`
+set. Its chromosomes are sets and its scores have a name and extra
+metrics. It takes the same arguments. A format other than `json` or
+`bson` stops either example with an error.
 
 Differences with the Python package:
 

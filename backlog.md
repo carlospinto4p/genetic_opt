@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (LOW, M) `crates/genetic_opt/tests/algorithm.rs:70-133`: the test `Numbers` problem repeats `examples/numbers.rs:58-107`; five `Problem` impls share boilerplate.
 - [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:240`: crossover-invariant error says "mutated to"; should say "crossed to".
 - [ ] (LOW, S) `src/genetic_opt/files.py:75-81`: `get_file_size` returns `None` by falling off the end.
 - [ ] (LOW, S) Google-style `Args:`/`Returns:` docstrings where the project uses Sphinx: `fit_result_io.py:30,101,240`, `metrics.py:64,109,143`, `chromosome.py:86,189`, `algorithms/plots.py:47-56`.

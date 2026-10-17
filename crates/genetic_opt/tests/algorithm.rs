@@ -5,7 +5,7 @@ use std::thread::available_parallelism;
 
 use rand::SeedableRng;
 
-use genetic_opt::examples::Knapsack;
+use genetic_opt::examples::{Knapsack, Numbers};
 use genetic_opt::{
     AlgorithmConfig, Chromosome, Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig,
     Score, single_point_crossover,
@@ -25,117 +25,83 @@ fn knapsack() -> Knapsack {
     .unwrap()
 }
 
-/// A knapsack that counts the calls to its fitness function.
-struct CountedKnapsack {
-    knapsack: Knapsack,
+const NUMBERS: u8 = Numbers::NUMBERS;
+const PICKED: usize = Numbers::PICKED;
+
+fn numbers(minimize: bool) -> Numbers {
+    Numbers { minimize }
+}
+
+/// `problem`, counting the calls to its fitness function, and with the
+/// mutation and crossover invariants holding as asked.
+struct Watched<P> {
+    problem: P,
     fitness_calls: AtomicUsize,
-}
-
-impl Problem for CountedKnapsack {
-    type Gene = u8;
-    type Solution = Vec<u8>;
-
-    fn chromosome_length(&self) -> usize {
-        self.knapsack.chromosome_length()
-    }
-
-    fn minimize(&self) -> bool {
-        false
-    }
-
-    fn gene_space_size(&self) -> usize {
-        2
-    }
-
-    fn random_gene(&self, rng: &mut Rng) -> u8 {
-        self.knapsack.random_gene(rng)
-    }
-
-    fn fitness(&self, genes: &[u8]) -> Score {
-        self.fitness_calls.fetch_add(1, Ordering::Relaxed);
-        self.knapsack.fitness(genes)
-    }
-
-    fn decode(&self, genes: &[u8]) -> Vec<u8> {
-        self.knapsack.decode(genes)
-    }
-
-    fn crossover(&self, first: &[u8], second: &[u8], rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
-        self.knapsack.crossover(first, second, rng)
-    }
-}
-
-/// Pick `PICKED` different numbers under `NUMBERS` with the highest sum,
-/// or the lowest. A chromosome is a set.
-struct Numbers {
-    minimize: bool,
     keep_mutations: bool,
     keep_crossovers: bool,
 }
 
-const NUMBERS: u8 = 12;
-const PICKED: usize = 3;
-
-impl Problem for Numbers {
-    type Gene = u8;
-    type Solution = u32;
-
-    fn chromosome_length(&self) -> usize {
-        PICKED
-    }
-
-    fn chromosome_as_set(&self) -> bool {
-        true
-    }
-
-    fn minimize(&self) -> bool {
-        self.minimize
-    }
-
-    fn gene_space_size(&self) -> usize {
-        NUMBERS.into()
-    }
-
-    fn random_gene(&self, rng: &mut Rng) -> u8 {
-        rand::RngExt::random_range(rng, 0..NUMBERS)
-    }
-
-    fn fitness(&self, genes: &[u8]) -> Score {
-        Score::new(self.decode(genes).into())
-    }
-
-    fn decode(&self, genes: &[u8]) -> u32 {
-        genes.iter().map(|gene| u32::from(*gene)).sum()
-    }
-
-    fn crossover(&self, first: &[u8], second: &[u8], rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
-        let mix = |a: &[u8], b: &[u8]| -> BTreeSet<u8> {
-            a[..1].iter().chain(&b[1..]).copied().collect()
-        };
-        (
-            self.fill_set(mix(first, second), rng),
-            self.fill_set(mix(second, first), rng),
-        )
-    }
-
-    fn mutation_invariant(&self, _before: &[u8], _after: &[u8]) -> bool {
-        self.keep_mutations
-    }
-
-    fn crossover_invariant(&self, _parents: (&[u8], &[u8]), _children: (&[u8], &[u8])) -> bool {
-        self.keep_crossovers
-    }
-
-    fn experiment_config(&self) -> Option<serde_json::Value> {
-        Some(serde_json::json!({"numbers": NUMBERS, "picked": PICKED}))
+fn watched<P>(problem: P, keep_mutations: bool, keep_crossovers: bool) -> Watched<P> {
+    Watched {
+        problem,
+        fitness_calls: AtomicUsize::new(0),
+        keep_mutations,
+        keep_crossovers,
     }
 }
 
-fn numbers(minimize: bool) -> Numbers {
-    Numbers {
-        minimize,
-        keep_mutations: true,
-        keep_crossovers: true,
+impl<P: Problem> Problem for Watched<P> {
+    type Gene = P::Gene;
+    type Solution = P::Solution;
+
+    fn chromosome_length(&self) -> usize {
+        self.problem.chromosome_length()
+    }
+
+    fn chromosome_as_set(&self) -> bool {
+        self.problem.chromosome_as_set()
+    }
+
+    fn minimize(&self) -> bool {
+        self.problem.minimize()
+    }
+
+    fn gene_space_size(&self) -> usize {
+        self.problem.gene_space_size()
+    }
+
+    fn random_gene(&self, rng: &mut Rng) -> P::Gene {
+        self.problem.random_gene(rng)
+    }
+
+    fn fitness(&self, genes: &[P::Gene]) -> Score {
+        self.fitness_calls.fetch_add(1, Ordering::Relaxed);
+        self.problem.fitness(genes)
+    }
+
+    fn decode(&self, genes: &[P::Gene]) -> P::Solution {
+        self.problem.decode(genes)
+    }
+
+    fn crossover(
+        &self,
+        first: &[P::Gene],
+        second: &[P::Gene],
+        rng: &mut Rng,
+    ) -> (Vec<P::Gene>, Vec<P::Gene>) {
+        self.problem.crossover(first, second, rng)
+    }
+
+    fn mutation_invariant(&self, _before: &[P::Gene], _after: &[P::Gene]) -> bool {
+        self.keep_mutations
+    }
+
+    fn crossover_invariant(
+        &self,
+        _parents: (&[P::Gene], &[P::Gene]),
+        _children: (&[P::Gene], &[P::Gene]),
+    ) -> bool {
+        self.keep_crossovers
     }
 }
 
@@ -314,10 +280,7 @@ fn knapsack_finds_the_best_bag() {
 
 #[test]
 fn each_different_chromosome_is_scored_once() {
-    let problem = CountedKnapsack {
-        knapsack: knapsack(),
-        fitness_calls: AtomicUsize::new(0),
-    };
+    let problem = watched(knapsack(), true, true);
     let mut config = FitConfig::new(5, 50);
     config.n_jobs = Some(two_jobs());
     let mut algorithm = algorithm(problem);
@@ -464,14 +427,14 @@ fn set_chromosomes_stay_sets_and_the_best_never_gets_worse() {
     let result = algorithm.fit(&numbers_config()).unwrap();
 
     assert!(result.metrics.len() > 1);
-    assert_eq!(result.bests[0].result, 9 + 10 + 11);
+    assert_eq!(result.bests[0].result, [9, 10, 11]);
     // Every set of 3 numbers out of 12.
     assert_eq!(result.fit_metrics.fitness_func_calls.space_points, 220.0);
     assert!(
         result
             .metrics
             .windows(2)
-            .all(|pair| pair[0].best.result <= pair[1].best.result)
+            .all(|pair| pair[0].best.score.value <= pair[1].best.score.value)
     );
     for individual in algorithm.history().iter().flatten() {
         let genes = individual.chromosome.genes();
@@ -486,13 +449,12 @@ fn minimize_keeps_the_lowest_scores() {
     let result = algorithm.fit(&numbers_config()).unwrap();
 
     assert!(result.metrics.len() > 1);
-    // 0 + 1 + 2.
-    assert_eq!(result.bests[0].result, 3);
+    assert_eq!(result.bests[0].result, [0, 1, 2]);
     assert!(
         result
             .metrics
             .windows(2)
-            .all(|pair| pair[0].best.result >= pair[1].best.result)
+            .all(|pair| pair[0].best.score.value >= pair[1].best.score.value)
     );
     for population in algorithm.history() {
         assert!(
@@ -602,11 +564,7 @@ fn a_broken_invariant_stops_the_run() {
     for (keep_mutations, keep_crossovers, broken) in
         [(false, true, "a mutation"), (true, false, "a crossover")]
     {
-        let problem = Numbers {
-            minimize: false,
-            keep_mutations,
-            keep_crossovers,
-        };
+        let problem = watched(numbers(false), keep_mutations, keep_crossovers);
         let error = fit_error(algorithm(problem), FitConfig::new(5, 30));
         assert!(
             matches!(&error, Error::Invariant(message) if message.starts_with(broken)),
