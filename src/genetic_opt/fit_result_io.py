@@ -54,8 +54,9 @@ def load_fit_result(
     """
     files = get_files_inside_folder(folder_path, return_complete_path=True)
     load_decoded_chromosome_func = (
-        load_decoded_chromosome_func or identity_func
+        _let_errors_out(load_decoded_chromosome_func) or identity_func
     )
+    load_gene_func = _let_errors_out(load_gene_func)
     # Every file gives its population and the metrics of its own
     # generation: the last of its `metrics`, which are all the
     # generations so far in a file saved before 0.7.0. The rest is read
@@ -125,8 +126,9 @@ def load_fit_result_file(
         a `FitResultFile`.
     """
     load_decoded_chromosome_func = (
-        load_decoded_chromosome_func or identity_func
+        _let_errors_out(load_decoded_chromosome_func) or identity_func
     )
+    load_gene_func = _let_errors_out(load_gene_func)
     with _refuse_malformed(file_path):
         raw = _read_fit_result_file(file_path, max_file_bytes)
         response = _load_fit_summary(
@@ -146,13 +148,42 @@ def load_fit_result_file(
     return response
 
 
+class _CallerError(Exception):
+    """An error of a function the caller passed, carried as its cause."""
+
+
+def _let_errors_out(
+    func: Callable[[Any], Any] | None,
+) -> Callable[[Any], Any] | None:
+    """
+    Wrap a function the caller passed, so that `_refuse_malformed` lets
+    its errors out as they are instead of refusing the file.
+
+    :param func: the function, or `None`.
+    :return: the wrapped function, or `None` when `func` is `None`.
+    """
+    if func is None:
+        return None
+
+    def wrapped(value: Any) -> Any:
+        try:
+            return func(value)
+        except Exception as error:
+            raise _CallerError from error
+
+    return wrapped
+
+
 @contextmanager
 def _refuse_malformed(file_path: str) -> Iterator[None]:
     """Turn the raw errors of a malformed file into a refusal of it."""
     from bson.errors import BSONError
 
+    caller_error = None
     try:
         yield
+    except _CallerError as error:
+        caller_error = error.__cause__
     except (
         AttributeError,
         BSONError,
@@ -164,6 +195,9 @@ def _refuse_malformed(file_path: str) -> Iterator[None]:
         raise ValidationException(
             f"`{file_path}` is not a fit result file: {error!r}"
         ) from error
+    # Raised outside the `except`, so that the error keeps its own chain.
+    if caller_error is not None:
+        raise caller_error
 
 
 def _read_fit_result_file(file_path: str, max_file_bytes: int | None) -> dict:

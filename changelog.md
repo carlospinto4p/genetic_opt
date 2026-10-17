@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.0.4 - 17th October 2026
+
+- Fixed `src/genetic_opt/fit_result_io.py`: an error raised by the
+  caller's `load_gene_func` or `load_decoded_chromosome_func` reached
+  the caller as a `ValidationException` saying the file is "not a fit
+  result file". `load_fit_result` and `load_fit_result_file` now let
+  it out as it was raised, with its own traceback and cause.
+- Added `test_an_error_of_a_load_function_is_not_a_refusal_of_the_file`
+  in `tests/unit/test_fit_save.py`.
+
 ### v2.0.3 - 17th October 2026
 
 - `.claude/rules/testing-areas.md`: "Recorded times" re-measured at

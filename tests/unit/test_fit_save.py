@@ -460,6 +460,28 @@ def test_load_fit_result_applies_the_load_functions(saved_run):
     )
 
 
+def broken_load(value):
+    raise KeyError("a bug in the caller's function")
+
+
+@pytest.mark.parametrize(
+    "func_name", ["load_decoded_chromosome_func", "load_gene_func"]
+)
+@pytest.mark.parametrize("from_folder", [True, False])
+def test_an_error_of_a_load_function_is_not_a_refusal_of_the_file(
+    saved_run, func_name, from_folder
+):
+    with pytest.raises(KeyError, match="a bug in the caller's function"):
+        if from_folder:
+            load_fit_result(
+                saved_run, decode_genes, **{func_name: broken_load}
+            )
+        else:
+            load_fit_result_file(
+                f"{saved_run}/fit_data_1.json", **{func_name: broken_load}
+            )
+
+
 def test_load_fit_result_removes_duplicates_when_asked(saved_run):
     # The second Chromosome of the first population becomes the first.
     file_path = f"{saved_run}/fit_data_1.json"

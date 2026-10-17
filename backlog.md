@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (MED, S) `src/genetic_opt/fit_result_io.py:61-74,120-131,136-152`: `_refuse_malformed` catches `AttributeError`/`TypeError`/`ValueError`/`KeyError` around the caller's `load_gene_func` and `load_decoded_chromosome_func`, so a bug in those is reported as "not a fit result file". Narrow the catch to the parsing.
 - [ ] (MED, S) `src/genetic_opt/gene_collection.py:133-134,209-211`: `GeneList`/`GeneSet` built with fewer genes than `size` and no `gene_space` crash with `AttributeError`/`TypeError` instead of `ValidationException`. Add the check and a regression test.
 - [ ] (MED, S) `src/genetic_opt/algorithms/base.py:355-388`: `fit` validates `FitConfig` and resolves `n_jobs` inline (~35 lines). Move into `FitConfig.__post_init__` or a helper, like the crate's `fit_parameters()`.
 - [ ] (MED, S) `src/genetic_opt/algorithms/base.py:470-490,731-751`: the score-cache lookup by `repr(chromosome)` is written twice; `get_chromosome_score` is called only by tests.
