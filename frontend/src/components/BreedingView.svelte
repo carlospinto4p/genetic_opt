@@ -1,15 +1,18 @@
 <script lang="ts" generics="D">
-  import type { Breeding, Child, Parent } from '../lib/api'
+  import type { Breeding, Child, Member } from '../lib/api'
+  import { crossedGenes, geneOrigins, parentAt, type Parent } from '../lib/breeding'
   import { fmt } from '../lib/format'
   import GeneStrip from './GeneStrip.svelte'
 
-  // How one generation was made from the one before it
+  // How one generation was made from the one before it, `previous`
   let {
     breeding,
+    previous,
     populationSize,
     off = () => [],
   }: {
     breeding: Breeding<D>
+    previous: Member<D>[]
     populationSize: number
     off?: (c: Parent<D> | Child<D>) => number[]
   } = $props()
@@ -26,7 +29,7 @@
   // How many times each rank of the last generation was picked
   let picks = $derived.by(() => {
     const counts = Array<number>(populationSize).fill(0)
-    for (const p of breeding.parents) counts[p.rank] += 1
+    for (const rank of breeding.parents) counts[rank] += 1
     return counts
   })
 </script>
@@ -78,8 +81,8 @@
   </div>
 
   {#each pairs as pair, i (i)}
-    {@const a = breeding.parents[pair.a]}
-    {@const b = breeding.parents[pair.b]}
+    {@const a = parentAt(breeding, previous, pair.a)}
+    {@const b = parentAt(breeding, previous, pair.b)}
     <div class="pair card">
       <div class="parents">
         {#each [['A', a], ['B', b]] as const as [name, p] (name)}
@@ -95,10 +98,11 @@
       </div>
       <div class="children">
         {#each pair.children as child, j (j)}
+          {@const crossed = crossedGenes(child)}
           <div class="child">
             <div class="row">
               <span class="who">Child {j + 1}, crossed</span>
-              <GeneStrip genes={child.crossed} origins={child.origins} />
+              <GeneStrip genes={crossed} origins={geneOrigins(crossed, a.genes, b.genes)} />
             </div>
             <div class="row">
               <span class="who">Child {j + 1}, mutated</span>

@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.8 - 17th October 2026
+
+- Explainer runs send less: a run at the limits (200 generations,
+  population 200, 40 genes) sent 15.6 MB instead of 34.3 MB.
+  - `web/runs.py`: each child no longer sends `crossed` and `origins`,
+    and each parent is sent as its rank in the last generation instead
+    of its genes, score and `kind`. Removed `_gene_origins`.
+  - Added `frontend/src/lib/breeding.ts`: `parentAt`, `crossedGenes`
+    and `geneOrigins` work them out on the page, used by
+    `BreedingView.svelte` and `Guide.svelte`, with tests in
+    `breeding.test.ts`.
+  - `tests/unit/web/test_runs.py`: the breeding tests read the parents
+    from the last generation by rank.
+
+
 ### v5.10.7 - 17th October 2026
 
 - `web/app.py`: lowered `MAX_GENERATIONS` from 300 to 200 and

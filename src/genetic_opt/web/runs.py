@@ -164,37 +164,26 @@ class _Recorder:
         return mutated
 
 
-def _gene_origins(child: list, a: list, b: list) -> list[str]:
-    """
-    Which parent each gene of a child came from: `a`, `b`, or `both`
-    where the parents have the same gene.
-    """
-    return [
-        "both" if ga == gb else "a" if g == ga else "b"
-        for g, ga, gb in zip(child, a, b)
-    ]
-
-
 def _breeding_record(algorithm: _Recorder) -> dict[str, Any]:
-    """What `_Recorder` kept of the generation that just ended."""
+    """
+    What `_Recorder` kept of the generation that just ended. Each parent
+    is its rank in the last generation, and each child holds its genes
+    after the mutation and the ones the mutation changed. The page
+    works out the rest: the genes are bits, so a child's genes before
+    the mutation are its changed ones flipped.
+    """
     breeding = algorithm._breeding
-    ranks, n_besties = breeding["ranks"], breeding["n_besties"]
+    ranks = breeding["ranks"]
     stayed = {id(c) for c in algorithm.population}
-    parents = breeding["parents"]
     mutations = iter(breeding["mutations"])
     pairs = []
     for i, children in enumerate(breeding["crossovers"]):
-        a, b = parents[2 * i], parents[2 * i + 1]
-        a_genes, b_genes = list(a.genes), list(b.genes)
         pair_children = []
         for crossed in children:
             mutated = next(mutations)
-            crossed_genes = [int(g) for g in crossed.genes]
             pair_children.append(
                 {
                     **algorithm.shown(mutated),
-                    "crossed": crossed_genes,
-                    "origins": _gene_origins(crossed_genes, a_genes, b_genes),
                     "changed": [
                         j
                         for j, (g, m) in enumerate(
@@ -208,15 +197,8 @@ def _breeding_record(algorithm: _Recorder) -> dict[str, Any]:
         pairs.append({"a": 2 * i, "b": 2 * i + 1, "children": pair_children})
     return {
         "n_crossovers": breeding["n_crossovers"],
-        "n_besties": n_besties,
-        "parents": [
-            {
-                **algorithm.shown(parent),
-                "rank": ranks[id(parent)],
-                "kind": "best" if ranks[id(parent)] < n_besties else "random",
-            }
-            for parent in parents
-        ],
+        "n_besties": breeding["n_besties"],
+        "parents": [ranks[id(parent)] for parent in breeding["parents"]],
         "pairs": pairs,
     }
 

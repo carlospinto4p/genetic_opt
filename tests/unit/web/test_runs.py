@@ -105,52 +105,49 @@ def test_record_run_picks_the_besties_and_then_the_rest(run):
     # 30 * 0.7 = 21 crossed, rounded down to 20; 20 * 0.6 = 12 besties
     breeding = run["generations"][1]["breeding"]
     assert (breeding["n_crossovers"], breeding["n_besties"]) == (20, 12)
-    parents = breeding["parents"]
-    best_ranks = sorted(p["rank"] for p in parents if p["kind"] == "best")
-    assert best_ranks == list(range(12))
-    assert all(p["rank"] >= 12 for p in parents if p["kind"] == "random")
+    ranks = breeding["parents"]
+    assert sorted(r for r in ranks if r < 12) == list(range(12))
 
 
-def test_record_run_takes_the_parents_scores_from_the_last_population(run):
-    previous = run["generations"][0]["population"]
-    for parent in run["generations"][1]["breeding"]["parents"]:
-        assert parent["genes"] == previous[parent["rank"]]["genes"]
-        assert parent["score"] == previous[parent["rank"]]["score"]
+def _crossed_pairs(run: dict):
+    """
+    Each child with its genes before the mutation and the genes of its
+    two parents, as the page works them out.
+    """
+    for previous, generation in pairwise(run["generations"]):
+        population, breeding = previous["population"], generation["breeding"]
+        for pair in breeding["pairs"]:
+            a, b = (
+                population[breeding["parents"][pair[p]]]["genes"]
+                for p in ("a", "b")
+            )
+            for child in pair["children"]:
+                crossed = [
+                    1 - g if i in child["changed"] else g
+                    for i, g in enumerate(child["genes"])
+                ]
+                yield child, crossed, a, b
 
 
 def test_record_run_gives_each_gene_of_a_child_its_parent(run):
-    for generation in run["generations"][1:]:
-        parents = generation["breeding"]["parents"]
-        for pair in generation["breeding"]["pairs"]:
-            a, b = parents[pair["a"]]["genes"], parents[pair["b"]]["genes"]
-            for child in pair["children"]:
-                for i, origin in enumerate(child["origins"]):
-                    source = b if origin == "b" else a
-                    assert child["crossed"][i] == source[i]
-                    assert (origin == "both") == (a[i] == b[i])
+    for _, crossed, a, b in _crossed_pairs(run):
+        assert all(g in (ga, gb) for g, ga, gb in zip(crossed, a, b))
 
 
 def test_record_run_crosses_each_pair_at_one_point(run):
     # One child takes the start of `a` and the end of `b`, the other
     # the opposite, so neither switches parent twice.
-    for pair in run["generations"][1]["breeding"]["pairs"]:
-        for child in pair["children"]:
-            switches = [o for o in child["origins"] if o != "both"]
-            changes = sum(x != y for x, y in pairwise(switches))
-            assert changes <= 1
+    for _, crossed, a, b in _crossed_pairs(run):
+        switches = [g == ga for g, ga, gb in zip(crossed, a, b) if ga != gb]
+        assert sum(x != y for x, y in pairwise(switches)) <= 1
 
 
 def test_record_run_lists_the_genes_the_mutation_changed(run):
     n_changed = 0
-    for generation in run["generations"][1:]:
-        for pair in generation["breeding"]["pairs"]:
-            for child in pair["children"]:
-                flipped = [
-                    1 - g if i in child["changed"] else g
-                    for i, g in enumerate(child["crossed"])
-                ]
-                assert child["genes"] == flipped
-                n_changed += len(child["changed"])
+    for child, _, _, _ in _crossed_pairs(run):
+        assert child["changed"] == sorted(set(child["changed"]))
+        assert all(0 <= i < len(child["genes"]) for i in child["changed"])
+        n_changed += len(child["changed"])
     # With a probability of 0.2, some genes change
     assert n_changed > 0
 
@@ -206,7 +203,6 @@ def test_record_run_decodes_each_chromosome_once():
     shown = [c for g in run["generations"] for c in g["population"]]
     for generation in run["generations"][1:]:
         breeding = generation["breeding"]
-        shown += breeding["parents"]
         shown += [c for p in breeding["pairs"] for c in p["children"]]
     distinct = {tuple(c["genes"]) for c in shown}
     # Each distinct Chromosome once to be shown. The algorithm decodes

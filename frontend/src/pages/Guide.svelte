@@ -1,6 +1,7 @@
 <script lang="ts">
   import GeneStrip from '../components/GeneStrip.svelte'
   import { runKnapsack, type Gene, type GeneOrigin } from '../lib/api'
+  import { crossedGenes, parentAt } from '../lib/breeding'
   import { fmt } from '../lib/format'
   import { loadExamples, runLab, store } from '../lib/store.svelte'
 
@@ -17,8 +18,12 @@
   let first = $derived(run?.generations[0].population[0])
   let breeding = $derived(run?.generations[1]?.breeding)
   let pair = $derived(breeding?.pairs[0])
-  let parentA = $derived(pair && breeding ? breeding.parents[pair.a] : undefined)
-  let parentB = $derived(pair && breeding ? breeding.parents[pair.b] : undefined)
+  let parentA = $derived(
+    pair && breeding && run ? parentAt(breeding, run.generations[0].population, pair.a) : undefined,
+  )
+  let parentB = $derived(
+    pair && breeding && run ? parentAt(breeding, run.generations[0].population, pair.b) : undefined,
+  )
   // A child the mutation changed, to show one
   let mutated = $derived(
     run?.generations
@@ -221,7 +226,7 @@
 </p>
 {#if mutated}
   <div class="card example">
-    <div class="row"><span class="who">After crossing</span><GeneStrip genes={mutated.crossed} size={26} /></div>
+    <div class="row"><span class="who">After crossing</span><GeneStrip genes={crossedGenes(mutated)} size={26} /></div>
     <div class="row">
       <span class="who">After mutation</span>
       <GeneStrip genes={mutated.genes} changed={mutated.changed} size={26} />

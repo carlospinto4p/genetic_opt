@@ -17,14 +17,9 @@ export interface Member<D = unknown> extends Chromosome<D> {
   origin?: Origin
 }
 
-export interface Parent<D = unknown> extends Chromosome<D> {
-  rank: number
-  kind: 'best' | 'random'
-}
-
+// A child after the mutation. `lib/breeding.ts` works out its genes
+// before it.
 export interface Child<D = unknown> extends Chromosome<D> {
-  crossed: number[]
-  origins: GeneOrigin[]
   changed: number[]
   stayed: boolean
 }
@@ -38,7 +33,8 @@ export interface Pair<D = unknown> {
 export interface Breeding<D = unknown> {
   n_crossovers: number
   n_besties: number
-  parents: Parent<D>[]
+  // The rank of each parent in the last generation
+  parents: number[]
   pairs: Pair<D>[]
 }
 

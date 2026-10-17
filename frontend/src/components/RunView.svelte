@@ -1,6 +1,7 @@
 <script lang="ts" generics="D">
   import type { Snippet } from 'svelte'
-  import type { Child, FitParams, Generation, Member, Parent, Run } from '../lib/api'
+  import type { Child, FitParams, Generation, Member, Run } from '../lib/api'
+  import type { Parent } from '../lib/breeding'
   import { fmt, pct } from '../lib/format'
   import BreedingView from './BreedingView.svelte'
   import LineChart from './LineChart.svelte'
@@ -30,6 +31,7 @@
 
   let last = $derived(run.generations.length - 1)
   let generation = $derived(run.generations[Math.min(index, last)])
+  let previous = $derived(run.generations[Math.min(index, last) - 1]?.population ?? [])
   let recorded = $derived(run.generations.some((g) => g.breeding))
 
   $effect(() => {
@@ -198,6 +200,7 @@
   {:else if generation.breeding}
     <BreedingView
       breeding={generation.breeding}
+      {previous}
       populationSize={generation.population.length}
       {off}
     />
