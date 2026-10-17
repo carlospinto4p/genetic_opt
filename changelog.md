@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.0.6 - 17th October 2026
+
+- `src/genetic_opt/algorithms/base.py`: `fit` checks its `FitConfig`
+  and resolves `n_jobs` in a new private method, `_fit_parameters`,
+  like the crate's `fit_parameters`. The checks, their messages and
+  the moment they raise are unchanged: in `fit`, not when the
+  `FitConfig` is built.
+
 ### v2.0.5 - 17th October 2026
 
 - Fixed `src/genetic_opt/gene_collection.py`: a `GeneList` or `GeneSet`

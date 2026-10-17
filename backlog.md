@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (MED, S) `src/genetic_opt/algorithms/base.py:355-388`: `fit` validates `FitConfig` and resolves `n_jobs` inline (~35 lines). Move into `FitConfig.__post_init__` or a helper, like the crate's `fit_parameters()`.
 - [ ] (MED, S) `src/genetic_opt/algorithms/base.py:470-490,731-751`: the score-cache lookup by `repr(chromosome)` is written twice; `get_chromosome_score` is called only by tests.
 - [ ] (MED, S) `src/genetic_opt/algorithms/base.py:290-303`: no counterpart to the crate's `FitConfig.stop_without_improvement`; tests turn it off by replacing `no_improvement_condition` on the instance (`tests/unit/test_binary_algs.py:663,690,714`).
 - [ ] (MED, M) Python/crate settings placement differs: `random_seed`, `extra_config`, `experiment_name`, `save` are constructor arguments in Python (`base.py:111-114`, `config.py:131-148`) but `FitConfig`/`SaveConfig` fields in the crate (`algorithm.rs:29-51`, `save.rs:19-24`); `as_bson: bool` vs `format: SaveFormat`. Public API change: decide, then check `downstream`.

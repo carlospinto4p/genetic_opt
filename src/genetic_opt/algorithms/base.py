@@ -377,41 +377,8 @@ class GeneticAlgorithm(ABC):
         callback_func = callback_func or (
             lambda _: self.default_fit_callback()
         )
-        # Validate parameters
-        n_generations = config.n_generations
-        population_size = config.population_size
-        min_population_size = config.min_population_size
-        if n_generations < 0:
-            raise ValidationException(
-                f"{n_generations = } must not be negative"
-            )
-        if population_size < 1:
-            raise ValidationException(f"{population_size = } is not valid!")
-        for name in ("crossovers_prop", "besties_prop", "mutate_prob"):
-            value = getattr(config, name)
-            # Written this way, a NaN is refused too
-            if not 0 <= value <= 1:
-                raise ValidationException(
-                    f"{name} = {value} must be between 0 and 1"
-                )
-        if min_population_size > population_size:
-            raise ValidationException(
-                f"{min_population_size} is greater than {population_size = }"
-            )
-        # Validate n_jobs
-        n_jobs = config.n_jobs
-        if n_jobs < 0:
-            # A negative number leaves cores out, down to one job
-            n_jobs = max(cpu_count() + n_jobs + 1, 1)
-        if n_jobs <= 0 or n_jobs > cpu_count():
-            raise ValidationException(
-                f"{n_jobs = } received is not valid! {cpu_count() = }"
-            )
-        fit_parameters: FitParameters = {
-            **asdict(config),
-            "random_seed": self.random_seed,
-            "n_jobs": n_jobs,
-        }
+        fit_parameters = self._fit_parameters(config)
+        n_jobs = fit_parameters["n_jobs"]
         # What an earlier run left would be mixed into this one
         self.random_state = RandomState(seed=self.random_seed)
         self.population = []
@@ -432,10 +399,12 @@ class GeneticAlgorithm(ABC):
             f"initializing population. Using:\n{log_format(fit_parameters)}"
         )
         with self._workers(n_jobs):
-            for n_generation in iter_func(list(range(n_generations + 1))):
+            for n_generation in iter_func(
+                list(range(config.n_generations + 1))
+            ):
                 if n_generation == 0:
                     self.init_population(
-                        population_size,
+                        config.population_size,
                         iter_func=iter_func,
                         n_jobs=n_jobs,
                     )
@@ -469,10 +438,10 @@ class GeneticAlgorithm(ABC):
                     )
                     self._saver.save_generation(fit_result)
                 # Exit conditions
-                if self.metrics[-1].n_uniques < min_population_size:
+                if self.metrics[-1].n_uniques < config.min_population_size:
                     logger.info(
                         f"Minimum population size reached: "
-                        f"{min_population_size}\n\t"
+                        f"{config.min_population_size}\n\t"
                         f"Training finished at iteration {n_generation}"
                     )
                     break
@@ -497,6 +466,48 @@ class GeneticAlgorithm(ABC):
         if self._saver and plot_metrics:
             self._saver.save_plots(fit_result, other_metrics_to_plot)
         return fit_result
+
+    def _fit_parameters(self, config: FitConfig) -> FitParameters:
+        """
+        Check the parameters of a run and resolve its number of jobs.
+        :param config: the parameters given to `fit`.
+        :return: the `FitParameters` of the run.
+        :raises ValidationException: when a value of `config` is not
+            valid.
+        """
+        n_generations = config.n_generations
+        population_size = config.population_size
+        min_population_size = config.min_population_size
+        if n_generations < 0:
+            raise ValidationException(
+                f"{n_generations = } must not be negative"
+            )
+        if population_size < 1:
+            raise ValidationException(f"{population_size = } is not valid!")
+        for name in ("crossovers_prop", "besties_prop", "mutate_prob"):
+            value = getattr(config, name)
+            # Written this way, a NaN is refused too
+            if not 0 <= value <= 1:
+                raise ValidationException(
+                    f"{name} = {value} must be between 0 and 1"
+                )
+        if min_population_size > population_size:
+            raise ValidationException(
+                f"{min_population_size} is greater than {population_size = }"
+            )
+        n_jobs = config.n_jobs
+        if n_jobs < 0:
+            # A negative number leaves cores out, down to one job
+            n_jobs = max(cpu_count() + n_jobs + 1, 1)
+        if n_jobs <= 0 or n_jobs > cpu_count():
+            raise ValidationException(
+                f"{n_jobs = } received is not valid! {cpu_count() = }"
+            )
+        return {
+            **asdict(config),
+            "random_seed": self.random_seed,
+            "n_jobs": n_jobs,
+        }
 
     def get_chromosome_score(self, chromosome: Chromosome) -> Score:
         """
