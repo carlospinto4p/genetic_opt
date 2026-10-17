@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { linePath, linearScale, plotSize } from '../lib/chart'
   import { fmt, niceTicks } from '../lib/format'
 
   // Values per generation, one line per series, on one axis. A
@@ -42,13 +43,17 @@
     t: 14,
     b: 32,
   })
-  let lo = $derived(ticks[0])
-  let hi = $derived(ticks[ticks.length - 1])
-  let plotW = $derived(Math.max(10, width - pad.l - pad.r))
-  let plotH = $derived(height - pad.t - pad.b)
+  let size = $derived(plotSize(width, height, pad))
+  let plotW = $derived(size.w)
+  let plotH = $derived(size.h)
 
-  const x = (i: number) => pad.l + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW)
-  const y = (v: number) => pad.t + plotH - ((v - lo) / (hi - lo || 1)) * plotH
+  // One generation alone sits in the middle
+  let x = $derived(
+    n <= 1 ? () => pad.l + plotW / 2 : linearScale(0, n - 1, pad.l, plotW),
+  )
+  let y = $derived(
+    linearScale(ticks[0], ticks[ticks.length - 1], pad.t + plotH, -plotH),
+  )
 
   let xTicks = $derived.by(() => {
     if (n <= 1) return [0]
@@ -69,7 +74,7 @@
   })
 
   function path(values: number[]): string {
-    return values.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join('')
+    return linePath(values.map((v, i) => [x(i), y(v)]))
   }
 
   function indexAt(e: MouseEvent): number {

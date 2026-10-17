@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `frontend/src/components/LineChart.svelte:30-51` — padding, scaling and SVG path code duplicated in `FunctionPlot.svelte:14-33`; share a scale helper — MED — M
 - [ ] `frontend/src/pages/Knapsack.svelte:58-62,173` — "server did not answer" block, "Loading the example…" line, `.explain`/`.row` CSS and `reset()` copied in `FunctionLab.svelte:43-47,107` and `Guide.svelte:63-67` — MED — S
 - [ ] `algorithms/plots.py:500`, `algorithms/save.py` — saved-run code sits under `algorithms/`, apart from `fit_result.py`, `fit_result_io.py`, `files.py`; a `runs/` subpackage would group them, but `downstream` imports `genetic_opt.files` and `genetic_opt.fit_result_io` (needs shims or a downstream backlog item) — LOW — M
 - [ ] `algorithms/__init__.py:3-14` — re-exports `Chromosome` and `Score` but not `BinaryGeneticAlgorithm`, which the README uses — LOW — S
@@ -43,7 +42,7 @@
 - [ ] `algorithms/base.py:911` — only NaN scores are refused; an infinite score comes back from the API as `{"score": null}` with 200, untested (same for infinite variance) — MED — M
 - [ ] `frontend/src/lib/api.ts:127-147` — `request()` error handling untested: string `detail`, Pydantic error list, non-JSON body — MED — S
 - [ ] `frontend/src/lib/store.svelte.ts:133-165` — untested: `loadExamples` retry after failure (resets `loading`), `runLab` error path and `ran` snapshot — MED — M
-- [ ] `frontend/src/components/*.svelte`, `pages/*.svelte` — ~2,500 lines with no component tests (Vitest has no DOM); extract and unit-test the tick/scale code (`LineChart.svelte:34-58`) and index clamping (`RunView.svelte:32`) — MED — M/L
+- [ ] `frontend/src/components/*.svelte`, `pages/*.svelte` — ~2,500 lines with no component tests (Vitest has no DOM); extract and unit-test the index clamping (`RunView.svelte:32`); the chart scales moved to the tested `lib/chart.ts` in v7.0.1 — MED — M/L
 - [ ] `web/app.py:69-78,86` — `MAX_GENES` limit on weights/values and the `n_bits` 2-40 range untested; `test_app.py:61` covers only the population limit — LOW — S
 - [ ] `web/app.py:164-174` — `main()` and its reading of `GENETIC_OPT_WEB_PORT` untested — LOW — S
 - [ ] `algorithms/base.py:581-582` — `cpu_count()` returning `None` makes the comparison raise `TypeError`; untested — LOW — S

@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v7.0.1 - 18th October 2026
+
+- Added `frontend/src/lib/chart.ts`, the drawing code the two charts of
+  the explainer each had a copy of:
+  - `plotSize`: the plot's size inside its padding.
+  - `linearScale`: the pixel of a value on an axis.
+  - `linePath`: the `d` of an SVG path through points.
+- `LineChart.svelte` and `FunctionPlot.svelte` use it.
+- Added `frontend/src/lib/chart.test.ts`: 7 tests.
+
+
 ### v7.0.0 - 18th October 2026
 
 - Moved `BinaryFunction`, `wavy_function` and the `FUNCTION_LOW`,

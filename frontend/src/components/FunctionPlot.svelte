@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Member } from '../lib/api'
+  import { linePath, linearScale, plotSize } from '../lib/chart'
   import { fmt, niceTicks } from '../lib/format'
 
   // The curve of the function, and where each chromosome of a
@@ -20,17 +21,16 @@
   let ys = $derived(curve.map((p) => p[1]))
   let xTicks = $derived(niceTicks(xs[0], xs[xs.length - 1], 6))
   let yTicks = $derived(niceTicks(Math.min(...ys), Math.max(...ys), 5))
-  let plotW = $derived(Math.max(10, width - pad.l - pad.r))
-  let plotH = $derived(height - pad.t - pad.b)
+  let size = $derived(plotSize(width, height, pad))
   let x0 = $derived(xs[0])
   let x1 = $derived(xs[xs.length - 1])
-  let y0 = $derived(yTicks[0])
-  let y1 = $derived(yTicks[yTicks.length - 1])
 
-  const px = (x: number) => pad.l + ((x - x0) / (x1 - x0)) * plotW
-  const py = (y: number) => pad.t + plotH - ((y - y0) / (y1 - y0 || 1)) * plotH
+  let px = $derived(linearScale(x0, x1, pad.l, size.w))
+  let py = $derived(
+    linearScale(yTicks[0], yTicks[yTicks.length - 1], pad.t + size.h, -size.h),
+  )
 
-  let line = $derived(curve.map(([x, y], i) => `${i ? 'L' : 'M'}${px(x)},${py(y)}`).join(''))
+  let line = $derived(linePath(curve.map(([x, y]) => [px(x), py(y)])))
   // One dot per different chromosome, with how many copies it has
   let dots = $derived.by(() => {
     const seen = new Map<string, { m: Member<number>; copies: number }>()
@@ -53,7 +53,7 @@
   </div>
   <svg {width} {height} role="img" aria-label="The function and the population on it">
     {#each yTicks as t (t)}
-      <line class="grid" x1={pad.l} x2={pad.l + plotW} y1={py(t)} y2={py(t)} />
+      <line class="grid" x1={pad.l} x2={pad.l + size.w} y1={py(t)} y2={py(t)} />
       <text class="tick" x={pad.l - 8} y={py(t) + 5} text-anchor="end">{fmt(t)}</text>
     {/each}
     {#each xTicks.filter((t) => t >= x0 && t <= x1) as t (t)}
