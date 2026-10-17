@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v3.1.0 - 17th October 2026
+
+- `src/genetic_opt/algorithms/base.py`: `init_population` now means
+  what it means in the crate.
+  - `get_init_population` is renamed `init_population`. It returns
+    the genes of each chromosome of the first population; a subclass
+    overrides it to choose them.
+  - The method that built and scored the first population, called
+    `init_population` before, is now the private `_start_population`.
+- Updated `tests/unit/test_binary_algs.py` for the new names.
+- A subclass that overrides `get_init_population` must rename it to
+  `init_population`, or its override stops being called.
+
 ### v3.0.0 - 17th October 2026
 
 - The crate's settings now sit where the Python package has them. The

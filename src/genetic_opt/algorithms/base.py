@@ -403,7 +403,7 @@ class GeneticAlgorithm(ABC):
                 list(range(config.n_generations + 1))
             ):
                 if n_generation == 0:
-                    self.init_population(
+                    self._start_population(
                         config.population_size,
                         iter_func=iter_func,
                         n_jobs=n_jobs,
@@ -515,9 +515,9 @@ class GeneticAlgorithm(ABC):
             "n_jobs": n_jobs,
         }
 
-    def get_init_population(self, population_size: int) -> list[list[Any]]:
+    def init_population(self, population_size: int) -> list[list[Any]]:
         """
-        Initializes the first population of the algorithm.
+        The genes of each Chromosome of the first population.
         :param population_size: number of Chromosomes of each population.
         :return: a list of Gene Collections to use later to create Chromosomes.
         """
@@ -525,14 +525,14 @@ class GeneticAlgorithm(ABC):
             n=(population_size, self.chromosome_length)
         )
 
-    def init_population(
+    def _start_population(
         self,
         population_size: int,
         iter_func: Callable | None = None,
         n_jobs: int = -2,
     ) -> None:
         """
-        Initializes the Algorithm population.
+        Builds and scores the first population of the Algorithm.
         Note that the internal parameters `self.population` is always
         sorted by their Score.
         :param population_size: number of Chromosomes of each population.
@@ -547,10 +547,9 @@ class GeneticAlgorithm(ABC):
         init_time = time()
 
         population = []
-        init_population = self.get_init_population(
+        for gene_collection in self.init_population(
             population_size=population_size
-        )
-        for gene_collection in init_population:
+        ):
             population.append(
                 Chromosome(
                     size=self.chromosome_length,

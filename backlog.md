@@ -4,7 +4,6 @@
 
 #### Refactoring
 
-- [ ] (MED, M) `init_population` means different things: Python (`base.py:502`) builds and scores the first population, the crate (`problem.rs:169`) only returns genes, like Python's `get_init_population`. Public API change: decide, then check `downstream`.
 - [ ] (MED, M) Test files do not mirror source modules (`.claude/rules/testing.md`): `tests/unit/test_binary_algs.py` (890 lines) tests chromosome, gene collections, base, examples and metrics; `test_functions.py:95-131` tests exceptions and gene collections; `test_fit_save.py` covers save, fit_result_io and plots. Split into `test_chromosome.py`, `test_gene_collection.py`, `test_fit_result_io.py`, `test_plots.py`, `test_score.py`, `test_exceptions.py`, and add the `# ── Module ──` headers missing in four files.
 - [ ] (LOW, S) v1.0.0 rename leftovers: `tests/unit/test_binary_algs.py:24` `test_genetic_bag` and ~80 `genetic_bag` locals; `decode_bag`/`fit_bag` in `src/genetic_opt/examples/binary.py:46,73`; `FitnessFuncCalls` (`fit_result.py:216`) vs the crate's `FitnessCalls` (`metrics.rs:38`); gitignored `sketches/genetic_bag.py` still imports `GeneticBag`.
 - [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:306-315,466`: `plot_metrics` and `other_metrics_to_plot` only apply with a `SaveConfig`; move them into it.

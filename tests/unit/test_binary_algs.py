@@ -60,14 +60,14 @@ class ZeroStartAlgorithm(BinaryGeneticAlgorithm):
             minimize=False,
         )
 
-    def get_init_population(self, population_size: int) -> list[list[int]]:
+    def init_population(self, population_size: int) -> list[list[int]]:
         return [[0] * self.chromosome_length for _ in range(population_size)]
 
 
 class EmptyStartAlgorithm(ZeroStartAlgorithm):
     """Its first population has no Chromosomes."""
 
-    def get_init_population(self, population_size: int) -> list[list[int]]:
+    def init_population(self, population_size: int) -> list[list[int]]:
         return []
 
 
@@ -767,9 +767,9 @@ def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
         return Parallel(**kwargs)
 
     monkeypatch.setattr(algorithms, "Parallel", counted_parallel)
-    genetic_bag.init_population(population_size=50, n_jobs=1)
+    genetic_bag._start_population(population_size=50, n_jobs=1)
     assert len(calls) == 4
-    genetic_bag.init_population(population_size=50, n_jobs=1)
+    genetic_bag._start_population(population_size=50, n_jobs=1)
     assert len(calls) == 4
     assert parallel_calls == [{"n_jobs": 1}]
     assert len(genetic_bag.population) == 50
