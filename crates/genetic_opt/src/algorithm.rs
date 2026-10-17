@@ -284,7 +284,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             };
             // The children go before the population they join, and the
             // sort keeps that order between equal scores.
-            let mut population = self.score(candidates, &pool);
+            let mut population = self.score(candidates, &pool)?;
             population.append(&mut self.population);
             let minimize = self.problem.minimize();
             population.sort_by(|a, b| {
@@ -447,12 +447,13 @@ impl<P: Problem> GeneticAlgorithm<P> {
     }
 
     /// Score the chromosomes not seen before, in parallel and one of each,
-    /// and pair every chromosome with its score.
+    /// and pair every chromosome with its score. A NaN score is refused
+    /// before it is kept, so a later run does not take it either.
     fn score(
         &mut self,
         chromosomes: Vec<Chromosome<P::Gene>>,
         pool: &rayon::ThreadPool,
-    ) -> Population<P::Gene> {
+    ) -> Result<Population<P::Gene>> {
         self.score_requests += chromosomes.len();
         let mut new: HashMap<Chromosome<P::Gene>, usize> = HashMap::new();
         let asked: Vec<Asked<P::Gene>> = chromosomes
@@ -488,17 +489,24 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 })
                 .collect()
         });
+        if let Some(individual) = scored.iter().find(|i| i.score.value.is_nan()) {
+            // `Gene` is not `Debug`, but it is `Serialize`.
+            let genes = serde_json::to_string(individual.chromosome.genes()).unwrap_or_default();
+            return Err(Error::Validation(format!(
+                "the fitness function gave a NaN score to the chromosome {genes}"
+            )));
+        }
         self.scored += scored.len();
         for individual in &scored {
             self.scores.insert(Scored(Arc::clone(individual)));
         }
-        asked
+        Ok(asked
             .into_iter()
             .map(|asked| match asked {
                 Asked::Scored(individual) => individual,
                 Asked::New(position) => Arc::clone(&scored[position]),
             })
-            .collect()
+            .collect())
     }
 
     fn best(&self, individual: &Arc<Individual<P::Gene>>) -> Best<P::Gene, P::Solution> {

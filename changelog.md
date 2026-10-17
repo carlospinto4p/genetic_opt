@@ -2,6 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.4 - 17th October 2026
+
+- Fixed: a fitness function that gives a NaN score stops the run with a
+  validation error naming the Chromosome, in both implementations. The
+  score is refused before it is cached, so a later `fit` refuses it
+  too. Before, Python left a NaN score wherever the sort put it, the
+  crate ranked it best when maximizing, and the mean of the generation
+  became NaN, so the stop when the mean does not change never fired.
+  - `algorithms/base.py`: `_sort_population` raises
+    `ValidationException`.
+  - `algorithm.rs`: `GeneticAlgorithm::score` returns
+    `Error::Validation`. `Problem::fitness` and `README.md` say so.
+- Added tests: `test_fit_refuses_a_nan_score` in
+  `tests/unit/algorithms/test_base.py`, and `a_nan_score_stops_the_run`
+  in `crates/genetic_opt/tests/algorithm.rs`.
+
 ### v5.0.3 - 17th October 2026
 
 - Fixed: an infinite `space_points` (more different chromosomes than a

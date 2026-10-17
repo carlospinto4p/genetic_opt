@@ -37,6 +37,9 @@ BinaryGeneticAlgorithm(
 )
 ```
 
+A score whose value is NaN stops the run with a `ValidationException`
+naming the Chromosome. The crate stops with `Error::Validation`.
+
 A saved run also gets a plot of its metrics, `fit_plots.jpg`.
 `SaveConfig(plot_metrics=False)` leaves it out, and
 `other_metrics_to_plot` adds the functions of the best Chromosome

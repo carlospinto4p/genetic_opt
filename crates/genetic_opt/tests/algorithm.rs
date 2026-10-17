@@ -596,6 +596,69 @@ fn chromosomes_the_problem_cannot_hold_are_refused() {
     }
 }
 
+/// The sum of 3 genes, except for the genes `[4, 5, 6]`, whose score is
+/// not a number. Its first population is those genes and `[1, 2, 3]`.
+struct NanFor456;
+
+impl Problem for NanFor456 {
+    type Gene = u8;
+    type Solution = u32;
+
+    fn chromosome_length(&self) -> usize {
+        3
+    }
+
+    fn minimize(&self) -> bool {
+        false
+    }
+
+    fn gene_space_size(&self) -> usize {
+        12
+    }
+
+    fn random_gene(&self, rng: &mut Rng) -> u8 {
+        rand::RngExt::random_range(rng, 0..12)
+    }
+
+    fn fitness(&self, genes: &[u8]) -> Score {
+        if genes == [4, 5, 6] {
+            return Score::new(f64::NAN);
+        }
+        Score::new(self.decode(genes).into())
+    }
+
+    fn decode(&self, genes: &[u8]) -> u32 {
+        genes.iter().map(|gene| u32::from(*gene)).sum()
+    }
+
+    fn crossover(&self, first: &[u8], second: &[u8], _rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
+        (first.to_vec(), second.to_vec())
+    }
+
+    fn init_population(&self, _population_size: usize, _rng: &mut Rng) -> Vec<Vec<u8>> {
+        vec![vec![1, 2, 3], vec![4, 5, 6]]
+    }
+}
+
+#[test]
+fn a_nan_score_stops_the_run() {
+    let mut algorithm = algorithm(NanFor456);
+    let mut config = FitConfig::new(5, 2);
+    config.min_population_size = 0;
+    // The score is not kept, so a second run is refused too.
+    for _ in 0..2 {
+        let error = algorithm.fit(&config).unwrap_err();
+        assert!(
+            matches!(
+                &error,
+                Error::Validation(message)
+                    if message == "the fitness function gave a NaN score to the chromosome [4,5,6]"
+            ),
+            "{error:?}"
+        );
+    }
+}
+
 #[test]
 fn more_threads_than_cores_are_refused() {
     let cores = available_parallelism().map_or(1, |n| n.get());

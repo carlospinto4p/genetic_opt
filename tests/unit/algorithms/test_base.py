@@ -59,6 +59,31 @@ def test_fit_refuses_a_first_population_without_chromosomes():
         )
 
 
+class NanStartAlgorithm(ZeroStartAlgorithm):
+    """Its first population has a Chromosome whose score is NaN."""
+
+    def __init__(self):
+        super().__init__()
+        self.fitness_func = lambda chromosome: Score(
+            value=float("nan") if sum(chromosome.genes) == 0 else 1.0
+        )
+
+
+def test_fit_refuses_a_nan_score():
+    algorithm = NanStartAlgorithm()
+    config = FitConfig(
+        n_generations=3, population_size=4, min_population_size=1, n_jobs=1
+    )
+    message = (
+        r"the fitness function gave a NaN score to the Chromosome "
+        r"\[0, 0, 0, 0, 0, 0, 0, 0, 0, 0\]"
+    )
+    # The score is not cached, so a second run is refused too
+    for _ in range(2):
+        with pytest.raises(ValidationException, match=message):
+            algorithm.fit(config)
+
+
 def test_fit_with_0_generations_scores_the_first_population_only():
     algorithm = ZeroStartAlgorithm()
     result = algorithm.fit(

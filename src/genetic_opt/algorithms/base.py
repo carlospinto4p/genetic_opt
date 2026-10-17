@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict
 from logging import INFO
+from math import isnan
 from os import cpu_count
 from time import time
 from typing import Any
@@ -358,7 +359,7 @@ class GeneticAlgorithm(ABC):
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :return: a `FitResult`.
         :raises ValidationException: when a value of `config` is not
-            valid.
+            valid, or when the fitness function gives a NaN score.
         """
         # Default parameters
         iter_func = iter_func or identity_func
@@ -738,6 +739,8 @@ class GeneticAlgorithm(ABC):
         :param n_jobs: number of jobs to use to parallelize the evaluation of
             each element of the population. Default to `FitConfig.n_jobs`.
         :return: None.
+        :raises ValidationException: when the population is empty, or
+            when the fitness function gives a NaN score.
         """
         if not self.population:
             raise ValidationException("Tried to sort an empty population")
@@ -764,6 +767,16 @@ class GeneticAlgorithm(ABC):
                 delayed(_score_chromosome)(self.fitness_func, chromosome)
                 for chromosome in iter_func(list(new_population.values()))
             )
+            # Refused before it is cached, so a later run does not take
+            # it either
+            for chromosome, (score, _) in zip(
+                new_population.values(), scores
+            ):
+                if isnan(score.value):
+                    raise ValidationException(
+                        f"the fitness function gave a NaN score to the "
+                        f"Chromosome {chromosome}"
+                    )
             self._chromosome_cache.update(zip(new_population, scores))
         for chromosome, chromosome_key in unscored:
             chromosome.score, chromosome.score_time = self._chromosome_cache[
