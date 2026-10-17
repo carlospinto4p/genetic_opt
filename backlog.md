@@ -4,9 +4,6 @@
 
 #### Performance
 
-- [ ] (MED, M) `src/genetic_opt/algorithms/base.py:742-745`: a new `joblib.Parallel` is built each generation and `self.fitness_func` is pickled again per batch. Keep one `Parallel` open for the whole `fit` (not timed).
-- [ ] (LOW, S) `src/genetic_opt/algorithms/base.py:736,750`: `repr(chromosome)` computed twice per unscored chromosome (and sorts the genes for a set). Keep the key from the first loop.
-- [ ] (LOW, S) `src/genetic_opt/metrics.py:164-166`: `mean`, `median` and `var` each convert the same list to a numpy array. Convert once.
 - [ ] (LOW, S) `crates/genetic_opt/src/algorithm.rs:425-437`: `score` hashes each new chromosome twice and sorts a `Vec` collected from a `HashMap` to restore order. Use a `Vec` plus an index map.
 - [ ] (LOW, S) `tests/unit/test_fit_save.py:74-77`: the save-and-load tests also draw the full metrics JPEG (about 4.2 s of the 8.95 s unit suite across the plot tests). Pass `plot_metrics=False` where the plot is not under test.
 - [ ] (LOW, S) `crates/genetic_opt/Cargo.toml`: no `[profile.dev]`; `debug = "line-tables-only"` (or no debug info for dependencies) would cut build time. Not measured.

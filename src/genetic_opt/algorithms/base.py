@@ -1,7 +1,8 @@
 """Genetic Opt base class of the algorithms."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import asdict
 from logging import INFO
 from os import cpu_count
@@ -189,12 +190,37 @@ class GeneticAlgorithm(ABC):
         # Scores an earlier run left in the cache, which the counts of
         # this run leave out
         self._scores_before_run: int = 0
+        # The workers `fit` keeps for its whole run
+        self._parallel: Parallel | None = None
 
         # Some logging
         logger.info(
             f"Genetic Opt. Algorithm initialized. "
             f"Gene Space length: {len(gene_space)}"
         )
+
+    def __getstate__(self) -> dict:
+        """
+        Leave the workers of a run out when pickling: a fitness function
+        that uses `self` takes the algorithm to each of them, and an open
+        `Parallel` can not be pickled.
+        :return: the attributes to pickle.
+        """
+        return {**self.__dict__, "_parallel": None}
+
+    @contextmanager
+    def _workers(self, n_jobs: int) -> Iterator[None]:
+        """
+        Keep one pool of workers open while the block runs, for every
+        scoring in it, instead of one for each generation.
+        :param n_jobs: number of jobs of the pool.
+        :return: an iterator that yields once, while the pool is open.
+        """
+        try:
+            with Parallel(n_jobs=n_jobs) as self._parallel:
+                yield
+        finally:
+            self._parallel = None
 
     @abstractmethod
     def crossover_func(
@@ -405,58 +431,63 @@ class GeneticAlgorithm(ABC):
         logger.info(
             f"initializing population. Using:\n{log_format(fit_parameters)}"
         )
-        for n_generation in iter_func(list(range(n_generations + 1))):
-            if n_generation == 0:
-                self.init_population(
-                    population_size, iter_func=iter_func, n_jobs=n_jobs
-                )
-            else:
-                self.next_generation_selection(
-                    crossovers_prop=config.crossovers_prop,
-                    besties_prop=config.besties_prop,
-                    mutate_prob=config.mutate_prob,
-                    iter_func=iter_func,
-                    n_jobs=n_jobs,
-                )
-            # The texts are built only when they are going to be logged
-            if logger.isEnabledFor(INFO):
-                logger.info(
-                    f"iteration {n_generation} - Metrics:"
-                    f"\n\t{log_format(self.metrics[-1])}"
-                )
-                if improvement := self._get_iteration_improvement():
-                    logger.info(f"improvement:\n{log_format(improvement)}")
-                logger.info(
-                    f"measuring this generation took "
-                    f"{format_seconds(self.metrics[-1].fitting_seconds)}"
-                )
-            callback_func(self)
-            # Save result for each iteration
-            if self._saver:
-                fit_result = self._get_fitted_data(
-                    fit_parameters=fit_parameters, n_jobs=n_jobs
-                )
-                self._saver.save_generation(fit_result)
-            # Exit conditions
-            if self.metrics[-1].n_uniques < min_population_size:
-                logger.info(
-                    f"Minimum population size reached: "
-                    f"{min_population_size}\n\t"
-                    f"Training finished at iteration {n_generation}"
-                )
-                break
-            if self.no_improvement_condition():
-                logger.info(
-                    f"no more improvement detected!\n\t"
-                    f"Training finished at iteration {n_generation}"
-                )
-                break
-            if exit_func(self):
-                logger.info(
-                    f"exit condition reached!\n\tTraining "
-                    f"finished at iteration {n_generation}"
-                )
-                break
+        with self._workers(n_jobs):
+            for n_generation in iter_func(list(range(n_generations + 1))):
+                if n_generation == 0:
+                    self.init_population(
+                        population_size,
+                        iter_func=iter_func,
+                        n_jobs=n_jobs,
+                    )
+                else:
+                    self.next_generation_selection(
+                        crossovers_prop=config.crossovers_prop,
+                        besties_prop=config.besties_prop,
+                        mutate_prob=config.mutate_prob,
+                        iter_func=iter_func,
+                        n_jobs=n_jobs,
+                    )
+                # The texts are built only when they are going to be logged
+                if logger.isEnabledFor(INFO):
+                    logger.info(
+                        f"iteration {n_generation} - Metrics:"
+                        f"\n\t{log_format(self.metrics[-1])}"
+                    )
+                    if improvement := self._get_iteration_improvement():
+                        logger.info(
+                            f"improvement:\n{log_format(improvement)}"
+                        )
+                    logger.info(
+                        f"measuring this generation took "
+                        f"{format_seconds(self.metrics[-1].fitting_seconds)}"
+                    )
+                callback_func(self)
+                # Save result for each iteration
+                if self._saver:
+                    fit_result = self._get_fitted_data(
+                        fit_parameters=fit_parameters, n_jobs=n_jobs
+                    )
+                    self._saver.save_generation(fit_result)
+                # Exit conditions
+                if self.metrics[-1].n_uniques < min_population_size:
+                    logger.info(
+                        f"Minimum population size reached: "
+                        f"{min_population_size}\n\t"
+                        f"Training finished at iteration {n_generation}"
+                    )
+                    break
+                if self.no_improvement_condition():
+                    logger.info(
+                        f"no more improvement detected!\n\t"
+                        f"Training finished at iteration {n_generation}"
+                    )
+                    break
+                if exit_func(self):
+                    logger.info(
+                        f"exit condition reached!\n\tTraining "
+                        f"finished at iteration {n_generation}"
+                    )
+                    break
         # With nothing to save, the result is built once, when the run
         # ends: it decodes the whole population.
         if not self._saver:
@@ -729,26 +760,29 @@ class GeneticAlgorithm(ABC):
         # Get the Chromosomes never scored before, one of each.
         # Note that len(self.population) > self.population size at this step.
         new_population: dict[str, Chromosome] = {}
+        # Each unscored Chromosome with its key, which is computed once
+        unscored: list[tuple[Chromosome, str]] = []
         for chromosome in self.population:
             if chromosome.score is not None:
                 continue
-            self._score_requests += 1
             chromosome_key = repr(chromosome)
+            unscored.append((chromosome, chromosome_key))
             if chromosome_key not in self._chromosome_cache:
                 new_population.setdefault(chromosome_key, chromosome)
+        self._score_requests += len(unscored)
         if new_population:
             # The workers are other processes and score copies of the
             # Chromosomes, so the scores must come back as results.
-            scores = Parallel(n_jobs=n_jobs)(
+            parallel = self._parallel or Parallel(n_jobs=n_jobs)
+            scores = parallel(
                 delayed(_score_chromosome)(self.fitness_func, chromosome)
                 for chromosome in iter_func(list(new_population.values()))
             )
             self._chromosome_cache.update(zip(new_population, scores))
-        for chromosome in self.population:
-            if chromosome.score is None:
-                chromosome.score, chromosome.score_time = (
-                    self._chromosome_cache[repr(chromosome)]
-                )
+        for chromosome, chromosome_key in unscored:
+            chromosome.score, chromosome.score_time = self._chromosome_cache[
+                chromosome_key
+            ]
 
         self.population.sort(
             key=lambda x: x.score.value,

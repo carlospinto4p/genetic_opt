@@ -751,6 +751,64 @@ def test_sorting_starts_no_workers_when_no_chromosome_is_new(monkeypatch):
     assert all(c.score is not None for c in genetic_bag.population)
 
 
+def test_fit_keeps_one_pool_of_workers_for_the_whole_run(monkeypatch):
+    genetic_bag = Knapsack(
+        weights=list(range(1, 21)), values=list(range(20, 0, -1)), capacity=60
+    )
+    genetic_bag.no_improvement_condition = lambda: False
+    parallel_calls: list[dict] = []
+
+    def counted_parallel(**kwargs):
+        parallel_calls.append(kwargs)
+        return Parallel(**kwargs)
+
+    monkeypatch.setattr(algorithms, "Parallel", counted_parallel)
+    result = genetic_bag.fit(
+        FitConfig(n_generations=4, population_size=30, n_jobs=1)
+    )
+    assert len(result["metrics"]) == 5
+    assert parallel_calls == [{"n_jobs": 1}]
+    assert genetic_bag._parallel is None
+
+
+def test_fit_lets_go_of_its_pool_of_workers_when_it_raises():
+    genetic_bag = Knapsack(weights=[1, 2, 3], values=[3, 4, 5], capacity=4)
+
+    def failing_callback(_):
+        raise RuntimeError("callback failed")
+
+    with pytest.raises(RuntimeError, match="callback failed"):
+        genetic_bag.fit(
+            FitConfig(n_generations=2, population_size=10, n_jobs=1),
+            callback_func=failing_callback,
+        )
+    assert genetic_bag._parallel is None
+
+
+def test_fit_runs_a_fitness_function_that_uses_the_algorithm():
+    # The function takes the whole algorithm to each worker process, so
+    # the algorithm must pickle while its pool of workers is open.
+    genetic_bag = Knapsack(
+        weights=[23, 31, 29, 44, 53], values=[92, 57, 49, 68, 60], capacity=80
+    )
+
+    def fit_with_algorithm(chromosome: Chromosome) -> Score:
+        return Score(
+            value=sum(
+                value * gene
+                for value, gene in zip(genetic_bag.values, chromosome.genes)
+            )
+        )
+
+    genetic_bag.fitness_func = fit_with_algorithm
+    result = genetic_bag.fit(
+        FitConfig(
+            n_generations=2, population_size=20, n_jobs=min(2, cpu_count())
+        )
+    )
+    assert result["bests"]["scores"][0].value > 0
+
+
 @pytest.mark.parametrize(
     "level, logged", [(logging.INFO, True), (logging.WARNING, False)]
 )

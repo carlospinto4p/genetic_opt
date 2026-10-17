@@ -6,7 +6,7 @@ from math import comb, inf
 from operator import itemgetter
 from typing import Any
 
-from numpy import mean, median, var
+from numpy import array, median
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.functions import identity_func
@@ -152,7 +152,7 @@ def get_population_metrics(
     """
     scores = [score for score, chromosome in population_with_scores]
     chromosomes = [chromosome for score, chromosome in population_with_scores]
-    values = [score.value for score in scores]
+    values = array([score.value for score in scores])
     n_uniques = len(set(chromosomes))
     genetic_algo_metrics = Metric(
         best=Best(
@@ -161,9 +161,9 @@ def get_population_metrics(
             result=decode_func(chromosomes[0]),
         ),
         size=len(values),
-        mean=float(mean(values)),
+        mean=float(values.mean()),
         median=float(median(values)),
-        var=float(var(values)),
+        var=float(values.var()),
         n_uniques=n_uniques,
         percent_uniques=100 * n_uniques / len(population_with_scores),
         fitting_seconds=round(fitting_seconds, 2),

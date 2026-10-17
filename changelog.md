@@ -2,6 +2,27 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.0.1 - 17th October 2026
+
+- `src/genetic_opt/algorithms/base.py`:
+  - `fit` keeps one `joblib.Parallel` open for its whole run, instead
+    of one for each generation. A 4-job `Knapsack` run (80 genes, 300
+    Chromosomes, 61 generations) was 6% and 16% faster in two of
+    three rounds timed against 2.0.0; the machine was busy with other
+    work, so the figures are rough.
+  - Added `__getstate__`, which leaves the open `Parallel` out: a
+    fitness function that uses the algorithm takes it to each worker,
+    and an open `Parallel` can not be pickled.
+  - `_sort_population` computes `repr` once for each unscored
+    Chromosome instead of twice.
+- `src/genetic_opt/metrics.py`: `get_population_metrics` converts the
+  scores to a numpy array once, instead of once for each of `mean`,
+  `median` and `var`.
+- Added tests in `tests/unit/test_binary_algs.py`:
+  - `test_fit_keeps_one_pool_of_workers_for_the_whole_run`.
+  - `test_fit_lets_go_of_its_pool_of_workers_when_it_raises`.
+  - `test_fit_runs_a_fitness_function_that_uses_the_algorithm`.
+
 ### v2.0.0 - 16th October 2026
 
 - A saved generation file no longer holds `last_population`, its
