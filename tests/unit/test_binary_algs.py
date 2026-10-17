@@ -905,17 +905,6 @@ def test_fit_refuses_no_jobs_and_more_jobs_than_cores(monkeypatch, n_jobs):
     assert not calls
 
 
-def test_get_chromosome_score_runs_the_fitness_function_once():
-    genetic_bag, calls = _counting_bag()
-    genes = [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
-    first = Chromosome(size=10, genes=list(genes))
-    same_genes = Chromosome(size=10, genes=list(genes))
-    assert genetic_bag.get_chromosome_score(first).value == 309
-    assert genetic_bag.get_chromosome_score(first).value == 309
-    assert genetic_bag.get_chromosome_score(same_genes).value == 309
-    assert len(calls) == 1
-
-
 def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
     genetic_bag, _ = _counting_bag()
     config = FitConfig(n_generations=5, population_size=30, n_jobs=1)
@@ -923,13 +912,6 @@ def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
 
     # Every Chromosome gets one id, as two would after a hash collision.
     monkeypatch.setattr(Chromosome, "id", property(lambda self: 1))
-    genetic_bag, calls = _counting_bag()
-    in_bag = Chromosome(size=10, genes=[1, 1, 1, 1, 0, 1, 0, 0, 0, 0])
-    empty = Chromosome(size=10, genes=[0] * 10)
-    assert genetic_bag.get_chromosome_score(in_bag).value == 309
-    assert genetic_bag.get_chromosome_score(empty).value == 0
-    assert len(calls) == 2
-
     genetic_bag, _ = _counting_bag()
     scores = genetic_bag.fit(config, plot_metrics=False)["bests"]["scores"]
     assert [s.value for s in scores] == [s.value for s in expected]

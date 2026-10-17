@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v2.1.0 - 17th October 2026
+
+- Removed `GeneticAlgorithm.get_chromosome_score` from
+  `src/genetic_opt/algorithms/base.py`. Only the tests called it, and
+  it repeated the lookup of the score cache that `_sort_population`
+  does for every population of `fit`. A minor version by decision,
+  though a public method is removed: no known caller uses it.
+- `tests/unit/test_binary_algs.py`:
+  - Removed `test_get_chromosome_score_runs_the_fitness_function_once`;
+    `test_fit_scores_each_chromosome_once` covers the cache through
+    `fit`.
+  - `test_chromosomes_sharing_an_id_keep_their_own_scores` keeps only
+    its check through `fit`.
+
 ### v2.0.6 - 17th October 2026
 
 - `src/genetic_opt/algorithms/base.py`: `fit` checks its `FitConfig`

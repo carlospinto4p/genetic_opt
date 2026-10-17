@@ -509,28 +509,6 @@ class GeneticAlgorithm(ABC):
             "n_jobs": n_jobs,
         }
 
-    def get_chromosome_score(self, chromosome: Chromosome) -> Score:
-        """
-        Get a chromosome score. The fitness function runs once for each
-        different Chromosome: later ones with the same genes get the
-        Score kept in `self._chromosome_cache`.
-        :param chromosome: Chromosome to get the Score from.
-        :return: the Chromosome Score.
-        """
-        if chromosome.score is None:
-            chromosome_key = repr(chromosome)
-            if chromosome_key in self._chromosome_cache:
-                chromosome.score, chromosome.score_time = (
-                    self._chromosome_cache[chromosome_key]
-                )
-            else:
-                chromosome.get_score(self.fitness_func)
-                self._chromosome_cache[chromosome_key] = (
-                    chromosome.score,
-                    chromosome.score_time,
-                )
-        return chromosome.score
-
     def get_init_population(self, population_size: int) -> list[list[Any]]:
         """
         Initializes the first population of the algorithm.
