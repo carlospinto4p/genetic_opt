@@ -2,6 +2,31 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.9.0 - 17th October 2026
+
+- Added tournament selection, in both implementations. The parents of a
+  generation that are not among the best ones are picked from the rest
+  as `FitConfig.selection` says:
+  - `"random"`, the default: each one at random, as before, with the
+    same draws for a seed.
+  - `"tournament"`: each one is the best of `tournament_size`
+    Chromosomes drawn at random from the rest.
+- Added `selection` and `tournament_size`, 3 by default, to `FitConfig`
+  in both implementations, and to the saved `fit_parameters`. A
+  `tournament_size` of 0, or another `selection`, is refused. In the
+  crate `selection` is the new enum `Selection`.
+- `FitParameters` in `fit_result.py` has both keys as not required:
+  runs saved before 5.9.0 do not have them.
+- The class doc of `GeneticAlgorithm` called the default selection a
+  tournament selection. It now describes both.
+- Added tests:
+  - `tests/unit/algorithms/test_base.py`: the winners of the
+    tournaments, the besties kept, the saved parameters and the
+    refused values.
+  - `tests/unit/test_fit_result.py`: the keys not required.
+  - `crates/genetic_opt/tests/algorithm.rs`: the same as the first.
+
+
 ### v5.8.0 - 17th October 2026
 
 - Added uniform crossover, in both implementations: each gene of a

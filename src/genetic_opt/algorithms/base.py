@@ -81,11 +81,12 @@ class GeneticAlgorithm(ABC):
     - Return the best chromosome of the last generation.
 
     There is a lot of flexibility inside this algorithm class.
-    It will do the following (Tournament selection):
+    It will do the following:
 
     - Each population has T chromosomes.
-    - Select the best M chromosomes, and then do a random selection of
-      `A` chromosomes of the rest, being A < T-M.
+    - Select the best M chromosomes, and then pick `A` chromosomes of
+      the rest, being A < T-M: at random, or with `FitConfig.selection`
+      set to `"tournament"`, each one the best of a few drawn at random.
     - Join M + A and crossover them randomly to obtain a new population of
       size C = M + A.
     - Randomly mutates each chromosome of the population.
@@ -450,6 +451,8 @@ class GeneticAlgorithm(ABC):
                         mutate_prob=config.mutate_prob,
                         iter_func=iter_func,
                         n_jobs=n_jobs,
+                        selection=config.selection,
+                        tournament_size=config.tournament_size,
                     )
                 # The texts are built only when they are going to be logged
                 if logger.isEnabledFor(INFO):
@@ -562,6 +565,16 @@ class GeneticAlgorithm(ABC):
         max_stale = config.max_stale_generations
         if max_stale is not None and max_stale < 0:
             raise ValidationException(f"{max_stale = } must not be negative")
+        if config.selection not in ("random", "tournament"):
+            raise ValidationException(
+                f"selection = {config.selection!r} must be 'random' or "
+                f"'tournament'"
+            )
+        if config.tournament_size < 1:
+            raise ValidationException(
+                f"tournament_size = {config.tournament_size} must be 1 or "
+                f"more"
+            )
         n_jobs = config.n_jobs
         if n_jobs < 0:
             # A negative number leaves cores out, down to one job
@@ -693,11 +706,11 @@ class GeneticAlgorithm(ABC):
         mutate_prob: float = FitConfig.mutate_prob,
         iter_func: Callable | None = None,
         n_jobs: int = FitConfig.n_jobs,
+        selection: str = FitConfig.selection,
+        tournament_size: int = FitConfig.tournament_size,
     ) -> None:
         """
-        Handles the selection of the next generation.
-        Default option (not overriding this function) is a
-        `tournament selection`. See the class doc.
+        Handles the selection of the next generation. See the class doc.
         :param crossovers_prop: proportion of chromosomes to crossover
             in each step.
         :param besties_prop: proportion of bests chromosomes to maintain for
@@ -707,6 +720,9 @@ class GeneticAlgorithm(ABC):
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :param n_jobs: number of jobs to use to parallelize the evaluation of
             each element of the population. Default to `FitConfig.n_jobs`.
+        :param selection: how the parents that are not besties are picked
+            from the rest: `"random"` or `"tournament"`.
+        :param tournament_size: Chromosomes drawn for each tournament.
         :return: None.
         """
         init_time = time()
@@ -714,16 +730,24 @@ class GeneticAlgorithm(ABC):
         # Ensure that the crossover population is even
         n_crossovers = 2 * int((crossovers_prop * population_length) // 2)
         n_besties = int(n_crossovers * besties_prop)
-        # Get the crossover candidates, choosing the besties and a random
-        # sample of the rest. Their positions are drawn, and not the
+        # Get the crossover candidates, choosing the besties and a sample
+        # of the rest. Their positions are drawn, and not the
         # Chromosomes, which numpy would copy into an array first: a
         # seed gives the same parents either way.
         rest = self.population[n_besties:]
-        parents = self.population[:n_besties] + [
-            rest[position]
-            for position in self.random_state.choice(
-                len(rest), size=n_crossovers - n_besties, replace=True
+        n_drawn = n_crossovers - n_besties
+        if selection == "tournament":
+            # The rest is sorted best first, so the lowest position drawn
+            # wins each tournament
+            positions = self.random_state.choice(
+                len(rest), size=(n_drawn, tournament_size), replace=True
+            ).min(axis=1)
+        else:
+            positions = self.random_state.choice(
+                len(rest), size=n_drawn, replace=True
             )
+        parents = self.population[:n_besties] + [
+            rest[position] for position in positions
         ]
         self.random_state.shuffle(parents)
         children = self.cross_parents(parents)

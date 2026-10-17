@@ -149,6 +149,8 @@ mod tests {
             min_population_size: 1,
             random_seed: 442,
             n_jobs: 1,
+            selection: crate::Selection::Random,
+            tournament_size: 3,
         };
         let fit_metrics = FitMetrics {
             fitness_func_calls: FitnessFuncCalls {

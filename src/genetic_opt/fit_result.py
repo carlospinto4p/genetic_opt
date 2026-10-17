@@ -72,6 +72,10 @@ class FitParameters(TypedDict):
     random_seed: int
     # The number of jobs used, so never a negative one
     n_jobs: int
+    # "random" or "tournament". Runs saved before 5.9.0 have neither
+    # this nor `tournament_size`, and picked the rest at random.
+    selection: NotRequired[str]
+    tournament_size: NotRequired[int]
 
 
 class FitSummary(TypedDict):

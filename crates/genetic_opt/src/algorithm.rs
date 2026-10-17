@@ -7,8 +7,8 @@ use std::thread::available_parallelism;
 use std::time::Instant;
 
 use log::info;
-use rand::SeedableRng;
 use rand::seq::{IndexedRandom, SliceRandom};
+use rand::{RngExt, SeedableRng};
 use rayon::prelude::*;
 use serde::Serialize;
 
@@ -59,7 +59,7 @@ pub struct FitConfig {
     /// Proportion of the population that is crossed in each generation.
     pub crossovers_prop: f64,
     /// Proportion of the crossed chromosomes taken from the best ones.
-    /// The others are picked at random from the rest.
+    /// The others are picked from the rest, as `selection` says.
     pub besties_prop: f64,
     /// Probability of each gene of a child to mutate.
     pub mutate_prob: f64,
@@ -78,6 +78,24 @@ pub struct FitConfig {
     /// better best score than the generations before them. `None` is no
     /// limit. It is not saved with the run.
     pub max_stale_generations: Option<usize>,
+    /// How the crossed chromosomes that are not among the best ones are
+    /// picked from the rest.
+    pub selection: Selection,
+    /// Chromosomes drawn for each tournament, 1 or more. With 1, a
+    /// tournament is a random pick.
+    pub tournament_size: usize,
+}
+
+/// How the parents that are not among the best chromosomes are picked.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Selection {
+    /// Each one at random from the rest.
+    #[default]
+    Random,
+    /// Each one is the best of [`FitConfig::tournament_size`] chromosomes
+    /// drawn at random from the rest.
+    Tournament,
 }
 
 impl FitConfig {
@@ -93,6 +111,8 @@ impl FitConfig {
             n_jobs: None,
             max_seconds: None,
             max_stale_generations: None,
+            selection: Selection::Random,
+            tournament_size: 3,
         }
     }
 }
@@ -108,6 +128,8 @@ pub struct FitParameters {
     pub min_population_size: usize,
     pub random_seed: u64,
     pub n_jobs: usize,
+    pub selection: Selection,
+    pub tournament_size: usize,
 }
 
 /// What a run found. Every population it went through stays in
@@ -177,8 +199,8 @@ enum Asked<G> {
 ///
 /// - It starts from a random population and scores it.
 /// - For each generation it picks parents, the best chromosomes plus a
-///   random sample of the rest, crosses them in random pairs and mutates
-///   the children.
+///   sample of the rest, at random or by tournament, crosses them in
+///   random pairs and mutates the children.
 /// - It joins the children to the population, sorts everything by score
 ///   and keeps as many as the population had.
 ///
@@ -431,6 +453,11 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 "max_seconds is {seconds}, and it must not be negative"
             )));
         }
+        if config.tournament_size == 0 {
+            return Err(Error::Validation(
+                "tournament_size is 0, and it must be 1 or more".into(),
+            ));
+        }
         if self.problem.chromosome_as_set()
             && self.problem.gene_space_size() < self.problem.chromosome_length()
         {
@@ -449,6 +476,8 @@ impl<P: Problem> GeneticAlgorithm<P> {
             min_population_size: config.min_population_size,
             random_seed: self.config.random_seed,
             n_jobs,
+            selection: config.selection,
+            tournament_size: config.tournament_size,
         })
     }
 
@@ -525,9 +554,16 @@ impl<P: Problem> GeneticAlgorithm<P> {
         // size`. The rest is empty only when `n_besties` is the whole
         // population, and then no parent is drawn from it.
         for _ in n_besties..n_crossovers {
-            let parent = rest
-                .choose(&mut self.rng)
-                .expect("the rest is not empty when parents are drawn from it");
+            let parent = match config.selection {
+                Selection::Random => rest.choose(&mut self.rng),
+                // The rest is sorted best first, so the lowest position
+                // drawn wins the tournament.
+                Selection::Tournament => (0..config.tournament_size)
+                    .map(|_| self.rng.random_range(0..rest.len()))
+                    .min()
+                    .map(|position| &rest[position]),
+            }
+            .expect("the rest is not empty when parents are drawn from it");
             parents.push(Arc::clone(parent));
         }
         parents.shuffle(&mut self.rng);

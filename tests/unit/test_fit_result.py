@@ -22,7 +22,8 @@ def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
     folder = f"{algorithm.save_path}/fit_data"
     fit_metrics = fit_result["fit_metrics"]
 
-    # Without an `extra_config` there is no `config`, the one optional key
+    # Without an `extra_config` there is no `config`. The other optional
+    # keys are left out only by runs of older versions.
     for result, result_type in (
         (fit_result, FitResult),
         (load_fit_result(folder, decode_genes), FitResult),
@@ -33,5 +34,11 @@ def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
         (fit_metrics["fitness_func_calls"], FitnessFuncCalls),
         (fit_metrics["total_fit_time"], TotalFitTime),
     ):
-        assert set(result) == result_type.__required_keys__
+        assert set(result) == result_type.__required_keys__ | (
+            result_type.__optional_keys__ - {"config"}
+        )
     assert FitResult.__optional_keys__ == {"config"}
+    assert FitParameters.__optional_keys__ == {
+        "selection",
+        "tournament_size",
+    }

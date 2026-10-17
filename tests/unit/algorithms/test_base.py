@@ -922,6 +922,8 @@ def test_fit_formats_the_metrics_only_when_they_are_logged(
         {"max_seconds": -1},
         {"max_seconds": float("nan")},
         {"max_stale_generations": -1},
+        {"selection": "roulette"},
+        {"tournament_size": 0},
     ],
 )
 def test_fit_refuses_parameters_out_of_range(parameters):
@@ -958,8 +960,77 @@ def test_fit_parameters_are_the_config_with_the_seed_and_the_jobs():
         "mutate_prob": 0.05,
         "min_population_size": 10,
         "n_jobs": 1,
+        "selection": "random",
+        "tournament_size": 3,
         "random_seed": 666,
     }
+
+
+def _tournament_parents(
+    tournament_size: int, n_besties: int = 0
+) -> list[list[int]]:
+    """
+    The genes of the parents picked from a population of the genes 0 to
+    19, scored by their own value and sorted best first, with no
+    crossover nor mutation.
+    """
+    algorithm = NumbersAlgorithm(minimize=False)
+    algorithm.population = []
+    for value in range(19, -1, -1):
+        chromosome = Chromosome(size=1, genes=[value])
+        chromosome.score = Score(value=value)
+        algorithm.population.append(chromosome)
+    picked: list[list[int]] = []
+
+    def keep_parents(parents):
+        picked.extend(list(parent.genes) for parent in parents)
+        return []
+
+    algorithm.cross_parents = keep_parents
+    algorithm.next_generation_selection(
+        crossovers_prop=1.0,
+        besties_prop=n_besties / 20,
+        n_jobs=1,
+        selection="tournament",
+        tournament_size=tournament_size,
+    )
+    return picked
+
+
+def test_tournament_picks_the_best_of_the_chromosomes_drawn():
+    one = sum(genes[0] for genes in _tournament_parents(1))
+    five = sum(genes[0] for genes in _tournament_parents(5))
+    # Each parent is the best of 5 drawn from 0 to 19: about 16 on
+    # average, against about 9.5 for a random pick
+    assert five > one
+    assert five / 20 > 14
+
+
+def test_tournament_draws_from_the_rest_after_the_besties():
+    parents = _tournament_parents(20, n_besties=6)
+    besties = sorted(genes[0] for genes in parents)[-6:]
+    assert besties == list(range(14, 20))
+    # Every other parent is drawn from 0 to 13
+    assert all(genes[0] < 14 for genes in parents if genes[0] not in besties)
+
+
+def test_a_tournament_run_is_saved_with_its_selection(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    algorithm.fit(
+        FitConfig(
+            n_generations=3,
+            population_size=20,
+            n_jobs=1,
+            selection="tournament",
+            tournament_size=4,
+        ),
+    )
+    loaded = load_fit_result(f"{algorithm.save_path}/fit_data", decode_genes)
+    parameters = loaded["fit_parameters"]
+    assert (parameters["selection"], parameters["tournament_size"]) == (
+        "tournament",
+        4,
+    )
 
 
 @pytest.mark.parametrize("n_jobs", [0, 3])

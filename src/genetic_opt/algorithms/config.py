@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from genetic_opt.chromosome import Chromosome
 
@@ -18,7 +18,8 @@ class FitConfig:
     :param crossovers_prop: proportion of the population that is crossed
         in each generation.
     :param besties_prop: proportion of the crossed Chromosomes taken from
-        the best ones. The others are picked at random from the rest.
+        the best ones. The others are picked from the rest, as
+        `selection` says.
     :param mutate_prob: probability of each gene of a child to mutate.
     :param min_population_size: the run stops when a population has
         fewer different Chromosomes.
@@ -40,6 +41,12 @@ class FitConfig:
         generations in a row have bred no better best score than the
         generations before them. `None` is no limit. It is not saved
         with the run.
+    :param selection: how the crossed Chromosomes that are not among the
+        best ones are picked from the rest. `"random"`: each one at
+        random. `"tournament"`: each one is the best of
+        `tournament_size` Chromosomes drawn at random from the rest.
+    :param tournament_size: number of Chromosomes drawn for each
+        tournament, 1 or more. With 1, a tournament is a random pick.
     """
 
     n_generations: int
@@ -52,6 +59,8 @@ class FitConfig:
     n_jobs: int = -2
     max_seconds: float | None = None
     max_stale_generations: int | None = None
+    selection: Literal["random", "tournament"] = "random"
+    tournament_size: int = 3
 
 
 @dataclass(frozen=True)

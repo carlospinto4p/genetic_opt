@@ -36,6 +36,25 @@ A subclass of `GeneticAlgorithm` can call either function in its
 `crossover_func`. The crate has both, `single_point_crossover` and
 `uniform_crossover`, for `Problem::crossover`.
 
+The parents of each generation are the best Chromosomes, a share
+`besties_prop` of them, and others picked from the rest. By default
+those are picked at random. With `selection="tournament"` each one is
+the best of `tournament_size` Chromosomes drawn at random from the
+rest, 3 by default. Both are saved with the run. In the crate they are
+`FitConfig::selection`, `Selection::Tournament`, and
+`FitConfig::tournament_size`:
+
+```python
+bag.fit(
+    FitConfig(
+        n_generations=100,
+        population_size=50,
+        selection="tournament",
+        tournament_size=4,
+    )
+)
+```
+
 The parameters of a run go in a `FitConfig`. To save the runs, the
 algorithm gets a `SaveConfig`:
 

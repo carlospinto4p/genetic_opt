@@ -79,8 +79,13 @@ def numbers_example(examples) -> str:
 
 
 def assert_typed_dict(value: dict, typed_dict: type) -> None:
-    """Check that `value` has the keys of `typed_dict`, each typed."""
-    assert set(value) == typed_dict.__required_keys__
+    """
+    Check that `value` has every key of `typed_dict`, each typed. The
+    ones not required are left out only by runs of older versions.
+    """
+    assert set(value) == (
+        typed_dict.__required_keys__ | typed_dict.__optional_keys__
+    )
     for key, hint in get_type_hints(typed_dict).items():
         if is_typeddict(hint):
             assert_typed_dict(value[key], hint)

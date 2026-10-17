@@ -11,7 +11,7 @@ use rand::SeedableRng;
 use genetic_opt::examples::{Knapsack, Numbers};
 use genetic_opt::{
     AlgorithmConfig, Chromosome, Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig,
-    Score, single_point_crossover, uniform_crossover,
+    Score, Selection, single_point_crossover, uniform_crossover,
 };
 
 /// Two threads, or the one that a machine with one core allows.
@@ -653,6 +653,8 @@ fn fit_config_new_sets_the_defaults() {
     assert_eq!(config.n_jobs, None);
     assert_eq!(config.max_seconds, None);
     assert_eq!(config.max_stale_generations, None);
+    assert_eq!(config.selection, Selection::Random);
+    assert_eq!(config.tournament_size, 3);
 }
 
 #[test]
@@ -705,6 +707,89 @@ fn the_algorithm_shows_the_last_population_and_the_metrics_of_the_run() {
     assert_eq!(parameters.min_population_size, 10);
     assert_eq!(parameters.random_seed, 9);
     assert_eq!(parameters.n_jobs, 1);
+    assert_eq!(parameters.selection, Selection::Random);
+    assert_eq!(parameters.tournament_size, 3);
+}
+
+/// One gene from 0 to 19, scored by its value, whose crossover keeps the
+/// genes of every parent it gets.
+struct Parents(std::sync::Mutex<Vec<u8>>);
+
+impl Problem for Parents {
+    type Gene = u8;
+    type Solution = u8;
+
+    fn chromosome_length(&self) -> usize {
+        1
+    }
+
+    fn minimize(&self) -> bool {
+        false
+    }
+
+    fn gene_space_size(&self) -> usize {
+        20
+    }
+
+    fn random_gene(&self, rng: &mut Rng) -> u8 {
+        rand::RngExt::random_range(rng, 0..20)
+    }
+
+    fn fitness(&self, genes: &[u8]) -> Score {
+        Score::new(f64::from(genes[0]))
+    }
+
+    fn decode(&self, genes: &[u8]) -> u8 {
+        genes[0]
+    }
+
+    fn crossover(&self, first: &[u8], second: &[u8], _rng: &mut Rng) -> (Vec<u8>, Vec<u8>) {
+        self.0.lock().unwrap().extend([first[0], second[0]]);
+        (first.to_vec(), second.to_vec())
+    }
+}
+
+/// The genes of the parents of one generation of [`Parents`], with no
+/// besties.
+fn tournament_parents(tournament_size: usize) -> Vec<u8> {
+    let mut config = FitConfig::new(1, 100);
+    config.crossovers_prop = 1.0;
+    config.besties_prop = 0.0;
+    config.mutate_prob = 0.0;
+    config.min_population_size = 0;
+    config.selection = Selection::Tournament;
+    config.tournament_size = tournament_size;
+    let mut algorithm = algorithm(Parents(std::sync::Mutex::new(Vec::new())));
+    algorithm.fit(&config).unwrap();
+    algorithm.problem().0.lock().unwrap().clone()
+}
+
+#[test]
+fn a_tournament_picks_the_best_of_the_chromosomes_drawn() {
+    let mean = |genes: &[u8]| genes.iter().map(|g| f64::from(*g)).sum::<f64>() / genes.len() as f64;
+    let one = tournament_parents(1);
+    let five = tournament_parents(5);
+    assert_eq!((one.len(), five.len()), (100, 100));
+    // The best of 5 drawn from 0 to 19 is about 16 on average, against
+    // about 9.5 for a random pick.
+    assert!(mean(&five) > 14.0);
+    assert!(mean(&five) > mean(&one));
+}
+
+#[test]
+fn a_tournament_run_is_saved_with_its_selection() {
+    let folder = tempfile::tempdir().unwrap();
+    let mut config = FitConfig::new(2, 20);
+    config.selection = Selection::Tournament;
+    config.tournament_size = 4;
+    let result = saving_algorithm(knapsack(), folder.path(), "bag")
+        .fit(&config)
+        .unwrap();
+
+    let file = File::open(result.save_folder.unwrap().join("experiment_config.yml")).unwrap();
+    let saved: serde_json::Value = serde_norway::from_reader(file).unwrap();
+    assert_eq!(saved["fit_parameters"]["selection"], "tournament");
+    assert_eq!(saved["fit_parameters"]["tournament_size"], 4);
 }
 
 #[test]
@@ -964,6 +1049,8 @@ fn bad_parameters_are_refused() {
     negative_seconds.max_seconds = Some(-1.0);
     let mut seconds_not_a_number = FitConfig::new(5, 30);
     seconds_not_a_number.max_seconds = Some(f64::NAN);
+    let mut empty_tournament = FitConfig::new(5, 30);
+    empty_tournament.tournament_size = 0;
 
     for config in [
         small_population,
@@ -974,6 +1061,7 @@ fn bad_parameters_are_refused() {
         mutate_not_a_number,
         negative_seconds,
         seconds_not_a_number,
+        empty_tournament,
     ] {
         assert!(matches!(
             algorithm(knapsack()).fit(&config),

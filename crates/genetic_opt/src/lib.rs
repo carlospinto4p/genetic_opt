@@ -18,7 +18,9 @@ mod problem;
 mod save;
 mod score;
 
-pub use algorithm::{AlgorithmConfig, FitConfig, FitParameters, FitResult, GeneticAlgorithm};
+pub use algorithm::{
+    AlgorithmConfig, FitConfig, FitParameters, FitResult, GeneticAlgorithm, Selection,
+};
 pub use chromosome::{Chromosome, Individual};
 pub use error::{Error, Result};
 pub use format::format_seconds;
