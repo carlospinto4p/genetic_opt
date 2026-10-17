@@ -7,7 +7,7 @@ use std::env::args;
 use std::error::Error;
 
 use genetic_opt::examples::Knapsack;
-use genetic_opt::{FitConfig, GeneticAlgorithm, SaveConfig, SaveFormat};
+use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm, SaveConfig};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let knapsack = Knapsack::new(
@@ -15,19 +15,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         vec![92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
         165,
     )?;
-    let mut config = FitConfig::new(100, 50);
-    if let Some(folder) = args().nth(1) {
-        let format = match args().nth(2).as_deref() {
-            Some("json") => SaveFormat::Json,
-            _ => SaveFormat::Bson,
-        };
-        config.save = Some(SaveConfig {
-            path: folder.into(),
-            experiment_name: "Knapsack".into(),
-            format,
-        });
-    }
-    let result = GeneticAlgorithm::new(knapsack, config).fit()?;
+    // The runs are saved in `folder/Knapsack`, after the problem's type.
+    let save = args().nth(1).map(|folder| SaveConfig {
+        path: folder.into(),
+        as_bson: args().nth(2).as_deref() != Some("json"),
+    });
+    let config = AlgorithmConfig {
+        save,
+        ..AlgorithmConfig::default()
+    };
+    let result = GeneticAlgorithm::new(knapsack, config).fit(&FitConfig::new(100, 50))?;
 
     let best = &result.bests[0];
     println!("best value: {}", best.score.value);

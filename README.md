@@ -92,21 +92,28 @@ example, the same problem as `examples.binary.Knapsack`:
 
 ```rust
 use genetic_opt::examples::Knapsack;
-use genetic_opt::{FitConfig, GeneticAlgorithm};
+use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm};
 
 let knapsack = Knapsack::new(
     vec![23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
     vec![92, 57, 49, 68, 60, 43, 67, 84, 87, 72],
     165,
 )?;
-let result = GeneticAlgorithm::new(knapsack, FitConfig::new(100, 50)).fit()?;
+let mut algorithm = GeneticAlgorithm::new(knapsack, AlgorithmConfig::default());
+let result = algorithm.fit(&FitConfig::new(100, 50))?;
 println!("{}", result.bests[0].score.value);
 ```
 
-With `FitConfig::save` set, a run is saved in the layout of the Python
-package: `experiment_config.yml` and one `fit_data/fit_data_<n>` file
-per generation, as BSON or JSON. `fit_result_io.load_fit_result` reads
-them. It does not save the plot `fit_plots.jpg`.
+The settings sit where the Python package has them.
+`AlgorithmConfig` holds what the Python algorithm takes when it is
+created: `experiment_name`, `random_seed`, `extra_config` and `save`.
+`FitConfig` holds the parameters of a run, given to `fit`.
+
+With `AlgorithmConfig::save` set, a run is saved in the layout of the
+Python package: `experiment_config.yml` and one
+`fit_data/fit_data_<n>` file per generation, as BSON or JSON.
+`fit_result_io.load_fit_result` reads them. It does not save the plot
+`fit_plots.jpg`.
 
 Since 0.7.0 each `fit_data_<n>` file holds the metrics of its own
 generation, in both implementations. Before, it held those of every

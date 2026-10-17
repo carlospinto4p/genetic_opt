@@ -7,8 +7,8 @@ use rand::SeedableRng;
 
 use genetic_opt::examples::Knapsack;
 use genetic_opt::{
-    Chromosome, Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score,
-    single_point_crossover,
+    AlgorithmConfig, Chromosome, Error, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig,
+    Score, single_point_crossover,
 };
 
 /// Two threads, or the one that a machine with one core allows.
@@ -198,12 +198,17 @@ impl Problem for FirstGenes {
     }
 }
 
-/// The message of the error a run of `problem` stops with.
-fn fit_error<P: Problem>(problem: P, config: FitConfig) -> Error
+/// The algorithm of `problem` with the default settings.
+fn algorithm<P: Problem>(problem: P) -> GeneticAlgorithm<P> {
+    GeneticAlgorithm::new(problem, AlgorithmConfig::default())
+}
+
+/// The message of the error a run of `algorithm` stops with.
+fn fit_error<P: Problem>(mut algorithm: GeneticAlgorithm<P>, config: FitConfig) -> Error
 where
     P::Solution: Clone,
 {
-    match GeneticAlgorithm::new(problem, config).fit() {
+    match algorithm.fit(&config) {
         Ok(_) => panic!("the run did not stop with an error"),
         Err(error) => error,
     }
@@ -279,7 +284,7 @@ fn fit_zeros(min_population_size: usize, stop_without_improvement: bool) -> Vec<
     config.mutate_prob = 0.0;
     config.min_population_size = min_population_size;
     config.stop_without_improvement = stop_without_improvement;
-    let result = GeneticAlgorithm::new(ZeroStart, config).fit().unwrap();
+    let result = algorithm(ZeroStart).fit(&config).unwrap();
     result
         .metrics
         .iter()
@@ -301,8 +306,7 @@ fn the_run_stops_when_the_mean_score_does_not_change() {
 
 #[test]
 fn knapsack_finds_the_best_bag() {
-    let mut algorithm = GeneticAlgorithm::new(knapsack(), FitConfig::new(100, 50));
-    let result = algorithm.fit().unwrap();
+    let result = algorithm(knapsack()).fit(&FitConfig::new(100, 50)).unwrap();
 
     assert_eq!(result.bests[0].score.value, 309.0);
     assert_eq!(result.bests[0].result, [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]);
@@ -316,8 +320,8 @@ fn each_different_chromosome_is_scored_once() {
     };
     let mut config = FitConfig::new(5, 50);
     config.n_jobs = Some(two_jobs());
-    let mut algorithm = GeneticAlgorithm::new(problem, config);
-    let result = algorithm.fit().unwrap();
+    let mut algorithm = algorithm(problem);
+    let result = algorithm.fit(&config).unwrap();
 
     let fitness_calls = algorithm.problem().fitness_calls.load(Ordering::Relaxed);
     let calls = result.fit_metrics.fitness_func_calls;
@@ -339,8 +343,8 @@ fn each_different_chromosome_is_scored_once() {
 
 #[test]
 fn the_metrics_count_the_different_chromosomes() {
-    let mut algorithm = GeneticAlgorithm::new(knapsack(), FitConfig::new(5, 50));
-    let result = algorithm.fit().unwrap();
+    let mut algorithm = algorithm(knapsack());
+    let result = algorithm.fit(&FitConfig::new(5, 50)).unwrap();
 
     assert_eq!(result.metrics.len(), algorithm.history().len());
     let mut repeated = false;
@@ -357,9 +361,12 @@ fn the_metrics_count_the_different_chromosomes() {
 fn knapsack_run_genes(n_jobs: usize, random_seed: u64) -> Vec<Vec<Vec<u8>>> {
     let mut config = FitConfig::new(10, 30);
     config.n_jobs = Some(n_jobs);
-    config.random_seed = random_seed;
-    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-    algorithm.fit().unwrap();
+    let settings = AlgorithmConfig {
+        random_seed,
+        ..AlgorithmConfig::default()
+    };
+    let mut algorithm = GeneticAlgorithm::new(knapsack(), settings);
+    algorithm.fit(&config).unwrap();
     algorithm
         .history()
         .iter()
@@ -386,8 +393,8 @@ fn another_seed_gives_another_run() {
 fn the_population_keeps_its_size_and_is_sorted_best_first() {
     let mut config = FitConfig::new(4, 30);
     config.stop_without_improvement = false;
-    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-    let result = algorithm.fit().unwrap();
+    let mut algorithm = algorithm(knapsack());
+    let result = algorithm.fit(&config).unwrap();
 
     assert_eq!(algorithm.history().len(), 5);
     assert_eq!(result.metrics.len(), 5);
@@ -412,8 +419,7 @@ fn proportions_at_0_and_1_breed_without_error() {
         config.besties_prop = besties_prop;
         config.stop_without_improvement = false;
         config.min_population_size = 0;
-        let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-        assert_eq!(algorithm.fit().unwrap().metrics.len(), 5);
+        assert_eq!(algorithm(knapsack()).fit(&config).unwrap().metrics.len(), 5);
     }
 }
 
@@ -421,7 +427,7 @@ fn proportions_at_0_and_1_breed_without_error() {
 fn a_second_fit_is_the_same_run_again() {
     let mut config = FitConfig::new(4, 30);
     config.stop_without_improvement = false;
-    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
+    let mut algorithm = algorithm(knapsack());
     let genes = |algorithm: &GeneticAlgorithm<Knapsack>| {
         algorithm
             .history()
@@ -434,9 +440,9 @@ fn a_second_fit_is_the_same_run_again() {
             })
             .collect::<Vec<_>>()
     };
-    let first = algorithm.fit().unwrap();
+    let first = algorithm.fit(&config).unwrap();
     let first_genes = genes(&algorithm);
-    let second = algorithm.fit().unwrap();
+    let second = algorithm.fit(&config).unwrap();
 
     assert_eq!(second.metrics.len(), 5);
     assert_eq!(algorithm.metrics().len(), 5);
@@ -454,8 +460,8 @@ fn a_second_fit_is_the_same_run_again() {
 
 #[test]
 fn set_chromosomes_stay_sets_and_the_best_never_gets_worse() {
-    let mut algorithm = GeneticAlgorithm::new(numbers(false), numbers_config());
-    let result = algorithm.fit().unwrap();
+    let mut algorithm = algorithm(numbers(false));
+    let result = algorithm.fit(&numbers_config()).unwrap();
 
     assert!(result.metrics.len() > 1);
     assert_eq!(result.bests[0].result, 9 + 10 + 11);
@@ -476,8 +482,8 @@ fn set_chromosomes_stay_sets_and_the_best_never_gets_worse() {
 
 #[test]
 fn minimize_keeps_the_lowest_scores() {
-    let mut algorithm = GeneticAlgorithm::new(numbers(true), numbers_config());
-    let result = algorithm.fit().unwrap();
+    let mut algorithm = algorithm(numbers(true));
+    let result = algorithm.fit(&numbers_config()).unwrap();
 
     assert!(result.metrics.len() > 1);
     // 0 + 1 + 2.
@@ -519,20 +525,43 @@ fn fit_config_new_sets_the_defaults() {
     assert_eq!(config.min_population_size, 10);
     assert!(config.stop_without_improvement);
     assert_eq!(config.n_jobs, None);
+}
+
+#[test]
+fn algorithm_config_default_sets_the_defaults() {
+    let config = AlgorithmConfig::default();
+    assert!(config.experiment_name.is_none());
     assert_eq!(config.random_seed, 442);
     assert!(config.extra_config.is_none());
     assert!(config.save.is_none());
 }
 
 #[test]
+fn the_experiment_name_defaults_to_the_name_of_the_problem_type() {
+    assert_eq!(algorithm(knapsack()).experiment_name(), "Knapsack");
+    assert_eq!(algorithm(numbers(false)).experiment_name(), "Numbers");
+    let settings = AlgorithmConfig {
+        experiment_name: Some("bag".into()),
+        ..AlgorithmConfig::default()
+    };
+    assert_eq!(
+        GeneticAlgorithm::new(knapsack(), settings).experiment_name(),
+        "bag"
+    );
+}
+
+#[test]
 fn the_algorithm_shows_the_last_population_and_the_metrics_of_the_run() {
     let mut config = FitConfig::new(4, 30);
     config.n_jobs = Some(1);
-    config.random_seed = 9;
-    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
+    let settings = AlgorithmConfig {
+        random_seed: 9,
+        ..AlgorithmConfig::default()
+    };
+    let mut algorithm = GeneticAlgorithm::new(knapsack(), settings);
     assert!(algorithm.population().is_empty());
     assert!(algorithm.metrics().is_empty());
-    let result = algorithm.fit().unwrap();
+    let result = algorithm.fit(&config).unwrap();
 
     assert_eq!(algorithm.population(), algorithm.history().last().unwrap());
     assert_eq!(
@@ -553,9 +582,7 @@ fn the_algorithm_shows_the_last_population_and_the_metrics_of_the_run() {
 #[test]
 fn n_jobs_none_is_every_core_but_one() {
     let cores = available_parallelism().map_or(1, |n| n.get());
-    let result = GeneticAlgorithm::new(knapsack(), FitConfig::new(1, 20))
-        .fit()
-        .unwrap();
+    let result = algorithm(knapsack()).fit(&FitConfig::new(1, 20)).unwrap();
     assert_eq!(result.fit_parameters.n_jobs, (cores - 1).max(1));
 }
 
@@ -563,9 +590,8 @@ fn n_jobs_none_is_every_core_but_one() {
 fn on_generation_can_stop_the_run() {
     let mut config = FitConfig::new(50, 30);
     config.stop_without_improvement = false;
-    let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-    let result = algorithm
-        .fit_with(|algorithm| algorithm.history().len() == 3)
+    let result = algorithm(knapsack())
+        .fit_with(&config, |algorithm| algorithm.history().len() == 3)
         .unwrap();
 
     assert_eq!(result.metrics.len(), 3);
@@ -581,7 +607,7 @@ fn a_broken_invariant_stops_the_run() {
             keep_mutations,
             keep_crossovers,
         };
-        let error = fit_error(problem, FitConfig::new(5, 30));
+        let error = fit_error(algorithm(problem), FitConfig::new(5, 30));
         assert!(
             matches!(&error, Error::Invariant(message) if message.starts_with(broken)),
             "{error:?}"
@@ -604,7 +630,7 @@ fn chromosomes_the_problem_cannot_hold_are_refused() {
             as_set,
             gene_space_size,
         };
-        let error = fit_error(problem, FitConfig::new(5, 30));
+        let error = fit_error(algorithm(problem), FitConfig::new(5, 30));
         assert!(
             matches!(&error, Error::Validation(message) if message.starts_with(refused)),
             "{error:?}"
@@ -617,7 +643,7 @@ fn more_threads_than_cores_are_refused() {
     let cores = available_parallelism().map_or(1, |n| n.get());
     let mut config = FitConfig::new(5, 30);
     config.n_jobs = Some(cores + 1);
-    let error = fit_error(knapsack(), config);
+    let error = fit_error(algorithm(knapsack()), config);
     assert!(
         matches!(&error, Error::Validation(message) if message.starts_with("n_jobs")),
         "{error:?}"
@@ -648,8 +674,10 @@ fn bad_parameters_are_refused() {
         negative_besties,
         mutate_not_a_number,
     ] {
-        let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-        assert!(matches!(algorithm.fit(), Err(Error::Validation(_))));
+        assert!(matches!(
+            algorithm(knapsack()).fit(&config),
+            Err(Error::Validation(_))
+        ));
     }
     assert!(matches!(
         Knapsack::new(vec![1, 2], vec![1], 3),
@@ -745,18 +773,22 @@ fn single_point_crossover_of_different_lengths_cuts_within_the_shorter() {
 
 #[test]
 fn a_run_is_saved_one_file_per_generation() {
-    for (format, extension) in [(SaveFormat::Json, "json"), (SaveFormat::Bson, "bson")] {
+    for (as_bson, extension) in [(false, "json"), (true, "bson")] {
         let folder = tempfile::tempdir().unwrap();
         let mut config = FitConfig::new(3, 20);
         config.stop_without_improvement = false;
-        config.extra_config = Some(serde_json::json!({"note": "test"}));
-        config.save = Some(SaveConfig {
-            path: folder.path().to_path_buf(),
-            experiment_name: "bag".into(),
-            format,
-        });
-        let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-        let result = algorithm.fit().unwrap();
+        let settings = AlgorithmConfig {
+            experiment_name: Some("bag".into()),
+            extra_config: Some(serde_json::json!({"note": "test"})),
+            save: Some(SaveConfig {
+                path: folder.path().to_path_buf(),
+                as_bson,
+            }),
+            ..AlgorithmConfig::default()
+        };
+        let result = GeneticAlgorithm::new(knapsack(), settings)
+            .fit(&config)
+            .unwrap();
 
         let run_folder = result.save_folder.unwrap();
         assert_eq!(run_folder.parent().unwrap(), folder.path().join("bag"));
@@ -772,11 +804,10 @@ fn a_run_is_saved_one_file_per_generation() {
         assert_eq!(files, expected);
 
         let last = File::open(run_folder.join("fit_data").join(&files[3])).unwrap();
-        let saved: serde_json::Value = match format {
-            SaveFormat::Json => serde_json::from_reader(last).unwrap(),
-            SaveFormat::Bson => {
-                serde_json::to_value(bson::Document::from_reader(last).unwrap()).unwrap()
-            }
+        let saved: serde_json::Value = if as_bson {
+            serde_json::to_value(bson::Document::from_reader(last).unwrap()).unwrap()
+        } else {
+            serde_json::from_reader(last).unwrap()
         };
         assert_eq!(saved["population_idx"], 4);
         assert_eq!(saved["config"]["note"], "test");
@@ -800,14 +831,22 @@ fn a_run_is_saved_one_file_per_generation() {
     }
 }
 
-fn saving_config(path: &std::path::Path, experiment_name: &str) -> FitConfig {
-    let mut config = FitConfig::new(1, 20);
-    config.save = Some(SaveConfig {
-        path: path.to_path_buf(),
-        experiment_name: experiment_name.into(),
-        format: SaveFormat::Json,
-    });
-    config
+/// The algorithm of `problem`, saving its runs as JSON in
+/// `path/experiment_name`.
+fn saving_algorithm<P: Problem>(
+    problem: P,
+    path: &std::path::Path,
+    experiment_name: &str,
+) -> GeneticAlgorithm<P> {
+    let settings = AlgorithmConfig {
+        experiment_name: Some(experiment_name.into()),
+        save: Some(SaveConfig {
+            path: path.to_path_buf(),
+            as_bson: false,
+        }),
+        ..AlgorithmConfig::default()
+    };
+    GeneticAlgorithm::new(problem, settings)
 }
 
 #[test]
@@ -816,8 +855,9 @@ fn two_runs_with_one_name_get_a_folder_each() {
     // More runs than fit in the second a folder is named after.
     let run_folders: HashSet<_> = (0..5)
         .map(|_| {
-            let config = saving_config(folder.path(), "bag");
-            let result = GeneticAlgorithm::new(knapsack(), config).fit().unwrap();
+            let result = saving_algorithm(knapsack(), folder.path(), "bag")
+                .fit(&FitConfig::new(1, 20))
+                .unwrap();
             result.save_folder.unwrap()
         })
         .collect();
@@ -832,8 +872,9 @@ fn two_runs_with_one_name_get_a_folder_each() {
 #[test]
 fn the_experiment_config_of_the_problem_is_saved() {
     let folder = tempfile::tempdir().unwrap();
-    let config = saving_config(folder.path(), "numbers");
-    let result = GeneticAlgorithm::new(numbers(false), config).fit().unwrap();
+    let result = saving_algorithm(numbers(false), folder.path(), "numbers")
+        .fit(&FitConfig::new(1, 20))
+        .unwrap();
 
     let file = File::open(result.save_folder.unwrap().join("experiment_config.yml")).unwrap();
     let saved: serde_json::Value = serde_norway::from_reader(file).unwrap();
@@ -850,7 +891,10 @@ fn a_save_path_that_cannot_be_created_stops_the_run() {
     let file = folder.path().join("a_file");
     File::create(&file).unwrap();
 
-    let error = fit_error(knapsack(), saving_config(&file, "bag"));
+    let error = fit_error(
+        saving_algorithm(knapsack(), &file, "bag"),
+        FitConfig::new(1, 20),
+    );
     assert!(matches!(error, Error::Io(_)), "{error:?}");
 }
 
@@ -861,9 +905,11 @@ fn an_experiment_name_outside_the_save_path_is_refused() {
     let absolute = folder.path().join("elsewhere");
 
     for experiment_name in ["../elsewhere", "bag/../..", absolute.to_str().unwrap(), ""] {
-        let config = saving_config(&save_path, experiment_name);
-        let mut algorithm = GeneticAlgorithm::new(knapsack(), config);
-        assert!(matches!(algorithm.fit(), Err(Error::Validation(_))));
+        let mut algorithm = saving_algorithm(knapsack(), &save_path, experiment_name);
+        assert!(matches!(
+            algorithm.fit(&FitConfig::new(1, 20)),
+            Err(Error::Validation(_))
+        ));
     }
     assert!(!save_path.exists());
     assert!(!absolute.exists());

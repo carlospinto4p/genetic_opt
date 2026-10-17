@@ -6,33 +6,28 @@ use serde::Serialize;
 
 use crate::{Error, FitMetrics, FitParameters, Individual, Metric, Result, Score};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SaveFormat {
-    Bson,
-    Json,
-}
-
-/// Where to save a run. Its files go to
+/// Where and how a [`GeneticAlgorithm`](crate::GeneticAlgorithm) saves
+/// its runs. The files of a run go to
 /// `<path>/<experiment_name>/<UTC date and time of the start>/`, with
 /// `_2`, `_3` and so on added to the last folder when it exists.
 #[derive(Clone, Debug)]
 pub struct SaveConfig {
     pub path: PathBuf,
-    /// A path inside `path`: not an absolute one, and without `..`.
-    pub experiment_name: String,
-    pub format: SaveFormat,
+    /// Whether each generation is saved as a BSON file instead of a
+    /// JSON one.
+    pub as_bson: bool,
 }
 
-/// Create the folder of a run that starts now, and return it.
-pub(crate) fn create_run_folder(save: &SaveConfig) -> Result<PathBuf> {
-    let name = Path::new(&save.experiment_name);
+/// Create the folder of a run of `experiment_name` that starts now, and
+/// return it.
+pub(crate) fn create_run_folder(save: &SaveConfig, experiment_name: &str) -> Result<PathBuf> {
+    let name = Path::new(experiment_name);
     let inside = name
         .components()
         .all(|part| matches!(part, Component::Normal(_) | Component::CurDir));
-    if save.experiment_name.is_empty() || !inside {
+    if experiment_name.is_empty() || !inside {
         return Err(Error::Validation(format!(
-            "experiment_name is {:?}, and it must be a path inside the save path",
-            save.experiment_name
+            "experiment_name is {experiment_name:?}, and it must be a path inside the save path"
         )));
     }
     let experiment = save.path.join(name);
@@ -103,25 +98,22 @@ pub(crate) fn write_experiment_config(
 
 pub(crate) fn write_generation<G: Serialize, S: Serialize>(
     folder: &Path,
-    format: SaveFormat,
+    as_bson: bool,
     generation: &GenerationFile<G, S>,
 ) -> Result<()> {
     let folder = folder.join("fit_data");
     create_dir_all(&folder)?;
     let name = format!("fit_data_{}", generation.population_idx);
-    match format {
-        SaveFormat::Json => {
-            let file = File::create(folder.join(format!("{name}.json")))?;
-            let mut writer = BufWriter::new(file);
-            serde_json::to_writer(&mut writer, generation)?;
-            Ok(writer.flush()?)
-        }
-        SaveFormat::Bson => {
-            let file = File::create(folder.join(format!("{name}.bson")))?;
-            let mut writer = BufWriter::new(file);
-            bson::serialize_to_document(generation)?.to_writer(&mut writer)?;
-            Ok(writer.flush()?)
-        }
+    if as_bson {
+        let file = File::create(folder.join(format!("{name}.bson")))?;
+        let mut writer = BufWriter::new(file);
+        bson::serialize_to_document(generation)?.to_writer(&mut writer)?;
+        Ok(writer.flush()?)
+    } else {
+        let file = File::create(folder.join(format!("{name}.json")))?;
+        let mut writer = BufWriter::new(file);
+        serde_json::to_writer(&mut writer, generation)?;
+        Ok(writer.flush()?)
     }
 }
 
@@ -189,10 +181,10 @@ mod tests {
         };
 
         assert!(write_experiment_config(folder, &fit_parameters, None).is_err());
-        for format in [SaveFormat::Json, SaveFormat::Bson] {
+        for as_bson in [false, true] {
             assert!(
-                write_generation(folder, format, &generation).is_err(),
-                "{format:?}"
+                write_generation(folder, as_bson, &generation).is_err(),
+                "as_bson: {as_bson}"
             );
         }
     }

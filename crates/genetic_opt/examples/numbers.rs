@@ -13,7 +13,7 @@ use std::error::Error;
 use rand::RngExt;
 use serde_json::json;
 
-use genetic_opt::{FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, SaveFormat, Score};
+use genetic_opt::{AlgorithmConfig, FitConfig, GeneticAlgorithm, Problem, Rng, SaveConfig, Score};
 
 struct Numbers;
 
@@ -72,18 +72,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     // its mean score stops changing, before its best reaches 30.
     config.min_population_size = 0;
     config.stop_without_improvement = false;
-    if let Some(folder) = args().nth(1) {
-        let format = match args().nth(2).as_deref() {
-            Some("json") => SaveFormat::Json,
-            _ => SaveFormat::Bson,
-        };
-        config.save = Some(SaveConfig {
-            path: folder.into(),
-            experiment_name: "Numbers".into(),
-            format,
-        });
-    }
-    let result = GeneticAlgorithm::new(Numbers, config).fit()?;
+    // The runs are saved in `folder/Numbers`, after the problem's type.
+    let save = args().nth(1).map(|folder| SaveConfig {
+        path: folder.into(),
+        as_bson: args().nth(2).as_deref() != Some("json"),
+    });
+    let algorithm_config = AlgorithmConfig {
+        save,
+        ..AlgorithmConfig::default()
+    };
+    let result = GeneticAlgorithm::new(Numbers, algorithm_config).fit(&config)?;
 
     let best = &result.bests[0];
     println!("best sum: {}", best.score.value);

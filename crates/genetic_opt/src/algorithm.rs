@@ -24,7 +24,32 @@ use crate::{
 /// Number of best chromosomes a [`FitResult`] reports.
 const N_BESTS: usize = 5;
 
-/// The parameters of a run.
+/// The settings of a [`GeneticAlgorithm`], which every run of it keeps.
+#[derive(Clone, Debug)]
+pub struct AlgorithmConfig {
+    /// Names the folder of the runs inside the save path, so it must be a
+    /// path inside it: not an absolute one, and without `..`. `None` is
+    /// the name of the problem's type, without its module path.
+    pub experiment_name: Option<String>,
+    pub random_seed: u64,
+    /// Saved with every generation under the key `config`.
+    pub extra_config: Option<serde_json::Value>,
+    /// Nothing is saved without it.
+    pub save: Option<SaveConfig>,
+}
+
+impl Default for AlgorithmConfig {
+    fn default() -> Self {
+        Self {
+            experiment_name: None,
+            random_seed: 442,
+            extra_config: None,
+            save: None,
+        }
+    }
+}
+
+/// The parameters of a run, given to [`GeneticAlgorithm::fit`].
 #[derive(Clone, Debug)]
 pub struct FitConfig {
     /// Generations to breed after the first population.
@@ -44,10 +69,6 @@ pub struct FitConfig {
     pub stop_without_improvement: bool,
     /// Threads that score chromosomes. `None` is every core but one.
     pub n_jobs: Option<usize>,
-    pub random_seed: u64,
-    /// Saved with every generation under the key `config`.
-    pub extra_config: Option<serde_json::Value>,
-    pub save: Option<SaveConfig>,
 }
 
 impl FitConfig {
@@ -61,9 +82,6 @@ impl FitConfig {
             min_population_size: 10,
             stop_without_improvement: true,
             n_jobs: None,
-            random_seed: 442,
-            extra_config: None,
-            save: None,
         }
     }
 }
@@ -156,7 +174,8 @@ enum Asked<G> {
 /// A chromosome is scored once: an equal one met later takes its score.
 pub struct GeneticAlgorithm<P: Problem> {
     problem: P,
-    config: FitConfig,
+    config: AlgorithmConfig,
+    experiment_name: String,
     rng: Rng,
     population: Population<P::Gene>,
     history: Vec<Population<P::Gene>>,
@@ -168,11 +187,18 @@ pub struct GeneticAlgorithm<P: Problem> {
 }
 
 impl<P: Problem> GeneticAlgorithm<P> {
-    pub fn new(problem: P, config: FitConfig) -> Self {
+    pub fn new(problem: P, config: AlgorithmConfig) -> Self {
         let rng = Rng::seed_from_u64(config.random_seed);
+        let experiment_name = config.experiment_name.clone().unwrap_or_else(|| {
+            let name = std::any::type_name::<P>();
+            // `type_name` gives `module::Name<Parameters>`.
+            let name = name.split('<').next().unwrap_or(name);
+            name.rsplit("::").next().unwrap_or(name).to_string()
+        });
         Self {
             problem,
             config,
+            experiment_name,
             rng,
             population: Vec::new(),
             history: Vec::new(),
@@ -185,6 +211,11 @@ impl<P: Problem> GeneticAlgorithm<P> {
 
     pub fn problem(&self) -> &P {
         &self.problem
+    }
+
+    /// The name of the folder of the runs inside the save path.
+    pub fn experiment_name(&self) -> &str {
+        &self.experiment_name
     }
 
     /// The current population, best first.
@@ -205,22 +236,26 @@ impl<P: Problem> GeneticAlgorithm<P> {
     /// Run the algorithm. Each call is a new run: it starts from the seed
     /// again and keeps only the scores of the run before, so a chromosome
     /// met again is not scored again.
-    pub fn fit(&mut self) -> Result<FitResult<P::Gene, P::Solution>>
+    pub fn fit(&mut self, config: &FitConfig) -> Result<FitResult<P::Gene, P::Solution>>
     where
         P::Solution: Clone,
     {
-        self.fit_with(|_| false)
+        self.fit_with(config, |_| false)
     }
 
     /// Run the algorithm, calling `on_generation` after each generation is
     /// measured and before it is saved. The run stops after a generation
     /// for which it returns `true`.
-    pub fn fit_with<F>(&mut self, mut on_generation: F) -> Result<FitResult<P::Gene, P::Solution>>
+    pub fn fit_with<F>(
+        &mut self,
+        config: &FitConfig,
+        mut on_generation: F,
+    ) -> Result<FitResult<P::Gene, P::Solution>>
     where
         F: FnMut(&Self) -> bool,
         P::Solution: Clone,
     {
-        let fit_parameters = self.fit_parameters()?;
+        let fit_parameters = self.fit_parameters(config)?;
         // What an earlier run left would be mixed into this one.
         self.rng = Rng::seed_from_u64(self.config.random_seed);
         self.population.clear();
@@ -233,19 +268,19 @@ impl<P: Problem> GeneticAlgorithm<P> {
             .num_threads(fit_parameters.n_jobs)
             .build()?;
         let save_folder = match &self.config.save {
-            Some(save) => Some(create_run_folder(save)?),
+            Some(save) => Some(create_run_folder(save, &self.experiment_name)?),
             None => None,
         };
         if let Some(folder) = &save_folder {
             write_experiment_config(folder, &fit_parameters, self.problem.experiment_config())?;
         }
 
-        for generation in 0..=self.config.n_generations {
+        for generation in 0..=config.n_generations {
             let start = Instant::now();
             let candidates = if generation == 0 {
-                self.first_chromosomes()?
+                self.first_chromosomes(config.population_size)?
             } else {
-                self.breed()?
+                self.breed(config)?
             };
             // The children go before the population they join, and the
             // sort keeps that order between equal scores.
@@ -274,8 +309,8 @@ impl<P: Problem> GeneticAlgorithm<P> {
             }
             let uniques = self.metrics[generation].n_uniques;
             if stop
-                || uniques < self.config.min_population_size
-                || (self.config.stop_without_improvement && self.mean_stalled())
+                || uniques < config.min_population_size
+                || (config.stop_without_improvement && self.mean_stalled())
             {
                 break;
             }
@@ -290,8 +325,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
         })
     }
 
-    fn fit_parameters(&self) -> Result<FitParameters> {
-        let config = &self.config;
+    fn fit_parameters(&self, config: &FitConfig) -> Result<FitParameters> {
         let cores = available_parallelism().map_or(1, |n| n.get());
         let n_jobs = config.n_jobs.unwrap_or((cores - 1).max(1));
         if n_jobs == 0 || n_jobs > cores {
@@ -335,7 +369,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             besties_prop: config.besties_prop,
             mutate_prob: config.mutate_prob,
             min_population_size: config.min_population_size,
-            random_seed: config.random_seed,
+            random_seed: self.config.random_seed,
             n_jobs,
         })
     }
@@ -352,10 +386,8 @@ impl<P: Problem> GeneticAlgorithm<P> {
         Ok(chromosome)
     }
 
-    fn first_chromosomes(&mut self) -> Result<Vec<Chromosome<P::Gene>>> {
-        let first = self
-            .problem
-            .init_population(self.config.population_size, &mut self.rng);
+    fn first_chromosomes(&mut self, population_size: usize) -> Result<Vec<Chromosome<P::Gene>>> {
+        let first = self.problem.init_population(population_size, &mut self.rng);
         if first.is_empty() {
             return Err(Error::Validation(
                 "init_population returned no chromosomes".into(),
@@ -368,11 +400,11 @@ impl<P: Problem> GeneticAlgorithm<P> {
     }
 
     /// Cross and mutate the parents of the next generation.
-    fn breed(&mut self) -> Result<Vec<Chromosome<P::Gene>>> {
+    fn breed(&mut self, config: &FitConfig) -> Result<Vec<Chromosome<P::Gene>>> {
         let size = self.population.len();
         // The crossed chromosomes go in pairs.
-        let n_crossovers = 2 * ((self.config.crossovers_prop * size as f64) as usize / 2);
-        let n_besties = ((n_crossovers as f64 * self.config.besties_prop) as usize).min(size);
+        let n_crossovers = 2 * ((config.crossovers_prop * size as f64) as usize / 2);
+        let n_besties = ((n_crossovers as f64 * config.besties_prop) as usize).min(size);
         let (besties, rest) = self.population.split_at(n_besties);
         let mut parents = besties.to_vec();
         // Both proportions are at most 1, so `n_besties <= n_crossovers <=
@@ -402,7 +434,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             for child in [child_1, child_2] {
                 let mutated = self
                     .problem
-                    .mutate(&child, self.config.mutate_prob, &mut self.rng);
+                    .mutate(&child, config.mutate_prob, &mut self.rng);
                 if !self.problem.mutation_invariant(&child, &mutated) {
                     return Err(Error::Invariant(
                         "a mutation broke the invariant of the problem".into(),
@@ -565,7 +597,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             population_idx: self.history.len(),
             population: self.population.iter().map(|i| (&i.score, &**i)).collect(),
         };
-        write_generation(folder, save.format, &generation)
+        write_generation(folder, save.as_bson, &generation)
     }
 }
 

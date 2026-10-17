@@ -2,6 +2,29 @@
 ## Changelog - Genetic-Opt
 
 
+### v3.0.0 - 17th October 2026
+
+- The crate's settings now sit where the Python package has them. The
+  Python package is unchanged.
+- `crates/genetic_opt/src/algorithm.rs`:
+  - Added `AlgorithmConfig`, given to `GeneticAlgorithm::new`, with
+    `experiment_name`, `random_seed`, `extra_config` and `save`, as
+    the Python algorithm takes them. `AlgorithmConfig::default()` has
+    the seed 442 and nothing else set.
+  - Removed `random_seed`, `extra_config` and `save` from `FitConfig`.
+  - `fit` and `fit_with` take the `FitConfig` of the run, as the
+    Python `fit` does.
+  - `experiment_name` defaults to the name of the problem's type
+    without its module path, as the Python one defaults to the class
+    name. Added `GeneticAlgorithm::experiment_name`.
+- `crates/genetic_opt/src/save.rs`: `SaveConfig` lost
+  `experiment_name` and has `as_bson: bool` in place of `format`, as
+  the Python `SaveConfig`. Removed `SaveFormat`.
+- Updated the `knapsack` and `numbers` examples, the crate's tests and
+  the README. Their runs are saved in the same folders as before.
+- Added the crate tests `algorithm_config_default_sets_the_defaults`
+  and `the_experiment_name_defaults_to_the_name_of_the_problem_type`.
+
 ### v2.2.0 - 17th October 2026
 
 - Added `FitConfig.stop_without_improvement` in
