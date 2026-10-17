@@ -5,8 +5,8 @@ import bson
 import pytest
 import yaml
 
-from genetic_opt import files
-from genetic_opt.files import (
+from genetic_opt.runs import files
+from genetic_opt.runs.files import (
     create_new_folder,
     ensure_file_extension,
     get_file_size,

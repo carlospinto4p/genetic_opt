@@ -1,22 +1,27 @@
 """Genetic Opt submodule that saves a run to a folder."""
 
 from pathlib import Path, PurePosixPath, PureWindowsPath
+from typing import TYPE_CHECKING
 
-from genetic_opt.algorithms.config import SaveConfig
-from genetic_opt.algorithms.plots import (
-    plot_genetic_algo_metrics,
-    save_current_figure,
-)
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.files import (
+from genetic_opt.functions import now_for_file_path
+from genetic_opt.runs.files import (
     create_new_folder,
     save_bson,
     save_json,
     save_yaml,
 )
-from genetic_opt.fit_result import FitParameters, FitResult
-from genetic_opt.fit_result_io import serialize_fit_result
-from genetic_opt.functions import now_for_file_path
+from genetic_opt.runs.fit_result import FitParameters, FitResult
+from genetic_opt.runs.fit_result_io import serialize_fit_result
+from genetic_opt.runs.plots import (
+    plot_genetic_algo_metrics,
+    save_current_figure,
+)
+
+# Importing `genetic_opt.algorithms` here would import this module back,
+# from `algorithms.base`, before `FitSaver` is defined.
+if TYPE_CHECKING:
+    from genetic_opt.algorithms.config import SaveConfig
 
 
 class FitSaver:

@@ -10,18 +10,21 @@ import yaml
 
 from genetic_opt import __version__
 from genetic_opt.algorithms import FitConfig
-from genetic_opt.algorithms.plots import save_fit_plots
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
-from genetic_opt.files import get_files_inside_folder
-from genetic_opt.fit_result import (
+from genetic_opt.metrics import Best, Metric
+from genetic_opt.runs.files import get_files_inside_folder
+from genetic_opt.runs.fit_result import (
     FitMetrics,
     FitParameters,
     FitResult,
     FitResultFile,
 )
-from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
-from genetic_opt.metrics import Best, Metric
+from genetic_opt.runs.fit_result_io import (
+    load_fit_result,
+    load_fit_result_file,
+)
+from genetic_opt.runs.plots import save_fit_plots
 from genetic_opt.score import Score
 
 CRATE_MANIFEST = (

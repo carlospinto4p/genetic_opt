@@ -90,19 +90,20 @@ naming the Chromosome. The crate stops with `Error::Validation`.
 A saved run also gets a plot of its metrics, `fit_plots.jpg`.
 `SaveConfig(plot_metrics=False)` leaves it out, and
 `other_metrics_to_plot` adds the functions of the best Chromosome
-of each population to it. `algorithms.plots.save_fit_plots` draws it
+of each population to it. `runs.plots.save_fit_plots` draws it
 later for a run saved without it, or by the Rust crate:
 
 ```python
-from genetic_opt.algorithms.plots import save_fit_plots
+from genetic_opt.runs.plots import save_fit_plots
 
 save_fit_plots("<run folder>")
 ```
 
-`fit` returns a dictionary, and `fit_result_io.load_fit_result`
+`fit` returns a dictionary, and `runs.fit_result_io.load_fit_result`
 returns one with the same keys for a saved run. Those keys, and the
-ones of a single file loaded with `fit_result_io.load_fit_result_file`,
-are written once, in `fit_result.py`: `FitResult` and `FitResultFile`.
+ones of a single file loaded with
+`runs.fit_result_io.load_fit_result_file`, are written once, in
+`runs/fit_result.py`: `FitResult` and `FitResultFile`.
 
 Only the result of `fit` has `stop_reason`, which says why the run
 ended: `completed`, `min_population`, `no_improvement`,
@@ -115,7 +116,7 @@ The saved files hold each population once, as genes. The
 again, so `load_fit_result` takes the `decode_func` of the algorithm:
 
 ```python
-from genetic_opt.fit_result_io import load_fit_result
+from genetic_opt.runs.fit_result_io import load_fit_result
 
 loaded = load_fit_result("<folder>/fit_data", bag.decode_func)
 ```
@@ -227,12 +228,13 @@ let result = algorithm.fit_from(&FitConfig::new(100, 50), Some(first), |_| false
 With `AlgorithmConfig::save` set, a run is saved in the layout of the
 Python package: `experiment_config.yml` and one
 `fit_data/fit_data_<n>` file per generation, as BSON or JSON.
-`fit_result_io.load_fit_result` reads them. It does not save the plot
-`fit_plots.jpg`, which `algorithms.plots.save_fit_plots` draws from the
+`runs.fit_result_io.load_fit_result` reads them. It does not save the
+plot `fit_plots.jpg`, which `runs.plots.save_fit_plots` draws from the
 saved files.
 
 Each `fit_data_<n>` file holds the metrics of its own generation, in
-both implementations. `fit_result_io.load_fit_result` also reads runs
+both implementations. `runs.fit_result_io.load_fit_result` also reads
+runs
 saved before 0.7.0, whose files held those of every generation up to
 their own.
 

@@ -25,6 +25,25 @@ def test_importing_the_package_leaves_the_save_libraries_out(module):
     assert done.stdout.strip() == "[]"
 
 
+@pytest.mark.parametrize(
+    "module",
+    [
+        "genetic_opt.runs.files",
+        "genetic_opt.runs.fit_result",
+        "genetic_opt.runs.fit_result_io",
+        "genetic_opt.runs.plots",
+        "genetic_opt.runs.save",
+    ],
+)
+def test_each_runs_module_imports_before_the_algorithms(module):
+    # A new interpreter, so `genetic_opt.algorithms` is not imported yet.
+    subprocess.run(
+        [sys.executable, "-c", f"import {module}"],
+        check=True,
+        capture_output=True,
+    )
+
+
 def test_the_algorithms_package_keeps_the_names_other_projects_import():
     from genetic_opt import algorithms
     from genetic_opt.algorithms.base import GeneticAlgorithm

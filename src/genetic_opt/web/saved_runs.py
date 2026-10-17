@@ -7,9 +7,9 @@ from typing import Any
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.files import get_files_inside_folder
-from genetic_opt.fit_result_io import load_fit_result
 from genetic_opt.functions import format_bytes, identity_func
+from genetic_opt.runs.files import get_files_inside_folder
+from genetic_opt.runs.fit_result_io import load_fit_result
 from genetic_opt.web.runs import generation_metrics
 
 # Size of the files of a saved run over which `saved_run` refuses it: a

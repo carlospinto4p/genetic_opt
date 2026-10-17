@@ -15,10 +15,8 @@ from numpy.random import RandomState
 
 from genetic_opt import __version__
 from genetic_opt.algorithms.config import FitConfig, SaveConfig
-from genetic_opt.algorithms.save import FitSaver
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import InvariantException, ValidationException
-from genetic_opt.fit_result import FitParameters, FitResult, StopReason
 from genetic_opt.functions import (
     format_seconds,
     identity_func,
@@ -31,6 +29,8 @@ from genetic_opt.metrics import (
     get_population_metrics,
     get_space_points,
 )
+from genetic_opt.runs.fit_result import FitParameters, FitResult, StopReason
+from genetic_opt.runs.save import FitSaver
 from genetic_opt.score import Score
 
 # Number of best Chromosomes a `FitResult` reports

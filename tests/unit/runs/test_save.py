@@ -6,8 +6,11 @@ import yaml
 from genetic_opt.algorithms import FitConfig, SaveConfig
 from genetic_opt.algorithms.base import N_BESTS
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.files import get_files_inside_folder, load_json
-from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
+from genetic_opt.runs.files import get_files_inside_folder, load_json
+from genetic_opt.runs.fit_result_io import (
+    load_fit_result,
+    load_fit_result_file,
+)
 from tests.unit.conftest import NumbersAlgorithm, decode_genes, ones_algorithm
 
 # ── FitSaver Tests ─────────────────────────────────────────────────────
@@ -187,7 +190,7 @@ def test_runs_started_in_the_same_second_get_a_folder_each(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(
-        "genetic_opt.algorithms.save.now_for_file_path",
+        "genetic_opt.runs.save.now_for_file_path",
         lambda: "20261012_101500",
     )
     first, second = ones_algorithm(tmp_path), ones_algorithm(tmp_path)
@@ -205,7 +208,7 @@ def test_runs_started_in_the_same_second_get_a_folder_each(
 
 def test_a_second_fit_saves_in_a_new_folder(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "genetic_opt.algorithms.save.now_for_file_path",
+        "genetic_opt.runs.save.now_for_file_path",
         lambda: "20261012_101500",
     )
     algorithm = ones_algorithm(tmp_path)

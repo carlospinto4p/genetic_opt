@@ -22,12 +22,12 @@ from genetic_opt.exceptions import (
     InvariantException,
     ValidationException,
 )
-from genetic_opt.fit_result import (
-    FitResult,
-)
-from genetic_opt.fit_result_io import load_fit_result
 from genetic_opt.gene_space import ValuesGeneSpace
 from genetic_opt.metrics import Metric
+from genetic_opt.runs.fit_result import (
+    FitResult,
+)
+from genetic_opt.runs.fit_result_io import load_fit_result
 from genetic_opt.score import Score
 from tests.unit.conftest import (
     NumbersAlgorithm,

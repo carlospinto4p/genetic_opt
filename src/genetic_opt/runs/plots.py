@@ -6,15 +6,15 @@ from pathlib import Path
 from typing import Any
 
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.files import (
+from genetic_opt.functions import identity_func
+from genetic_opt.metrics import Metric
+from genetic_opt.runs.files import (
     ensure_file_extension,
     ensure_folder_exists,
     log_saved,
 )
-from genetic_opt.fit_result import FitMetrics
-from genetic_opt.fit_result_io import load_fit_result
-from genetic_opt.functions import identity_func
-from genetic_opt.metrics import Metric
+from genetic_opt.runs.fit_result import FitMetrics
+from genetic_opt.runs.fit_result_io import load_fit_result
 
 # `matplotlib` is imported inside the functions that plot: it takes
 # longer to import than the rest of the package.

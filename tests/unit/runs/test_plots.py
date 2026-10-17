@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import pytest
 
 from genetic_opt.algorithms import FitConfig
-from genetic_opt.algorithms.plots import (
+from genetic_opt.runs.fit_result_io import load_fit_result
+from genetic_opt.runs.plots import (
     plot_genetic_algo_metrics,
     save_fit_plots,
 )
-from genetic_opt.fit_result_io import load_fit_result
 from tests.unit.conftest import decode_genes, ones_algorithm
 
 # ── plot_genetic_algo_metrics Tests ────────────────────────────────────

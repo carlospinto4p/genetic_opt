@@ -8,13 +8,16 @@ import pytest
 from genetic_opt.algorithms import FitConfig, SaveConfig
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.files import (
+from genetic_opt.runs.files import (
     get_files_inside_folder,
     load_json,
     save_bson,
     save_json,
 )
-from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
+from genetic_opt.runs.fit_result_io import (
+    load_fit_result,
+    load_fit_result_file,
+)
 from tests.unit.conftest import count_ones, decode_genes, ones_algorithm
 
 # ── load_fit_result Tests ──────────────────────────────────────────────

@@ -1,5 +1,5 @@
 from genetic_opt.algorithms import FitConfig
-from genetic_opt.fit_result import (
+from genetic_opt.runs.fit_result import (
     Bests,
     FitMetrics,
     FitnessFuncCalls,
@@ -8,7 +8,10 @@ from genetic_opt.fit_result import (
     FitResultFile,
     TotalFitTime,
 )
-from genetic_opt.fit_result_io import load_fit_result, load_fit_result_file
+from genetic_opt.runs.fit_result_io import (
+    load_fit_result,
+    load_fit_result_file,
+)
 from tests.unit.conftest import decode_genes, ones_algorithm
 
 # ── FitResult Types Tests ──────────────────────────────────────────────

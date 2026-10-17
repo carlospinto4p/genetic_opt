@@ -57,7 +57,7 @@ struct ExperimentConfig<'a> {
 }
 
 /// One file of `fit_data/`, as the Python
-/// `fit_result_io.load_fit_result_file` reads it. It does not hold the
+/// `runs.fit_result_io.load_fit_result_file` reads it. It does not hold the
 /// population decoded: the Python loader decodes `population` instead.
 #[derive(Serialize)]
 pub(crate) struct GenerationFile<'a, G: Serialize, S: Serialize> {

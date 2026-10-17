@@ -11,14 +11,18 @@ from typing import Any
 
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
-from genetic_opt.files import get_files_inside_folder, load_bson, load_json
-from genetic_opt.fit_result import (
+from genetic_opt.functions import identity_func
+from genetic_opt.metrics import Metric
+from genetic_opt.runs.files import (
+    get_files_inside_folder,
+    load_bson,
+    load_json,
+)
+from genetic_opt.runs.fit_result import (
     FitResult,
     FitResultFile,
     FitSummary,
 )
-from genetic_opt.functions import identity_func
-from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
 
 

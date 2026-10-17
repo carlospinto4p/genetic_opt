@@ -8,10 +8,9 @@
 
 #### Refactoring
 
-- [ ] `algorithms/plots.py:500`, `algorithms/save.py` — saved-run code sits under `algorithms/`, apart from `fit_result.py`, `fit_result_io.py`, `files.py`; a `runs/` subpackage would group them, but `downstream` imports `genetic_opt.files` and `genetic_opt.fit_result_io` (needs shims or a downstream backlog item) — LOW — M
 - [ ] `algorithms/base.py:568-577` — Rust refuses a gene space too small for a set chromosome at run start (`algorithm.rs:461-469`); Python only fails when the first set chromosome is built (`gene_collection.py:477-481`) — LOW — S
-- [ ] `pyproject.toml:56-57` — ruff has `line-length = 78` but no rule selection, so E501 is never checked although `CLAUDE.md` says it is enforced; 5 lines are over (`fit_result.py:13`, `fit_result_io.py:346`, `functions.py:69`, `base.py:601`, `tests/unit/algorithms/test_base.py:439`) — LOW — S
-- [ ] `web/runs.py:408-409` — infinite-`space_points`-to-`None` repeats `fit_result_io.py:326-329` — LOW — S
+- [ ] `pyproject.toml:56-57` — ruff has `line-length = 78` but no rule selection, so E501 is never checked although `CLAUDE.md` says it is enforced; 5 lines are over (`runs/fit_result.py:13`, `runs/fit_result_io.py:346`, `functions.py:69`, `base.py:601`, `tests/unit/algorithms/test_base.py:439`) — LOW — S
+- [ ] `web/runs.py:408-409` — infinite-`space_points`-to-`None` repeats `runs/fit_result_io.py:326-329` — LOW — S
 - [ ] `algorithms/base.py:625-630` — the same `Chromosome(size=..., is_gene_set=..., random_seed=...)` call at `base.py:669-677` and `binary.py:80-85`; one `_new_chromosome(genes)` — LOW — S
 - [ ] `web/app.py:49-50` — seeds 442 and 2 repeated at `web/runs.py:55-56` and `algorithms/binary.py:30-31` — LOW — S
 - [ ] `web/runs.py:20-22` — README knapsack data copied at `crates/genetic_opt/examples/knapsack.rs:15-17` — LOW — S
@@ -51,4 +50,4 @@
 - [ ] `tests/unit/web/test_runs.py:262-266` — BSON run checked only by generation count; compare it to the JSON run — LOW — S
 - [ ] `tests/integration/web/test_app.py:41-45,55-58` — checks only curve length and the 422 status, not the error text — LOW — S
 - [ ] `tests/integration/web/test_app.py:7` — imports `ones_algorithm` from `tests.unit.conftest`; move the shared helper to `tests/conftest.py` — LOW — S
-- [ ] `algorithms/plots.py:40-52` — `set_pyplot_config` changes global matplotlib style/`rcParams` and plot tests never restore them — LOW — S
+- [ ] `runs/plots.py:40-52` — `set_pyplot_config` changes global matplotlib style/`rcParams` and plot tests never restore them — LOW — S
