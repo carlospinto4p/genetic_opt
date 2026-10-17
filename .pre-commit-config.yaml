@@ -4,7 +4,7 @@
 #   - install hooks: pre-commit install
 #   - run hooks: pre-commit run --all-files (this is what CI does)
 # Local to this project: `pre-commit install` also installs the pre-push
-# hook, which runs both test suites. Every hook without `stages` runs on
+# hook, which runs the test suites. Every hook without `stages` runs on
 # commit only.
 default_install_hook_types: [pre-commit, pre-push]
 default_stages: [pre-commit]
@@ -91,7 +91,8 @@ repos:
         files: '^crates/genetic_opt/.*\.rs$'
         pass_filenames: false
   # Local to this project: nothing else runs the tests on a push, since
-  # GitLab CI is disabled. Both suites take seconds.
+  # GitLab CI is disabled. Each suite takes seconds. The front end's
+  # needs `corepack pnpm --dir frontend install` first.
   - repo: local
     hooks:
       - id: pytest-unit
@@ -104,6 +105,13 @@ repos:
       - id: cargo-test
         name: cargo test (crates/genetic_opt)
         entry: cargo test --manifest-path crates/genetic_opt/Cargo.toml
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      - id: frontend-test
+        name: vitest (frontend)
+        entry: corepack pnpm --dir frontend test
         language: system
         pass_filenames: false
         always_run: true

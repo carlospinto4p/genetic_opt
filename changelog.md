@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.2 - 17th October 2026
+
+- Added the `frontend-test` pre-push hook to `.pre-commit-config.yaml`,
+  which runs `corepack pnpm --dir frontend test`. It needs the front
+  end's packages installed first.
+
+
 ### v5.10.1 - 17th October 2026
 
 - `frontend/`:
