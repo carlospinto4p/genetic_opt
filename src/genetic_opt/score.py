@@ -19,11 +19,12 @@ class Score:
         """
         Get a dictionary that describes the Score.
         Keys: `value`.
-        Optional keys: `name`, `extra_metrics`.
+        Optional keys: `name`, `extra_metrics`, left out when `None` only,
+        as the crate saves them.
         """
         response = {"value": self.value}
-        if self.name:
+        if self.name is not None:
             response["name"] = self.name
-        if self.extra_metrics:
+        if self.extra_metrics is not None:
             response["extra_metrics"] = self.extra_metrics
         return response

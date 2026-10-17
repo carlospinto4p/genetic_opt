@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.0.9 - 17th October 2026
+
+- `Score.to_dict` leaves out `name` and `extra_metrics` only when they
+  are `None`, as the crate does. Before, an empty `name` or
+  `extra_metrics` was left out too and loaded back as `None`.
+- Added `tests/unit/test_score.py`: a Score comes back equal from its
+  dict, with and without an empty `name` and `extra_metrics`.
+
 ### v5.0.8 - 17th October 2026
 
 - `load_fit_result` refuses a folder where two files hold the same
