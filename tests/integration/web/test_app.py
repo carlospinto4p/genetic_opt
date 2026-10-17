@@ -2,7 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from genetic_opt import __version__
+from genetic_opt.algorithms import FitConfig
 from genetic_opt.web.app import MAX_POPULATION, app
+from tests.unit.conftest import ones_algorithm
 
 
 @pytest.fixture
@@ -64,3 +66,22 @@ def test_run_refuses_a_population_over_the_limit(client):
 def test_run_function_refuses_an_empty_interval(client):
     body = {"low": 1.0, "high": 1.0}
     assert client.post("/api/runs/function", json=body).status_code == 422
+
+
+def test_open_a_saved_run(client, tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=True)
+    algorithm.fit(FitConfig(n_generations=2, population_size=20, n_jobs=1))
+    response = client.post(
+        "/api/runs/saved", json={"path": algorithm.save_path}
+    )
+    assert response.status_code == 200
+    run = response.json()
+    assert run["genetic_opt_version"] == __version__
+    assert len(run["generations"][0]["population"]) == 20
+
+
+def test_open_a_saved_run_refuses_a_missing_folder(client, tmp_path):
+    body = {"path": str(tmp_path / "missing")}
+    response = client.post("/api/runs/saved", json=body)
+    assert response.status_code == 422
+    assert "is not a folder" in response.json()["detail"]

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GeneOrigin } from '../lib/api'
+  import type { Gene, GeneOrigin } from '../lib/api'
 
   // A Chromosome drawn as one square per gene: filled for 1, empty for
   // 0. Optional marks: the parent each gene came from (a bar under
@@ -13,7 +13,7 @@
     size = 22,
     label = '',
   }: {
-    genes: number[]
+    genes: Gene[]
     origins?: GeneOrigin[]
     changed?: number[]
     off?: number[]

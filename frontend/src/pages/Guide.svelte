@@ -1,6 +1,6 @@
 <script lang="ts">
   import GeneStrip from '../components/GeneStrip.svelte'
-  import { runKnapsack, type GeneOrigin } from '../lib/api'
+  import { runKnapsack, type Gene, type GeneOrigin } from '../lib/api'
   import { fmt } from '../lib/format'
   import { loadExamples, runLab, store } from '../lib/store.svelte'
 
@@ -29,7 +29,7 @@
   let length = $derived(ran?.weights.length ?? 10)
   let cut = $state(4)
 
-  function cross(a: number[], b: number[]) {
+  function cross(a: Gene[], b: Gene[]) {
     const origins = (start: GeneOrigin, end: GeneOrigin) =>
       a.map((g, i) => (g === b[i] ? 'both' : i < cut ? start : end)) as GeneOrigin[]
     return [
@@ -48,7 +48,7 @@
     return { n, best, random: n - best }
   })
 
-  const off = (genes: number[], decoded: number[]) =>
+  const off = (genes: Gene[], decoded: number[]) =>
     genes.flatMap((g, i) => (g === 1 && decoded[i] === 0 ? [i] : []))
 </script>
 

@@ -23,6 +23,7 @@ from genetic_opt.web.runs import (
     KNAPSACK_WEIGHTS,
     function_run,
     knapsack_run,
+    saved_run,
 )
 
 # Port of the API. The front-end's dev server sends `/api` to it.
@@ -94,6 +95,11 @@ class FunctionRequest(BaseModel):
         return self
 
 
+class SavedRunRequest(BaseModel):
+    # A folder on the machine of the server, which only listens there
+    path: str = Field(min_length=1)
+
+
 app = FastAPI(title="genetic_opt explainer")
 
 
@@ -148,6 +154,11 @@ def run_function(request: FunctionRequest) -> dict[str, Any]:
         random_seed=request.fit.random_seed,
         gene_space_random_seed=request.fit.gene_space_random_seed,
     )
+
+
+@app.post("/api/runs/saved")
+def open_saved_run(request: SavedRunRequest) -> dict[str, Any]:
+    return _run(saved_run, path=request.path)
 
 
 def main() -> None:

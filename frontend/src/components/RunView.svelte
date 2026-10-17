@@ -6,7 +6,8 @@
   import LineChart from './LineChart.svelte'
   import PopulationTable from './PopulationTable.svelte'
 
-  // A recorded run: what it found, its curves, and each generation
+  // A run: what it found, its curves, and each generation. A saved run
+  // has no breeding, no problem view and nothing decoded to show.
   let {
     run,
     params,
@@ -16,10 +17,10 @@
     off = () => [],
   }: {
     run: Run<D>
-    params: FitParams
-    problem: Snippet<[Generation<D>, number]>
-    decoded: Snippet<[Member<D>]>
-    decodedLabel: string
+    params: Pick<FitParams, 'n_generations' | 'min_population_size'>
+    problem?: Snippet<[Generation<D>, number]>
+    decoded?: Snippet<[Member<D>]>
+    decodedLabel?: string
     off?: (c: Member<D> | Parent<D> | Child<D>) => number[]
   } = $props()
 
@@ -29,6 +30,7 @@
 
   let last = $derived(run.generations.length - 1)
   let generation = $derived(run.generations[Math.min(index, last)])
+  let recorded = $derived(run.generations.some((g) => g.breeding))
 
   $effect(() => {
     // A new run starts on its last generation
@@ -53,6 +55,12 @@
 
   let stopText = $derived.by(() => {
     if (run.stop_reason === 'completed') return `It ran all ${last} generations.`
+    if (run.stop_reason === 'stopped') {
+      return (
+        `It stopped at generation ${last} of the ${params.n_generations} asked. ` +
+        `The saved files do not say why.`
+      )
+    }
     if (run.stop_reason === 'min_population') {
       return (
         `It stopped at generation ${last}: fewer than ` +
@@ -92,7 +100,11 @@
     <div class="tile-label">Search space seen</div>
     <div class="tile-value">{pct(calls.exploration_percentage)}</div>
     <div class="muted">
-      {calls.processed} of {fmt(calls.space_points)} possible chromosomes.
+      {#if calls.space_points === null}
+        {calls.processed} of more possible chromosomes than can be counted.
+      {:else}
+        {calls.processed} of {fmt(calls.space_points)} possible chromosomes.
+      {/if}
     </div>
   </div>
 </section>
@@ -151,31 +163,37 @@
   <span class="gen">Generation <b>{index}</b> of {last}</span>
 </section>
 
-<section class="problem">
-  {@render problem(generation, index)}
-</section>
+{#if problem}
+  <section class="problem">
+    {@render problem(generation, index)}
+  </section>
+{/if}
 
-<div class="tabs" role="tablist">
-  <button
-    role="tab"
-    aria-selected={tab === 'breeding'}
-    class:active={tab === 'breeding'}
-    onclick={() => (tab = 'breeding')}
-  >
-    How generation {index} was made
-  </button>
-  <button
-    role="tab"
-    aria-selected={tab === 'population'}
-    class:active={tab === 'population'}
-    onclick={() => (tab = 'population')}
-  >
-    Its population ({generation.population.length})
-  </button>
-</div>
+{#if !recorded}
+  <h3>Population of generation {index} ({generation.population.length})</h3>
+{:else}
+  <div class="tabs" role="tablist">
+    <button
+      role="tab"
+      aria-selected={tab === 'breeding'}
+      class:active={tab === 'breeding'}
+      onclick={() => (tab = 'breeding')}
+    >
+      How generation {index} was made
+    </button>
+    <button
+      role="tab"
+      aria-selected={tab === 'population'}
+      class:active={tab === 'population'}
+      onclick={() => (tab = 'population')}
+    >
+      Its population ({generation.population.length})
+    </button>
+  </div>
+{/if}
 
 <section class="card">
-  {#if tab === 'population'}
+  {#if tab === 'population' || !recorded}
     <PopulationTable population={generation.population} {decoded} {decodedLabel} {off} />
   {:else if generation.breeding}
     <BreedingView

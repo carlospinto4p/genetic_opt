@@ -4,6 +4,7 @@ export const pages = [
   { path: '/', label: 'How it works' },
   { path: '/knapsack', label: 'Knapsack' },
   { path: '/function', label: 'Find a maximum' },
+  { path: '/saved', label: 'Open a saved run' },
 ] as const
 
 export type PagePath = (typeof pages)[number]['path']

@@ -1,6 +1,8 @@
 """Genetic Opt runs that keep every step, for the explainer."""
 
-from math import pi, sin
+import json
+from math import isinf, pi, sin
+from pathlib import Path
 from typing import Any
 
 from genetic_opt.algorithms.base import GeneticAlgorithm
@@ -8,6 +10,10 @@ from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.algorithms.config import FitConfig
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import Knapsack
+from genetic_opt.exceptions import ValidationException
+from genetic_opt.fit_result_io import load_fit_result
+from genetic_opt.functions import identity_func
+from genetic_opt.metrics import Metric
 from genetic_opt.score import Score
 
 # The objects of the `Knapsack` example in the README
@@ -203,6 +209,18 @@ def _breeding_record(algorithm: GeneticAlgorithm) -> dict[str, Any]:
     }
 
 
+def _metrics(metric: Metric) -> dict[str, Any]:
+    """The metrics of a generation as the explainer reads them."""
+    return {
+        "best": metric.best.score.value,
+        "mean": metric.mean,
+        "median": metric.median,
+        "var": metric.var,
+        "n_uniques": metric.n_uniques,
+        "percent_uniques": metric.percent_uniques,
+    }
+
+
 def _stop_reason(algorithm: GeneticAlgorithm, config: FitConfig) -> str:
     """
     Why the run ended, checked in the order `GeneticAlgorithm.fit`
@@ -243,17 +261,9 @@ def record_run(
     generations = []
 
     def keep_generation(algo: GeneticAlgorithm) -> None:
-        metric = algo.metrics[-1]
         generation = {
             "population": [],
-            "metrics": {
-                "best": metric.best.score.value,
-                "mean": metric.mean,
-                "median": metric.median,
-                "var": metric.var,
-                "n_uniques": metric.n_uniques,
-                "percent_uniques": metric.percent_uniques,
-            },
+            "metrics": _metrics(algo.metrics[-1]),
             "breeding": None,
         }
         children = set()
@@ -327,3 +337,83 @@ def function_run(
         gene_space_random_seed=gene_space_random_seed,
     )
     return {**run, "curve": function_curve(low, high)}
+
+
+def _shown_gene(gene: Any) -> Any:
+    """
+    A saved gene as the explainer shows it: a number or a text as it
+    is, anything else, such as a dictionary, as JSON text. Either can
+    go in a set, as the genes of a Chromosome saved as a set do.
+    """
+    if gene is None or isinstance(gene, int | float | str):
+        return gene
+    return json.dumps(gene, sort_keys=True, default=str)
+
+
+def _saved_genes(chromosome: Chromosome) -> list:
+    """The genes of a saved Chromosome, those of a set sorted."""
+    if not chromosome.is_gene_set:
+        return list(chromosome.genes)
+    return sorted(chromosome.genes, key=lambda g: (type(g).__name__, g))
+
+
+def saved_run(path: str) -> dict[str, Any]:
+    """
+    A run saved by `GeneticAlgorithm.fit`, or by the Rust crate, as the
+    explainer shows it. The files hold each population and its scores,
+    so there is no `breeding`, no `origin` and no decoded Chromosome.
+    :param path: the folder of the run, or its `fit_data` folder.
+    :return: the keys of `record_run`, with `minimize` as `None`, since
+        the files do not say it, and `stop_reason` as `stopped` when
+        the run ended early for a reason the files do not hold. Also
+        `folder`, the `fit_data` folder read, `fit_parameters` and
+        `genetic_opt_version`, the version that saved it. An infinite
+        `space_points` is `None`.
+    :raises ValidationException: when `path` is not a folder, or does
+        not hold a saved run.
+    """
+    folder = Path(path).expanduser()
+    if (folder / "fit_data").is_dir():
+        folder = folder / "fit_data"
+    if not folder.is_dir():
+        raise ValidationException(f"`{path}` is not a folder")
+    result = load_fit_result(
+        str(folder), decode_func=identity_func, load_gene_func=_shown_gene
+    )
+    generations = [
+        {
+            "population": [
+                {
+                    "genes": _saved_genes(chromosome),
+                    "decoded": None,
+                    "score": score.value,
+                }
+                for score, chromosome in population
+            ],
+            "metrics": _metrics(metric),
+            "breeding": None,
+        }
+        for population, metric in zip(
+            result["history"], result["metrics"], strict=True
+        )
+    ]
+    parameters = result["fit_parameters"]
+    if len(generations) - 1 >= parameters["n_generations"]:
+        stop_reason = "completed"
+    elif result["metrics"][-1].n_uniques < parameters["min_population_size"]:
+        stop_reason = "min_population"
+    else:
+        stop_reason = "stopped"
+    calls = result["fit_metrics"]["fitness_func_calls"]
+    if isinf(calls["space_points"]):
+        calls = calls | {"space_points": None}
+    return {
+        "chromosome_length": len(generations[0]["population"][0]["genes"]),
+        "minimize": None,
+        "generations": generations,
+        "stop_reason": stop_reason,
+        "fit_metrics": calls,
+        "folder": str(folder),
+        "fit_parameters": parameters,
+        "genetic_opt_version": result["fit_metrics"]["genetic_opt_version"],
+    }

@@ -5,6 +5,7 @@
   import FunctionLab from './pages/FunctionLab.svelte'
   import Guide from './pages/Guide.svelte'
   import Knapsack from './pages/Knapsack.svelte'
+  import SavedRun from './pages/SavedRun.svelte'
 
   let name = $state('')
   let version = $state('')
@@ -35,6 +36,8 @@
         <Knapsack />
       {:else if route.path === '/function'}
         <FunctionLab />
+      {:else if route.path === '/saved'}
+        <SavedRun />
       {:else}
         <Guide />
       {/if}

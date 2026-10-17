@@ -2,15 +2,19 @@
 
 export type Origin = 'initial' | 'child' | 'survivor'
 export type GeneOrigin = 'a' | 'b' | 'both'
+// 0 or 1 in the runs the explainer makes. A gene of a saved run can be
+// any value, sent as JSON text when it is not a number or a text.
+export type Gene = number | string | null
 
 export interface Chromosome<D = unknown> {
-  genes: number[]
+  genes: Gene[]
   decoded: D
   score: number
 }
 
 export interface Member<D = unknown> extends Chromosome<D> {
-  origin: Origin
+  // Not known for a saved run
+  origin?: Origin
 }
 
 export interface Parent<D = unknown> extends Chromosome<D> {
@@ -53,21 +57,39 @@ export interface Generation<D = unknown> {
   breeding: Breeding<D> | null
 }
 
-export type StopReason = 'completed' | 'no_improvement' | 'min_population'
+// `stopped`: a saved run that ended early, for a reason its files do not hold
+export type StopReason = 'completed' | 'no_improvement' | 'min_population' | 'stopped'
 
 export interface Run<D = unknown> {
   chromosome_length: number
-  minimize: boolean
+  // `null` for a saved run: its files do not say
+  minimize: boolean | null
   generations: Generation<D>[]
   stop_reason: StopReason
   fit_metrics: {
     total: number
     processed: number
     cached: number
-    space_points: number
+    // `null` when too many to count
+    space_points: number | null
     exploration_percentage: number
   }
   curve?: [number, number][]
+}
+
+// A run saved by the package or the Rust crate
+export interface SavedRun extends Run<null> {
+  folder: string
+  fit_parameters: {
+    n_generations: number
+    population_size: number
+    crossovers_prop: number
+    besties_prop: number
+    mutate_prob: number
+    min_population_size: number
+    random_seed: number
+  }
+  genetic_opt_version: string
 }
 
 export interface FitParams {
@@ -134,3 +156,6 @@ export const runKnapsack = (problem: KnapsackProblem) =>
 
 export const runFunction = (problem: FunctionProblem) =>
   request<Run<number>>('/api/runs/function', problem)
+
+export const openSavedRun = (path: string) =>
+  request<SavedRun>('/api/runs/saved', { path })

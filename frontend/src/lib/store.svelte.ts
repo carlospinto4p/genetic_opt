@@ -6,6 +6,7 @@ import {
   type FunctionProblem,
   type KnapsackProblem,
   type Run,
+  type SavedRun,
 } from './api'
 
 interface Lab<P, D> {
@@ -32,6 +33,8 @@ export const store = $state({
   fn: lab<FunctionProblem, number>(),
   // The run of the default Knapsack the guide shows
   guide: lab<KnapsackProblem, number[]>(),
+  // The saved run opened, and the path typed
+  saved: { path: '', run: null as SavedRun | null, loading: false, error: '' },
 })
 
 let loading: Promise<void> | null = null

@@ -30,12 +30,17 @@
   let width = $state(600)
   let hover = $state(-1)
 
-  const pad = { l: 60, r: 90, t: 14, b: 32 }
-
   let n = $derived(series[0]?.values.length ?? 0)
   let ticks = $derived.by(() => {
     const all = series.flatMap((s) => s.values)
     return niceTicks(yMin ?? Math.min(...all), yMax ?? Math.max(...all))
+  })
+  // The left side fits the longest tick label, such as 0.000036
+  let pad = $derived({
+    l: Math.max(60, 16 + 8 * Math.max(...ticks.map((t) => format(t).length))),
+    r: 90,
+    t: 14,
+    b: 32,
   })
   let lo = $derived(ticks[0])
   let hi = $derived(ticks[ticks.length - 1])

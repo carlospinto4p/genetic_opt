@@ -13,6 +13,7 @@
     '/': 'M4 6h16M4 12h10M4 18h7',
     '/knapsack': 'M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 0 1 6 0v2',
     '/function': 'M3 17c3 0 3-10 6-10s3 8 6 8 3-11 6-11',
+    '/saved': 'M3 7h6l2 2h10v10H3V7z',
   }
 
   function loadWidth(): number {

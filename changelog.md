@@ -2,6 +2,44 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.0 - 17th October 2026
+
+- Added the explainer page "Open a saved run" (`frontend/src/pages/SavedRun.svelte`).
+  It takes the folder of a run saved by `fit` or by the crate, or its
+  `fit_data` folder, and shows its charts, its parameters and the
+  population of each generation. The files hold no parents or
+  crossovers, so it has no breeding view.
+- `src/genetic_opt/web`:
+  - Added `runs.saved_run`, which loads the folder with
+    `load_fit_result`. A gene that is not a number or a text, such as a
+    dictionary, is sent as JSON text, and the genes of a set are sorted.
+    `stop_reason` is `stopped` when the run ended early for a reason
+    the files do not hold.
+  - Added `POST /api/runs/saved` to `app.py`.
+  - `runs._metrics` gives the metrics of a generation to both kinds of
+    run.
+- `frontend/src/components`:
+  - `RunView`: the problem view, the decoded column and the breeding
+    tab are left out when a run has none.
+  - `PopulationTable`: genes that are not 0 or 1 are shown as text.
+    The "Where from" column is left out when it is not known.
+  - `LineChart`: the left side fits the longest tick label, so labels
+    such as `0.000036` are no longer cut.
+- Fixed `niceTicks` in `frontend/src/lib/format.ts`: a range of float
+  noise, such as best and mean scores equal but for the last digit,
+  froze the page in an endless loop. Such a range, and an empty one, is
+  now widened by a tenth of the values on each side, where an empty one
+  was widened by 1.
+- `tests/conftest.py` sets `MPLBACKEND=Agg`. With a display the plots of
+  the tests used Tk, and freeing them in the worker thread of a web
+  test could hold `test_run_knapsack_with_the_defaults` for 20 seconds.
+- Added tests:
+  - `tests/unit/web/test_runs.py`: runs saved as JSON and BSON, the
+    `fit_data` folder, sets, dictionary genes, the stop reasons, and
+    the refused paths.
+  - `tests/integration/web/test_app.py`: the endpoint.
+
+
 ### v5.9.0 - 17th October 2026
 
 - Added tournament selection, in both implementations. The parents of a

@@ -11,12 +11,18 @@
     off = () => [],
   }: {
     population: Member<D>[]
-    decoded: Snippet<[Member<D>]>
-    decodedLabel: string
+    // Left out for a saved run, whose files hold no decoded chromosome
+    decoded?: Snippet<[Member<D>]>
+    decodedLabel?: string
     off?: (m: Member<D>) => number[]
   } = $props()
 
   const originLabel = { initial: 'random start', child: 'new child', survivor: 'kept' }
+
+  // A saved run can have genes of any kind, shown as text
+  let binary = $derived(population.every((m) => m.genes.every((g) => g === 0 || g === 1)))
+  // Not known for a saved run
+  let hasOrigin = $derived(population.some((m) => m.origin))
 
   type Row = { rank: number; member: Member<D>; score: number; origin: string; copies: number }
   type Key = 'rank' | 'score' | 'origin' | 'copies'
@@ -24,15 +30,15 @@
   let rows: Row[] = $derived.by(() => {
     const counts = new Map<string, number>()
     for (const m of population) {
-      const key = m.genes.join('')
+      const key = JSON.stringify(m.genes)
       counts.set(key, (counts.get(key) ?? 0) + 1)
     }
     return population.map((member, i) => ({
       rank: i + 1,
       member,
       score: member.score,
-      origin: member.origin,
-      copies: counts.get(member.genes.join('')) ?? 1,
+      origin: member.origin ?? '',
+      copies: counts.get(JSON.stringify(member.genes)) ?? 1,
     }))
   })
 
@@ -65,9 +71,11 @@
       <tr>
         <th class="sortable num" onclick={() => sortBy('rank')}>Rank{arrow('rank')}</th>
         <th>Genes</th>
-        <th>{decodedLabel}</th>
+        {#if decoded}<th>{decodedLabel}</th>{/if}
         <th class="sortable num" onclick={() => sortBy('score')}>Score{arrow('score')}</th>
-        <th class="sortable" onclick={() => sortBy('origin')}>Where from{arrow('origin')}</th>
+        {#if hasOrigin}
+          <th class="sortable" onclick={() => sortBy('origin')}>Where from{arrow('origin')}</th>
+        {/if}
         <th class="sortable num" onclick={() => sortBy('copies')}>Copies{arrow('copies')}</th>
       </tr>
     </thead>
@@ -75,10 +83,20 @@
       {#each sorted as row (row.rank)}
         <tr>
           <td class="num">{row.rank}</td>
-          <td><GeneStrip genes={row.member.genes} off={off(row.member)} size={16} /></td>
-          <td>{@render decoded(row.member)}</td>
+          <td>
+            {#if binary}
+              <GeneStrip genes={row.member.genes} off={off(row.member)} size={16} />
+            {:else}
+              <ul class="genes">
+                {#each row.member.genes as gene, i (i)}<li><code>{gene}</code></li>{/each}
+              </ul>
+            {/if}
+          </td>
+          {#if decoded}<td>{@render decoded(row.member)}</td>{/if}
           <td class="num">{fmt(row.score)}</td>
-          <td><span class="chip origin-{row.origin}">{originLabel[row.member.origin]}</span></td>
+          {#if hasOrigin && row.member.origin}
+            <td><span class="chip origin-{row.origin}">{originLabel[row.member.origin]}</span></td>
+          {/if}
           <td class="num">{row.copies}</td>
         </tr>
       {/each}
@@ -97,6 +115,14 @@
     top: 0;
     background: var(--bg-surface);
     z-index: 1;
+  }
+  .genes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .genes code {
+    overflow-wrap: anywhere;
   }
   .origin-child {
     background: var(--accent-dim);

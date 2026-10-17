@@ -14,9 +14,13 @@ export function pct(value: number): string {
 
 /** Round tick values covering `[min, max]`. */
 export function niceTicks(min: number, max: number, count = 5): number[] {
-  if (min === max) {
-    min -= 1
-    max += 1
+  // A range of float noise, or none, is widened around the values: a
+  // step that small would not move `t` below, and the loop never ends.
+  const size = Math.max(Math.abs(min), Math.abs(max))
+  if (max - min <= size * 1e-9) {
+    const pad = size ? size / 10 : 1
+    min -= pad
+    max += pad
   }
   const rough = (max - min) / count
   const magnitude = 10 ** Math.floor(Math.log10(rough))
