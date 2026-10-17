@@ -170,6 +170,8 @@ corepack pnpm --dir frontend dev
 ```
 
 `GENETIC_OPT_WEB_PORT` moves the API to another port, for both.
+`GENETIC_OPT_WEB_RUNS_ROOT`, when set, is the folder the saved runs the
+page opens must be inside. A saved run over 4 GB (3.7 GiB) is refused.
 
 ## Rust crate
 

@@ -9,6 +9,7 @@ import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel, Field, model_validator
 
 from genetic_opt import __version__
@@ -28,6 +29,10 @@ from genetic_opt.web.runs import (
 
 # Port of the API. The front-end's dev server sends `/api` to it.
 DEFAULT_PORT = 5209
+# Names of this machine, the only hosts a request may name. A page of
+# another site that points its own name here (DNS rebinding) sends
+# that name, and is refused.
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # Upper bounds of a run: every generation goes back in one response,
 # so a large run would hold the server and send megabytes.
@@ -101,6 +106,7 @@ class SavedRunRequest(BaseModel):
 
 
 app = FastAPI(title="genetic_opt explainer")
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 
 @app.get("/api/info")
@@ -158,7 +164,12 @@ def run_function(request: FunctionRequest) -> dict[str, Any]:
 
 @app.post("/api/runs/saved")
 def open_saved_run(request: SavedRunRequest) -> dict[str, Any]:
-    return _run(saved_run, path=request.path)
+    """A saved run, inside `GENETIC_OPT_WEB_RUNS_ROOT` when it is set."""
+    return _run(
+        saved_run,
+        path=request.path,
+        root=os.environ.get("GENETIC_OPT_WEB_RUNS_ROOT"),
+    )
 
 
 def main() -> None:

@@ -4,9 +4,6 @@
 
 #### Security
 
-- [ ] `web/app.py:103` — no Host/Origin check, so a DNS-rebinding page can post any path to `/api/runs/saved` and read saved runs or start runs; add `TrustedHostMiddleware` for `127.0.0.1`/`localhost` (incl. the Vite proxy on 5208) — MED — S
-- [ ] `web/runs.py:380` — `saved_run` calls `load_fit_result` with no `max_file_bytes` and no cap on file/generation count; a large folder is read whole into memory and sent in one response — MED — S
-- [ ] `web/runs.py:375` — the path is taken as given, with no allowed root folder; optionally restrict to a configured runs root — LOW — S/M
 - [ ] `web/runs.py:401-411` — `parameters["n_generations"]`, `["min_population_size"]`, `calls["space_points"]` and `generations[0]["population"][0]` are indexed outside `_refuse_malformed`, so a truncated run gives a 500 instead of a 422 — LOW — S
 - [ ] `web/app.py:84-85` — `FunctionRequest.low`/`high` accept NaN/Infinity and unbounded magnitudes; `1e308 - -1e308` is infinite and the response fails to encode (500); use `allow_inf_nan=False` plus a bound — LOW — S
 - [ ] `web/app.py:47,69-79` — `min_population_size` has no upper bound; knapsack `weights`/`values` elements and `capacity` allow negatives — LOW — S

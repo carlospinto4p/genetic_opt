@@ -2,6 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v5.10.3 - 17th October 2026
+
+- `web/app.py`:
+  - Added `TrustedHostMiddleware`: the API answers only requests naming
+    `127.0.0.1` or `localhost`, so a page that points its own name at
+    the machine (DNS rebinding) is refused with 400.
+  - `/api/runs/saved` reads `GENETIC_OPT_WEB_RUNS_ROOT`, the folder a
+    saved run must be inside. Any folder when it is not set.
+- `web/runs.py`: `saved_run` takes `root` and `max_bytes`, and refuses
+  a run whose files have more than `MAX_SAVED_RUN_BYTES` (4 GB) before
+  reading them.
+- Added tests: 3 host tests and 1 runs-root test in
+  `tests/integration/web/test_app.py`, 4 in `tests/unit/web/test_runs.py`.
+- Documented `GENETIC_OPT_WEB_RUNS_ROOT` and the size limit in `README.md`.
+
+
 ### v5.10.2 - 17th October 2026
 
 - Added the `frontend-test` pre-push hook to `.pre-commit-config.yaml`,

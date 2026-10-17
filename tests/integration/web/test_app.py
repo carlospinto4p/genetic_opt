@@ -9,10 +9,24 @@ from tests.unit.conftest import ones_algorithm
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, base_url="http://localhost:5209")
 
 
 # ── API Tests ──────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("host", "status"),
+    [
+        ("127.0.0.1:5209", 200),
+        # As the front-end's dev server sends it on
+        ("localhost:5208", 200),
+        ("rebound.example:5209", 400),
+    ],
+)
+def test_api_answers_only_the_names_of_this_machine(client, host, status):
+    response = client.get("/api/info", headers={"host": host})
+    assert response.status_code == status
 
 
 def test_info_gives_the_package_version(client):
@@ -78,6 +92,19 @@ def test_open_a_saved_run(client, tmp_path):
     run = response.json()
     assert run["genetic_opt_version"] == __version__
     assert len(run["generations"][0]["population"]) == 20
+
+
+def test_open_a_saved_run_refuses_one_outside_the_runs_root(
+    client, tmp_path, monkeypatch
+):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=True)
+    algorithm.fit(FitConfig(n_generations=1, population_size=20, n_jobs=1))
+    (root := tmp_path / "runs").mkdir()
+    monkeypatch.setenv("GENETIC_OPT_WEB_RUNS_ROOT", str(root))
+    body = {"path": algorithm.save_path}
+    response = client.post("/api/runs/saved", json=body)
+    assert response.status_code == 422
+    assert "is not inside" in response.json()["detail"]
 
 
 def test_open_a_saved_run_refuses_a_missing_folder(client, tmp_path):

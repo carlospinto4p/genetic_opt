@@ -336,6 +336,36 @@ def test_saved_run_cannot_say_why_a_run_stopped_early(tmp_path):
     assert run["stop_reason"] == "stopped"
 
 
+def test_saved_run_refuses_a_run_over_the_size_limit(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    fit_saved(algorithm)
+    folder = Path(algorithm.save_path) / "fit_data"
+    size = sum(file.stat().st_size for file in folder.iterdir())
+    assert saved_run(algorithm.save_path, max_bytes=size)
+    with pytest.raises(ValidationException, match="explainer opens"):
+        saved_run(algorithm.save_path, max_bytes=size - 1)
+
+
+def test_saved_run_opens_a_run_inside_the_root(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    fit_saved(algorithm)
+    assert saved_run(algorithm.save_path, root=str(tmp_path))
+
+
+@pytest.mark.parametrize("through", ["parent", "link"])
+def test_saved_run_refuses_a_run_outside_the_root(tmp_path, through):
+    algorithm = ones_algorithm(tmp_path / "elsewhere", save_as_bson=False)
+    fit_saved(algorithm)
+    (root := tmp_path / "runs").mkdir()
+    if through == "parent":
+        path = f"{root}/../{Path(algorithm.save_path).relative_to(tmp_path)}"
+    else:
+        (link := root / "run").symlink_to(algorithm.save_path)
+        path = str(link)
+    with pytest.raises(ValidationException, match="is not inside"):
+        saved_run(path, root=str(root))
+
+
 @pytest.mark.parametrize("make", ["missing", "file", "empty"])
 def test_saved_run_refuses_a_path_without_a_run(tmp_path, make):
     path = tmp_path / "run"
