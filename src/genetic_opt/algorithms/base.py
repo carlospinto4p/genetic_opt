@@ -360,13 +360,16 @@ class GeneticAlgorithm(ABC):
         """
         Method applied to the improvement dict after each fit step.
         If this condition is met, the fit process will stop.
-        By default, will get the mean key of the improvements
-        and check if it is 0. The first generation has no improvement
-        to check, so it never meets the condition.
+        By default, checks whether the mean score of the last generation
+        is the same as the one before it. The first generation has no
+        generation before it, so it never meets the condition.
         `FitConfig.stop_without_improvement` set to False makes `fit`
         skip it.
         """
-        return self._get_iteration_improvement().get("mean", -1) == 0
+        if len(self.metrics) < 2:
+            return False
+        previous, last = self.metrics[-2:]
+        return last.mean == previous.mean
 
     def stale_generations(self) -> int:
         """

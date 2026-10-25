@@ -6,10 +6,6 @@
 
 - [ ] **[manual]** Check the Knapsack page's breeding view after v5.10.8, which works out the parents and the crossed genes on the page: run `uv run python -m genetic_opt.web.app` and `corepack pnpm --dir frontend dev`, open `http://localhost:5208/#/knapsack`, click "Run the algorithm", stay on the breeding tab of a generation after 0. A pass: each pair shows Parent A and B with a score, a rank and a best/random chip; "crossed" rows have coloured bars under the genes; "mutated" rows ring the same genes that differ from the crossed row; ranks strip above shows picked squares. The "How it works" page was checked headless. Also after v5.10.9 (raw run state, tooltips built on hover): on the population tab, hover a gene square — its tooltip reads "gene N: 0/1", plus "turned off when decoded" on a crossed-out square; on a breeding child, "changed by the mutation" on a ringed square; press Play and the table steps every 700 ms; "Run the algorithm" again replaces the run; "Open a saved run" opens a folder — MED — S
 
-#### Refactoring
-
-- [ ] `algorithms/base.py:339` — `no_improvement_condition` builds the whole improvement dict to read one key; Rust's `mean_stalled` (`algorithm.rs:718-723`) compares means directly — LOW — S
-
 #### Test coverage
 
 - [ ] `chromosome.py:121`, `gene_collection.py:234` — bug: a set chromosome with mixed gene types (e.g. `{1, "a"}` from `ValuesGeneSpace`) raises `TypeError` in `repr` and in mutation because `sorted()` cannot compare `str` with `int` (reproduced); fix (sort by `(type name, value)` as `web/runs.py:357` does) with a regression test — HIGH — S

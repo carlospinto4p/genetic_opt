@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.1 - 25th October 2026
+
+- `algorithms/base.py`: `no_improvement_condition` compares the means of
+  the last two generations directly, as the crate's `mean_stalled` does,
+  in place of building every difference to read one.
+- Added a test that the condition is not met before two generations.
+
+
 ### v9.0.0 - 25th October 2026
 
 - `gene_collection.py`: removed `select_random` from `GeneCollection`,

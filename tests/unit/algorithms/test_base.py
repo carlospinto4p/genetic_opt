@@ -187,6 +187,10 @@ def test_fit_stops_when_the_mean_score_does_not_change():
     assert result["stop_reason"] == "no_improvement"
 
 
+def test_no_improvement_condition_is_not_met_before_two_generations():
+    assert not ZeroStartAlgorithm().no_improvement_condition()
+
+
 def test_fit_without_the_improvement_stop_breeds_every_generation():
     algorithm = ZeroStartAlgorithm()
     result = algorithm.fit(
