@@ -95,18 +95,6 @@ class GeneCollection(ABC):
         :return: a new GeneCollection object with the mutated genes.
         """
 
-    @abstractmethod
-    def select_random(
-        self, gene_space: AbstractGeneSpace, n: int | None = None
-    ) -> Collection:
-        """
-        Select a random gene collection using the input GeneSpace.
-        :param gene_space: GeneSpace object to get genes from.
-        :param n: number of Genes to take from the GeneSpace.
-            Default to the size of the GeneCollection.
-        :return: a collection of genes.
-        """
-
 
 class GeneList(GeneCollection):
     """
@@ -169,18 +157,6 @@ class GeneList(GeneCollection):
             for gene, gene_mutates in zip(self.genes, mutates)
         ]
         return mutated
-
-    def select_random(
-        self, gene_space: AbstractGeneSpace, n: int | None = None
-    ) -> list:
-        """
-        Select a random gene list using the input GeneSpace.
-        :param gene_space: GeneSpace object to get genes from.
-        :param n: number of Genes to take from the GeneSpace.
-            Default to the size of the GeneList.
-        :return: a list of genes.
-        """
-        return _draw_genes(gene_space, n or self.size)
 
 
 class GeneSet(GeneCollection):
@@ -253,18 +229,6 @@ class GeneSet(GeneCollection):
             genes=new_genes, gene_space=gene_space
         )
         return mutated
-
-    def select_random(
-        self, gene_space: AbstractGeneSpace, n: int | None = None
-    ) -> set:
-        """
-        Select a random gene set using the input GeneSpace.
-        :param gene_space: GeneSpace object to get genes from.
-        :param n: number of Genes to take from the GeneSpace.
-            Default to the size of the GeneSet.
-        :return: a set of genes.
-        """
-        return self._complete_genes(genes=set(), gene_space=gene_space, n=n)
 
     def _complete_genes(
         self, genes: set, gene_space: AbstractGeneSpace, n: int | None = None

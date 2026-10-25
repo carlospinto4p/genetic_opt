@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.0 - 25th October 2026
+
+- `gene_collection.py`: removed `select_random` from `GeneCollection`,
+  `GeneList` and `GeneSet`. Nothing called it; a run draws its genes
+  from the gene space's own `select_random`.
+
+
 ### v8.1.9 - 25th October 2026
 
 - `App.svelte`: a failed `/api/info` request is now logged with

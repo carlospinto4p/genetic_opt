@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `gene_collection.py:299-309` — abstract `select_random` and its two versions (`:370-380`, `:450-460`) are never called in src, tests or `downstream` — LOW — S
 - [ ] `algorithms/base.py:339` — `no_improvement_condition` builds the whole improvement dict to read one key; Rust's `mean_stalled` (`algorithm.rs:718-723`) compares means directly — LOW — S
 
 #### Test coverage
