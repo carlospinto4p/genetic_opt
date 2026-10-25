@@ -1,5 +1,9 @@
 # Backlog - Genetic-Opt
 
+### 2026.10.25 (v9.0.8)
+
+- [ ] `frontend/src/components/LineChart.svelte` — a mean or median too large for a float reaches the explainer as `null` (decided in v9.0.8), and the chart reads `null` as 0: the line drops to 0 and the axis stretches to it. Reached with Knapsack values near 1e307. `Metrics` in `lib/api.ts` types them as `number`. Decide how the chart shows a missing value (a gap in the line?) — LOW — S
+
 ### 2026.10.17 (v5.10.2 /scan)
 
 #### Performance
@@ -8,7 +12,6 @@
 
 #### Test coverage
 
-- [ ] `algorithms/base.py` metrics — finite scores near 1e200 make the variance of a generation overflow to infinity, which reaches the explainer as `null`; untested, and nothing decided on what it should do (infinite scores are refused since v9.0.7) — LOW — S
 - [ ] `frontend/src/components/*.svelte`, `pages/*.svelte` — ~2,500 lines with no component tests (Vitest has no DOM); extract and unit-test the index clamping (`RunView.svelte:32`); the chart scales moved to the tested `lib/chart.ts` in v7.0.1 — MED — M/L
 - [ ] `web/app.py:69-78,86` — `MAX_GENES` limit on weights/values and the `n_bits` 2-40 range untested; `test_app.py:61` covers only the population limit — LOW — S
 - [ ] `web/app.py:164-174` — `main()` and its reading of `GENETIC_OPT_WEB_PORT` untested — LOW — S

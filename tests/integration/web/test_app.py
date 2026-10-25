@@ -140,6 +140,28 @@ def test_run_knapsack_refuses_values_out_of_range(client, body):
     assert response.status_code == 422
 
 
+def test_run_knapsack_refuses_values_too_large_for_a_float(client):
+    body = {"weights": [1, 2], "values": [10**400, 1], "capacity": 3}
+    response = client.post("/api/runs/knapsack", json=body)
+    assert response.status_code == 422
+    assert "not finite" in response.json()["detail"]
+
+
+@pytest.mark.filterwarnings("ignore:overflow:RuntimeWarning")
+def test_run_knapsack_sends_an_infinite_variance_as_null(client):
+    body = {
+        "weights": [1, 2],
+        "values": [10**200, 1],
+        "capacity": 3,
+        "fit": {"n_generations": 2, "population_size": 10},
+    }
+    response = client.post("/api/runs/knapsack", json=body)
+    assert response.status_code == 200
+    metrics = response.json()["generations"][0]["metrics"]
+    assert metrics["var"] is None
+    assert metrics["mean"] > 0
+
+
 def test_open_a_saved_run(client, tmp_path):
     algorithm = ones_algorithm(tmp_path, save_as_bson=True)
     algorithm.fit(FitConfig(n_generations=2, population_size=20, n_jobs=1))

@@ -2,6 +2,30 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.8 - 25th October 2026
+
+- Fixed two `OverflowError`s on scores too large for a float, each a
+  500 error in the explainer's Knapsack page:
+  - `algorithms/base.py`: an `int` score too large for a float stops
+    the run with "a score that is not finite", as an infinite one does
+    since v9.0.7. Added `_is_finite`, used by `_sort_population` and
+    `_first_chromosomes`.
+  - `metrics.py`: `get_population_metrics` turns the scores into
+    floats first, so finite `int` scores whose sum is too large give an
+    infinite mean instead of raising.
+- Decided what a mean, median or variance too large for a float does:
+  it is infinite, the run goes on, and the explainer gets `null`. Said
+  in the `Metric` docstring and `README.md`.
+- Added tests:
+  - `tests/unit/test_metrics.py`: an infinite variance of finite
+    scores, and an infinite mean of `int` scores.
+  - `tests/unit/algorithms/test_base.py`: an `int` score too large for
+    a float, from the fitness function and in a first population.
+  - `tests/integration/web/test_app.py`: the Knapsack run refuses
+    values too large for a float, and sends an infinite variance as
+    `null`.
+
+
 ### v9.0.7 - 25th October 2026
 
 - Fixed: a score that is infinite stops the run with a validation

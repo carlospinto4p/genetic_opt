@@ -36,6 +36,8 @@ class Metric:
     - mean: mean of the population scores.
     - median: median of the population scores.
     - var: variance of the population scores.
+    The three are infinite when too large for a float, even with every
+    score finite.
     - n_uniques: number of unique Chromosomes in the population.
     - percent_uniques: percent of unique Chromosomes in the population.
     - fitting_seconds: number of seconds that it took for the population
@@ -148,7 +150,10 @@ def get_population_metrics(
     """
     scores = [score for score, chromosome in population_with_scores]
     chromosomes = [chromosome for score, chromosome in population_with_scores]
-    values = array([score.value for score in scores])
+    # As floats, so a mean or a variance too large for one is infinite:
+    # ints too large for numpy's are kept as Python ints, and dividing
+    # their sum raises `OverflowError`.
+    values = array([float(score.value) for score in scores])
     n_uniques = len(set(chromosomes))
     genetic_algo_metrics = Metric(
         best=Best(

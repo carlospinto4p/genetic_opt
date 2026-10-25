@@ -104,6 +104,15 @@ def test_fit_refuses_a_score_that_is_not_finite(value):
             algorithm.fit(config)
 
 
+def test_fit_refuses_an_int_score_too_large_for_a_float():
+    algorithm = NotFiniteStartAlgorithm(10**400)
+    config = FitConfig(
+        n_generations=3, population_size=4, min_population_size=1, n_jobs=1
+    )
+    with pytest.raises(ValidationException, match="not finite, 1000"):
+        algorithm.fit(config)
+
+
 def test_fit_with_0_generations_scores_the_first_population_only():
     algorithm = ZeroStartAlgorithm()
     result = algorithm.fit(
@@ -1007,6 +1016,13 @@ def test_fit_starts_from_a_saved_population_without_scoring_it(tmp_path):
                 (Score(value=float("-inf")), last[-1][1]),
             ],
             "a score that is not finite, -inf,",
+        ),
+        (
+            lambda last: [
+                *last[:-1],
+                (Score(value=10**400), last[-1][1]),
+            ],
+            "a score that is not finite, 1000",
         ),
         (
             lambda last: [

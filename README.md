@@ -85,7 +85,11 @@ BinaryGeneticAlgorithm(
 ```
 
 A score whose value is not finite, NaN or infinite, stops the run with
-a `ValidationException` naming the Chromosome. The crate stops with `Error::Validation`.
+a `ValidationException` naming the Chromosome. So does an `int` score
+too large for a float. The crate stops with `Error::Validation`.
+Finite scores can still give a generation a mean, median or variance
+too large for a float: those metrics are then infinite, and the run
+goes on.
 
 A saved run also gets a plot of its metrics, `fit_plots.jpg`.
 `SaveConfig(plot_metrics=False)` leaves it out, and

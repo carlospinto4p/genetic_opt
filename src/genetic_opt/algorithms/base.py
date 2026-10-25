@@ -43,6 +43,19 @@ N_BESTS = 5
 IN_PROCESS_SECONDS = 0.01
 
 
+def _is_finite(value: float) -> bool:
+    """
+    Whether a score value is a finite number. An int too large for a
+    float is not, as `isfinite` raises `OverflowError` on it.
+    :param value: the value of a Score.
+    :return: whether it is finite.
+    """
+    try:
+        return isfinite(value)
+    except OverflowError:
+        return False
+
+
 def _score_chromosome(
     fitness_func: Callable[[Chromosome], Score], chromosome: Chromosome
 ) -> tuple[Score, float]:
@@ -674,7 +687,7 @@ class GeneticAlgorithm(ABC):
         """
         chromosomes, scores = [], []
         for score, chromosome in first_population:
-            if not isfinite(score.value):
+            if not _is_finite(score.value):
                 raise ValidationException(
                     f"the first population gives a score that is not "
                     f"finite, {score.value}, to the Chromosome {chromosome}"
@@ -958,7 +971,7 @@ class GeneticAlgorithm(ABC):
             for chromosome, (score, _) in zip(
                 new_population.values(), scores
             ):
-                if not isfinite(score.value):
+                if not _is_finite(score.value):
                     raise ValidationException(
                         f"the fitness function gave a score that is not "
                         f"finite, {score.value}, to the Chromosome "

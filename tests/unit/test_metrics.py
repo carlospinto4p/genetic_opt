@@ -95,6 +95,30 @@ def test_population_metrics_of_equal_scores(scored_genes, n_uniques):
     assert metric.percent_uniques == 100 * n_uniques / len(population)
 
 
+@pytest.mark.filterwarnings("ignore:overflow:RuntimeWarning")
+def test_population_metrics_of_finite_scores_with_an_infinite_variance():
+    # Each score is finite, the square of its distance to the mean is not
+    population = _population([(1e200, [1, 1]), (-1e200, [0, 0])])
+    metric = get_population_metrics(
+        population, decode_func=_sum_genes, fitting_seconds=0
+    )
+    assert metric.var == float("inf")
+    assert metric.mean == metric.median == 0
+
+
+@pytest.mark.filterwarnings("ignore:overflow:RuntimeWarning")
+def test_population_metrics_of_int_scores_with_an_infinite_sum():
+    # Each score fits in a float, their sum does not
+    population = _population(
+        [(10**308, [1, 1]), (10**308, [1, 0]), (1, [0, 0])]
+    )
+    metric = get_population_metrics(
+        population, decode_func=_sum_genes, fitting_seconds=0
+    )
+    assert metric.mean == metric.var == float("inf")
+    assert metric.median == 1e308
+
+
 # ── get_space_points Tests ─────────────────────────────────────────────
 
 
