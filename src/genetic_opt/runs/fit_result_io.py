@@ -293,6 +293,18 @@ def _load_fit_summary(
     return response
 
 
+def serialize_fitness_func_calls(calls: dict) -> dict:
+    """
+    The `fitness_func_calls` of a run as it is saved: an infinite
+        `space_points` is `None`, as standard JSON has no infinity.
+    :param calls: the `fitness_func_calls` of `fit_metrics`.
+    :return: `calls`, or a copy of it with `space_points` as `None`.
+    """
+    if isinf(calls["space_points"]):
+        return calls | {"space_points": None}
+    return calls
+
+
 def serialize_fit_result(
     fit_result: FitResult,
     serialize_decoded_chromosome_func: Callable[[Any], Any],
@@ -326,11 +338,11 @@ def serialize_fit_result(
         "metrics",
         "fit_parameters",
     )(fit_result.copy())
-    calls = fit_metrics["fitness_func_calls"]
-    if isinf(calls["space_points"]):
-        fit_metrics = fit_metrics | {
-            "fitness_func_calls": calls | {"space_points": None}
-        }
+    fit_metrics = fit_metrics | {
+        "fitness_func_calls": serialize_fitness_func_calls(
+            fit_metrics["fitness_func_calls"]
+        )
+    }
     bests = {
         "scores": [s.to_dict() for s in bests["scores"]],
         "result": [

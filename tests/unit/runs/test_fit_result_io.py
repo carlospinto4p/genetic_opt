@@ -17,8 +17,27 @@ from genetic_opt.runs.files import (
 from genetic_opt.runs.fit_result_io import (
     load_fit_result,
     load_fit_result_file,
+    serialize_fitness_func_calls,
 )
 from tests.unit.conftest import count_ones, decode_genes, ones_algorithm
+
+# ── serialize_fitness_func_calls Tests ─────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "space_points, saved", [(inf, None), (1024, 1024), (1e300, 1e300)]
+)
+def test_serialize_fitness_func_calls_saves_only_infinity_as_none(
+    space_points, saved
+):
+    calls = {"processed": 3, "space_points": space_points}
+    assert serialize_fitness_func_calls(calls) == {
+        "processed": 3,
+        "space_points": saved,
+    }
+    # The calls given are left as they were
+    assert calls["space_points"] == space_points
+
 
 # ── load_fit_result Tests ──────────────────────────────────────────────
 

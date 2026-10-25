@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.0 - 25th October 2026
+
+- Added `serialize_fitness_func_calls` to `runs/fit_result_io.py`: the
+  `fitness_func_calls` of a run with an infinite `space_points` as
+  `None`. `serialize_fit_result` and `web/saved_runs.py`'s `saved_run`
+  both use it, in place of a copy each.
+- Added tests:
+  - `tests/unit/runs/test_fit_result_io.py`: 3 cases of
+    `serialize_fitness_func_calls`.
+  - `tests/unit/web/test_saved_runs.py`: `saved_run` sends an infinite
+    `space_points` as `None`.
+
+
 ### v8.0.5 - 25th October 2026
 
 - `pyproject.toml`: ruff checks line length (`E501`) on top of its

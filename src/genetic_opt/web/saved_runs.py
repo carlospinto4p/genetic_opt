@@ -1,7 +1,6 @@
 """Genetic Opt runs saved by `fit` or the Rust crate, for the explainer."""
 
 import json
-from math import isinf
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +8,10 @@ from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.functions import format_bytes, identity_func
 from genetic_opt.runs.files import get_files_inside_folder
-from genetic_opt.runs.fit_result_io import load_fit_result
+from genetic_opt.runs.fit_result_io import (
+    load_fit_result,
+    serialize_fitness_func_calls,
+)
 from genetic_opt.web.runs import generation_metrics
 
 # Size of the files of a saved run over which `saved_run` refuses it: a
@@ -107,9 +109,9 @@ def saved_run(
             stop_reason = "min_population"
         else:
             stop_reason = "stopped"
-        calls = result["fit_metrics"]["fitness_func_calls"]
-        if isinf(calls["space_points"]):
-            calls = calls | {"space_points": None}
+        calls = serialize_fitness_func_calls(
+            result["fit_metrics"]["fitness_func_calls"]
+        )
         chromosome_length = len(generations[0]["population"][0]["genes"])
         version = result["fit_metrics"]["genetic_opt_version"]
     except (IndexError, KeyError, TypeError) as error:

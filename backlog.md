@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `web/runs.py:408-409` — infinite-`space_points`-to-`None` repeats `runs/fit_result_io.py:326-329` — LOW — S
 - [ ] `algorithms/base.py:625-630` — the same `Chromosome(size=..., is_gene_set=..., random_seed=...)` call at `base.py:669-677` and `binary.py:80-85`; one `_new_chromosome(genes)` — LOW — S
 - [ ] `web/app.py:49-50` — seeds 442 and 2 repeated at `web/runs.py:55-56` and `algorithms/binary.py:30-31` — LOW — S
 - [ ] `web/runs.py:20-22` — README knapsack data copied at `crates/genetic_opt/examples/knapsack.rs:15-17` — LOW — S
