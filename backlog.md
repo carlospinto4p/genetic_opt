@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `algorithms/config.py:54-63` — `FitConfig` defaults duplicated in Rust (`algorithm.rs:102-117`) with no drift test (like `test_versions.py`); the same for the default seed 442, `seeds.py`'s `RANDOM_SEED`, copied at `algorithm.rs:46` and `save.rs:150` — LOW — S
 - [ ] `crates/genetic_opt/src/algorithm.rs:524` — NaN-score error text built twice (also `:644`) — LOW — S
 - [ ] `frontend/src/pages/SavedRun.svelte:9-22` — `open()` repeats `runLab`'s running/error try/finally (`store.svelte.ts:59-75`); `store.saved` (`:37`) hand-copies the `Lab` shape — LOW — S
 - [ ] `frontend/src/pages/SavedRun.svelte:25-37` — parameter labels copied from `FitForm.svelte:22-84`; share one label map — LOW — S

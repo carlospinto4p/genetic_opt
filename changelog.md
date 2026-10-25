@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.3 - 25th October 2026
+
+- Added `tests/unit/test_rust_defaults.py`: two tests that the Rust
+  crate's `FitConfig::new` and `AlgorithmConfig::default` in
+  `algorithm.rs` have the defaults of `FitConfig` and `seeds.py`'s
+  `RANDOM_SEED`. They read the Rust source, and skip without the crate.
+
+
 ### v8.1.2 - 25th October 2026
 
 - Added `docs/releasing.md`: how to upload a release by hand, since
