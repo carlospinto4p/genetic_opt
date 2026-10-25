@@ -2,6 +2,7 @@
   import type { Member } from '../lib/api'
   import { linePath, linearScale, plotSize } from '../lib/chart'
   import { fmt, niceTicks } from '../lib/format'
+  import { geneKey } from '../lib/genes'
 
   // The curve of the function, and where each chromosome of a
   // population sits on it
@@ -35,7 +36,7 @@
   let dots = $derived.by(() => {
     const seen = new Map<string, { m: Member<number>; copies: number }>()
     for (const m of population) {
-      const key = m.genes.join('')
+      const key = geneKey(m.genes)
       const dot = seen.get(key)
       if (dot) dot.copies += 1
       else seen.set(key, { m, copies: 1 })
@@ -60,7 +61,7 @@
       <text class="tick" x={px(t)} y={height - 8} text-anchor="middle">{fmt(t)}</text>
     {/each}
     <path d={line} fill="none" stroke="var(--muted)" stroke-width="2" />
-    {#each dots as { m, copies } (m.genes.join(''))}
+    {#each dots as { m, copies } (geneKey(m.genes))}
       <circle
         role="presentation"
         cx={px(m.decoded)}

@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte'
   import type { Member } from '../lib/api'
   import { fmt } from '../lib/format'
+  import { geneKey } from '../lib/genes'
   import GeneStrip from './GeneStrip.svelte'
 
   let {
@@ -35,7 +36,7 @@
   type Key = 'rank' | 'score' | 'origin' | 'copies'
 
   let rows: Row[] = $derived.by(() => {
-    const keys = population.map((m) => JSON.stringify(m.genes))
+    const keys = population.map((m) => geneKey(m.genes))
     const counts = new Map<string, number>()
     for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1)
     return population.map((member, i) => ({

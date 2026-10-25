@@ -4,6 +4,7 @@
   import { runKnapsack, type Gene, type GeneOrigin } from '../lib/api'
   import { crossedGenes, parentAt } from '../lib/breeding'
   import { fmt } from '../lib/format'
+  import { offGenes } from '../lib/knapsack'
   import { loadExamples, runLab, store } from '../lib/store.svelte'
 
   // Every example on this page comes from one real run of the
@@ -53,11 +54,7 @@
       best: breeding.n_besties,
       random: breeding.n_crossovers - breeding.n_besties,
     },
-  )
-
-  const off = (genes: Gene[], decoded: number[]) =>
-    genes.flatMap((g, i) => (g === 1 && decoded[i] === 0 ? [i] : []))
-</script>
+  )</script>
 
 <h1>How a genetic algorithm works</h1>
 <p>
@@ -127,7 +124,7 @@
       <div class="labelled">
         {#each first.genes as _, i (i)}<span>{i + 1}</span>{/each}
       </div>
-      <GeneStrip genes={first.genes} off={off(first.genes, first.decoded)} size={30} />
+      <GeneStrip genes={first.genes} off={offGenes(first)} size={30} />
     </div>
     <p>
       Genes <code>{first.genes.join('')}</code> ask for objects

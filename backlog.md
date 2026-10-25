@@ -8,9 +8,6 @@
 
 #### Refactoring
 
-- [ ] `frontend/src/pages/SavedRun.svelte:25-37` — parameter labels copied from `FitForm.svelte:22-84`; share one label map — LOW — S
-- [ ] `frontend/src/pages/Knapsack.svelte:14-15` — `off` helper copied at `Guide.svelte:51-52` — LOW — S
-- [ ] `frontend/src/components/PopulationTable.svelte:31-35` — duplicates keyed by `JSON.stringify(genes)` here, `genes.join('')` in `FunctionPlot.svelte:36-43` — LOW — S
 - [ ] `web/app.py:125` — `_run(func: Any, ...)` should be `Callable[..., dict[str, Any]]` — LOW — S
 - [ ] `frontend/src/lib/api.ts:83-91` — `SavedRun.fit_parameters` lacks `n_jobs`, `selection`, `tournament_size`, which both implementations save — LOW — S
 - [ ] `frontend/src/components/Sidebar.svelte:12-17` — icons keyed by path string; move into `pages` in `router.svelte.ts`, typed by `PagePath` — LOW — S

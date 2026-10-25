@@ -3,17 +3,14 @@
   import GeneStrip from '../components/GeneStrip.svelte'
   import RunView from '../components/RunView.svelte'
   import ServerError from '../components/ServerError.svelte'
-  import { runKnapsack, type Chromosome } from '../lib/api'
+  import { runKnapsack } from '../lib/api'
   import { fmt } from '../lib/format'
+  import { offGenes } from '../lib/knapsack'
   import { loadExamples, resetLab, runLab, store } from '../lib/store.svelte'
 
   loadExamples()
 
   let lab = store.knapsack
-
-  // Genes that ask for an object the decoding leaves out of the bag
-  const off = (c: Chromosome<number[]>) =>
-    c.genes.flatMap((g, i) => (g === 1 && c.decoded[i] === 0 ? [i] : []))
 
   function addObject() {
     lab.problem!.weights.push(10)
@@ -128,13 +125,13 @@
   {#if lab.run && lab.ran}
     {@const ran = lab.ran}
     <h2>The run</h2>
-    <RunView run={lab.run} params={ran.fit} decodedLabel="Bag" {off}>
+    <RunView run={lab.run} params={ran.fit} decodedLabel="Bag" off={offGenes}>
       {#snippet problem(generation)}
         {@const best = generation.population[0]}
         {@const weight = best.decoded.reduce((s, g, i) => s + g * ran.weights[i], 0)}
         <div class="card">
           <h3>Best bag of this generation</h3>
-          <GeneStrip genes={best.genes} off={off(best)} size={28} />
+          <GeneStrip genes={best.genes} off={offGenes(best)} size={28} />
           <div class="objects">
             {#each ran.weights as w, i (i)}
               {@const state =

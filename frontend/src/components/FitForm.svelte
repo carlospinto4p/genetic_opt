@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { FitParams } from '../lib/api'
+  import { type NumberParam, paramLabels } from '../lib/params'
 
   // The fields of `FitConfig`, and the two seeds of the algorithm
   let {
@@ -11,7 +12,7 @@
   } = $props()
 
   type NumberField = {
-    key: Exclude<keyof FitParams, 'stop_without_improvement'>
+    key: NumberParam
     label: string
     help: string
     min: number
@@ -22,7 +23,7 @@
   let fields: NumberField[] = $derived([
     {
       key: 'population_size',
-      label: 'Population size',
+      label: paramLabels.population_size,
       help: 'Chromosomes in each generation.',
       min: 1,
       max: limits.population_size,
@@ -30,7 +31,7 @@
     },
     {
       key: 'n_generations',
-      label: 'Generations',
+      label: paramLabels.n_generations,
       help: 'Generations bred after the first one, at most.',
       min: 0,
       max: limits.n_generations,
@@ -38,7 +39,7 @@
     },
     {
       key: 'crossovers_prop',
-      label: 'Crossover share',
+      label: paramLabels.crossovers_prop,
       help: 'Share of the population picked as parents.',
       min: 0,
       max: 1,
@@ -46,7 +47,7 @@
     },
     {
       key: 'besties_prop',
-      label: 'Best parents share',
+      label: paramLabels.besties_prop,
       help: 'Share of parents taken from the top. The rest are random.',
       min: 0,
       max: 1,
@@ -54,7 +55,7 @@
     },
     {
       key: 'mutate_prob',
-      label: 'Mutation probability',
+      label: paramLabels.mutate_prob,
       help: 'Chance that a gene of a child is drawn again.',
       min: 0,
       max: 1,
@@ -62,21 +63,21 @@
     },
     {
       key: 'min_population_size',
-      label: 'Minimum different',
+      label: paramLabels.min_population_size,
       help: 'Stop when fewer different chromosomes are left.',
       min: 0,
       step: 1,
     },
     {
       key: 'random_seed',
-      label: 'Algorithm seed',
+      label: paramLabels.random_seed,
       help: 'Picks parents, cut points and which genes mutate.',
       min: 0,
       step: 1,
     },
     {
       key: 'gene_space_random_seed',
-      label: 'Gene seed',
+      label: paramLabels.gene_space_random_seed,
       help: 'Draws the genes of the first population and the mutations.',
       min: 0,
       step: 1,

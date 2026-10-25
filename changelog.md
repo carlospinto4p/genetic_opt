@@ -2,6 +2,23 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.6 - 25th October 2026
+
+- Added shared helpers to `frontend/src/lib`, each with tests:
+  - `params.ts`: `paramLabels`, the name of each number parameter, used
+    by `FitForm.svelte`, and `savedParameters`, the list the Open a
+    saved run page shows. The page no longer has its own copy of the
+    labels.
+  - `knapsack.ts`: `offGenes`, the genes the decoding leaves out of the
+    bag, used by the Knapsack and How it works pages in place of a copy
+    each.
+  - `genes.ts`: `geneKey`, used by `PopulationTable.svelte` and
+    `FunctionPlot.svelte` to find copies of a chromosome.
+- Fixed `FunctionPlot.svelte` taking two chromosomes as copies when
+  their genes read the same once joined, such as `[1, 23]` and
+  `[12, 3]`.
+
+
 ### v8.1.5 - 25th October 2026
 
 - `frontend/src/lib/store.svelte.ts`:

@@ -1,6 +1,7 @@
 <script lang="ts">
   import RunView from '../components/RunView.svelte'
   import { fmt } from '../lib/format'
+  import { savedParameters } from '../lib/params'
   import { openSaved, store } from '../lib/store.svelte'
 
   let saved = store.saved
@@ -11,19 +12,9 @@
   }
 
   // The parameters a saved file holds, with the names the forms use
-  let parameters = $derived.by(() => {
-    if (!saved.run) return []
-    const p = saved.run.fit_parameters
-    return [
-      ['Population size', p.population_size],
-      ['Generations asked', p.n_generations],
-      ['Crossover share', p.crossovers_prop],
-      ['Best parents share', p.besties_prop],
-      ['Mutation probability', p.mutate_prob],
-      ['Minimum different', p.min_population_size],
-      ['Algorithm seed', p.random_seed],
-    ] as const
-  })
+  let parameters = $derived(
+    saved.run ? savedParameters(saved.run.fit_parameters) : [],
+  )
 </script>
 
 <h1>Open a saved run</h1>
