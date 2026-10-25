@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `algorithms/base.py:568-577` — Rust refuses a gene space too small for a set chromosome at run start (`algorithm.rs:461-469`); Python only fails when the first set chromosome is built (`gene_collection.py:477-481`) — LOW — S
 - [ ] `pyproject.toml:56-57` — ruff has `line-length = 78` but no rule selection, so E501 is never checked although `CLAUDE.md` says it is enforced; 5 lines are over (`runs/fit_result.py:13`, `runs/fit_result_io.py:346`, `functions.py:69`, `base.py:601`, `tests/unit/algorithms/test_base.py:439`) — LOW — S
 - [ ] `web/runs.py:408-409` — infinite-`space_points`-to-`None` repeats `runs/fit_result_io.py:326-329` — LOW — S
 - [ ] `algorithms/base.py:625-630` — the same `Chromosome(size=..., is_gene_set=..., random_seed=...)` call at `base.py:669-677` and `binary.py:80-85`; one `_new_chromosome(genes)` — LOW — S

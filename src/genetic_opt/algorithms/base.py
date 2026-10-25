@@ -416,8 +416,9 @@ class GeneticAlgorithm(ABC):
         :return: a `FitResult`, whose `stop_reason` says why the run
             ended.
         :raises ValidationException: when a value of `config` is not
-            valid, when the fitness function gives a NaN score, or when
-            `first_population` is empty, has a Chromosome that does not
+            valid, when a Chromosome is a set of more genes than
+            `self.gene_space` has, when the fitness function gives a NaN
+            score, or when `first_population` is empty, has a Chromosome that does not
             have `self.chromosome_length` genes, or has a NaN score.
         """
         # Default parameters
@@ -561,7 +562,8 @@ class GeneticAlgorithm(ABC):
         :param config: the parameters given to `fit`.
         :return: the `FitParameters` of the run.
         :raises ValidationException: when a value of `config` is not
-            valid.
+            valid, or when a Chromosome is a set of more genes than
+            `self.gene_space` has.
         """
         n_generations = config.n_generations
         population_size = config.population_size
@@ -601,6 +603,13 @@ class GeneticAlgorithm(ABC):
             raise ValidationException(
                 f"tournament_size = {config.tournament_size} must be 1 or "
                 f"more"
+            )
+        if self.chromosome_as_set and len(self.gene_space) < (
+            self.chromosome_length
+        ):
+            raise ValidationException(
+                f"a set of {self.chromosome_length} genes needs more than "
+                f"the {len(self.gene_space)} genes there are"
             )
         n_jobs = config.n_jobs
         if n_jobs < 0:

@@ -1041,6 +1041,17 @@ def test_fit_refuses_parameters_out_of_range(parameters):
     assert not calls
 
 
+def test_fit_refuses_a_set_larger_than_the_gene_space():
+    # The 12 numbers under 12 cannot fill a set of 13. The message is
+    # that of `fit`, not the one of the first Chromosome built.
+    algorithm = NumbersAlgorithm(minimize=False)
+    algorithm.chromosome_length = 13
+    with pytest.raises(ValidationException, match="a set of 13 genes"):
+        algorithm.fit(
+            FitConfig(n_generations=1, population_size=10, n_jobs=1)
+        )
+
+
 @pytest.mark.parametrize(
     "cores, parameters", [(1, {}), (1, {"n_jobs": -1}), (2, {"n_jobs": -4})]
 )
