@@ -8,9 +8,6 @@
 
 #### Refactoring
 
-- [ ] `web/app.py:125` — `_run(func: Any, ...)` should be `Callable[..., dict[str, Any]]` — LOW — S
-- [ ] `frontend/src/lib/api.ts:83-91` — `SavedRun.fit_parameters` lacks `n_jobs`, `selection`, `tournament_size`, which both implementations save — LOW — S
-- [ ] `frontend/src/components/Sidebar.svelte:12-17` — icons keyed by path string; move into `pages` in `router.svelte.ts`, typed by `PagePath` — LOW — S
 - [ ] `frontend/src/components/BreedingView.svelte:20` — `n_random` is snake_case among camelCase — LOW — S
 - [ ] `frontend/src/App.svelte:19` — `.catch(() => {})` hides a failed `/api/info`, so the sidebar silently shows no version — LOW — S
 - [ ] `frontend/src/components/RunView.svelte:213-216` — `stopText` falls through to "mean stalled" for unknown stop reasons; make the switch over `StopReason` exhaustive — LOW — S

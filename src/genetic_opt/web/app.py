@@ -6,6 +6,7 @@ Run it with `uv run python -m genetic_opt.web.app`.
 
 import logging
 import os
+from collections.abc import Callable
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -166,7 +167,9 @@ def get_examples() -> dict[str, Any]:
     }
 
 
-def _run(func: Any, **kwargs: Any) -> dict[str, Any]:
+def _run(
+    func: Callable[..., dict[str, Any]], **kwargs: Any
+) -> dict[str, Any]:
     """Call a run function, turning what the algorithm refuses into 422."""
     try:
         return func(**kwargs)

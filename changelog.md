@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.7 - 25th October 2026
+
+- `web/app.py`: typed the `func` argument of `_run` as
+  `Callable[..., dict[str, Any]]`, in place of `Any`.
+- `frontend/src/lib/api.ts`: added `n_jobs`, `selection` and
+  `tournament_size` to `SavedRun.fit_parameters`, which both
+  implementations save. `savedParameters` in `params.ts` now keeps only
+  the number parameters the forms show, and its test sample holds the
+  new fields.
+- Moved the sidebar's page icons into `pages` in `router.svelte.ts`, as
+  an `icon` field of each page, in place of a map keyed by path string
+  in `Sidebar.svelte`.
+
+
 ### v8.1.6 - 25th October 2026
 
 - Added shared helpers to `frontend/src/lib`, each with tests:

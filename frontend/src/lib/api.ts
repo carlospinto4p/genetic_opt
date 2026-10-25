@@ -84,6 +84,10 @@ export interface SavedRun extends Run<null> {
     mutate_prob: number
     min_population_size: number
     random_seed: number
+    n_jobs: number
+    // Runs saved before 5.9.0 have neither, and picked at random
+    selection?: 'random' | 'tournament'
+    tournament_size?: number
   }
   genetic_opt_version: string
 }

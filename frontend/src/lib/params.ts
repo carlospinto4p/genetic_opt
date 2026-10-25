@@ -20,7 +20,7 @@ export function savedParameters(
 ): [string, number][] {
   const keys = Object.keys(paramLabels) as NumberParam[]
   return keys
-    .filter((k): k is keyof typeof p => k in p)
+    .filter((k): k is Extract<NumberParam, keyof typeof p> => k in p)
     .map((k) => [
       // A saved run can stop before the generations asked for
       k === 'n_generations' ? 'Generations asked' : paramLabels[k],

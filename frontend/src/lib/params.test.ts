@@ -11,6 +11,9 @@ describe('savedParameters', () => {
       besties_prop: 0.6,
       mutate_prob: 0.05,
       min_population_size: 2,
+      n_jobs: 1,
+      selection: 'tournament' as const,
+      tournament_size: 3,
     }
     expect(savedParameters(p)).toEqual([
       ['Population size', 50],
