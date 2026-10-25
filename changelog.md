@@ -2,6 +2,11 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.0.3 - 25th October 2026
+
+- Rotated changelog: archived 2 entries to `changelog/2026.md`.
+
+
 ### v8.0.2 - 22nd October 2026
 
 - `.claude/rules/committing.md`: synced the trimmed canonical
@@ -429,32 +434,3 @@
     refused values.
   - `tests/unit/algorithms/test_base.py`: the set run over 40 words
     uses it in place of a gene space written in the test.
-
-
-### v5.6.0 - 17th October 2026
-
-- Added `max_stale_generations` to `FitConfig`, in both
-  implementations: the run stops when this many generations in a row
-  have bred no better best score than the generations before them.
-  `None`, the default, is no limit. It is not saved with the run. The
-  default stop, `stop_without_improvement`, is unchanged.
-- Added `stale_generations` to the `GeneticAlgorithm` of both
-  implementations: the count that stop compares.
-- Added tests:
-  - `tests/unit/algorithms/test_base.py`: the stop, its log line, the
-    count when maximizing and minimizing, and a negative value refused.
-  - `crates/genetic_opt/tests/algorithm.rs`: the stop, its log line and
-    the count.
-
-
-### v5.5.0 - 17th October 2026
-
-- Added `max_seconds` to `FitConfig`, in both implementations: the run
-  stops after the first generation that ends this many seconds or more
-  after the run started. `None`, the default, is no limit. A negative
-  value or a NaN is refused. Like `stop_without_improvement`, it is not
-  saved with the run.
-- Added tests:
-  - `tests/unit/algorithms/test_base.py`: the stop, its log line and the
-    refused values.
-  - `crates/genetic_opt/tests/algorithm.rs`: the same.
