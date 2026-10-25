@@ -50,6 +50,7 @@ export function loadExamples(): Promise<void> {
   loading ??= getExamples()
     .then((examples) => {
       store.examples = examples
+      store.examplesError = ''
       store.knapsack.problem ??= structuredClone(examples.knapsack)
       store.fn.problem ??= structuredClone(examples.function)
       store.guide.problem ??= structuredClone(examples.knapsack)

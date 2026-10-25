@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.6 - 25th October 2026
+
+- Fixed `loadExamples` in `frontend/src/lib/store.svelte.ts` keeping
+  the error of a failed load after a later load succeeds, so the
+  Knapsack, Function and Guide pages kept showing the server error
+  with the examples loaded.
+- Added two tests of `loadExamples` to `frontend/src/lib/store.test.ts`:
+  it asks again after a failed load, and asks nothing more once loaded.
+
+
 ### v9.0.5 - 25th October 2026
 
 - Added `frontend/src/lib/api.test.ts`: 5 tests of the error `request()`

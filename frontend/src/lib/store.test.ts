@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { KnapsackProblem, Run } from './api'
-import { openSaved, runLab, store } from './store.svelte'
+import type { Examples, KnapsackProblem, Run } from './api'
+import { loadExamples, openSaved, runLab, store } from './store.svelte'
 
 const problem = { weights: [1], values: [2], capacity: 3 } as KnapsackProblem
 const run = { generations: [] } as unknown as Run<number[]>
@@ -17,6 +17,32 @@ function answer(status: number, body: unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+})
+
+describe('loadExamples', () => {
+  const examples = {
+    knapsack: problem,
+    function: { low: 0, high: 1, n_bits: 4 },
+    limits: { n_generations: 200, population_size: 200, genes: 40 },
+  } as Examples
+
+  it('asks again after a failed load, and clears its error', async () => {
+    answer(500, { detail: 'the server stopped' })
+    await loadExamples()
+    expect([store.examples, store.examplesError]).toEqual([null, 'the server stopped'])
+    const fetch = answer(200, examples)
+    await loadExamples()
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect([store.examples, store.examplesError]).toEqual([examples, ''])
+  })
+
+  // The examples are loaded by the test above
+  it('asks nothing more once loaded', async () => {
+    const fetch = answer(200, examples)
+    await loadExamples()
+    await loadExamples()
+    expect(fetch).not.toHaveBeenCalled()
+  })
 })
 
 describe('runLab', () => {
