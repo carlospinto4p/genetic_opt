@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.9 - 25th October 2026
+
+- Added `frontend/src/lib/generations.ts`: `generationAt`, the
+  generation at an index, or the last one when the index is past it,
+  and the population before it. `RunView.svelte` used to work these out
+  inline.
+- Added `frontend/src/lib/generations.test.ts`: 3 tests, including an
+  index past the last generation, as when a shorter run replaces the
+  one the index was set on.
+
+
 ### v9.0.8 - 25th October 2026
 
 - Fixed two `OverflowError`s on scores too large for a float, each a

@@ -3,6 +3,7 @@
   import type { Child, FitParams, Generation, Member, Run } from '../lib/api'
   import type { Parent } from '../lib/breeding'
   import { fmt, pct } from '../lib/format'
+  import { generationAt } from '../lib/generations'
   import BreedingView from './BreedingView.svelte'
   import LineChart from './LineChart.svelte'
   import PopulationTable from './PopulationTable.svelte'
@@ -30,8 +31,7 @@
   let tab = $state<'breeding' | 'population'>('breeding')
 
   let last = $derived(run.generations.length - 1)
-  let generation = $derived(run.generations[Math.min(index, last)])
-  let previous = $derived(run.generations[Math.min(index, last) - 1]?.population ?? [])
+  let { generation, previous } = $derived(generationAt(run.generations, index))
   let recorded = $derived(run.generations.some((g) => g.breeding))
 
   $effect(() => {

@@ -12,7 +12,7 @@
 
 #### Test coverage
 
-- [ ] `frontend/src/components/*.svelte`, `pages/*.svelte` — ~2,500 lines with no component tests (Vitest has no DOM); extract and unit-test the index clamping (`RunView.svelte:32`); the chart scales moved to the tested `lib/chart.ts` in v7.0.1 — MED — M/L
+- [ ] `frontend/src/components/*.svelte`, `pages/*.svelte` — ~2,500 lines with no component tests (Vitest has no DOM). Testing them needs a DOM environment (`jsdom`, `@testing-library/svelte`), not added yet. The chart scales moved to the tested `lib/chart.ts` in v7.0.1, and `RunView`'s index clamping to `lib/generations.ts` in v9.0.9 — MED — M/L
 - [ ] `web/app.py:69-78,86` — `MAX_GENES` limit on weights/values and the `n_bits` 2-40 range untested; `test_app.py:61` covers only the population limit — LOW — S
 - [ ] `web/app.py:164-174` — `main()` and its reading of `GENETIC_OPT_WEB_PORT` untested — LOW — S
 - [ ] `algorithms/base.py:581-582` — `cpu_count()` returning `None` makes the comparison raise `TypeError`; untested — LOW — S
