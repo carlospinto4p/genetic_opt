@@ -451,7 +451,7 @@ def test_fit_without_a_save_path_decodes_the_population_once():
 
 
 def _counting_bag() -> tuple[Knapsack, list[str]]:
-    """A knapsack whose fitness function records each Chromosome it runs on."""
+    """A knapsack whose fitness function records each Chromosome scored."""
     knapsack = Knapsack(
         weights=[23, 31, 29, 44, 53, 38, 63, 85, 89, 82],
         values=[92, 57, 49, 68, 60, 43, 67, 84, 87, 72],

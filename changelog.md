@@ -2,6 +2,18 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.0.5 - 25th October 2026
+
+- `pyproject.toml`: ruff checks line length (`E501`) on top of its
+  default rules. `line-length = 78` was set but the rule was off.
+- Shortened the 5 lines over 78 characters:
+  - `algorithms/base.py`: two docstring lines.
+  - `functions.py`: the log line of `time_it_with_logger`.
+  - `runs/fit_result.py`: the docstring of `Bests`.
+  - `tests/unit/algorithms/test_base.py`: the docstring of
+    `_counting_bag`.
+
+
 ### v8.0.4 - 25th October 2026
 
 - `GeneticAlgorithm.fit` refuses a Chromosome set of more genes than

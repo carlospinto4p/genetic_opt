@@ -65,9 +65,8 @@ def time_it_with_logger(logger: Logger) -> Callable:
             logger.info(f"`{func.__name__}` started...")
             start_time = time()
             result = func(*args, **kwargs)
-            logger.info(
-                f"`{func.__name__}` took {format_seconds(time() - start_time)}"
-            )
+            seconds = format_seconds(time() - start_time)
+            logger.info(f"`{func.__name__}` took {seconds}")
             return result
 
         return wrapper

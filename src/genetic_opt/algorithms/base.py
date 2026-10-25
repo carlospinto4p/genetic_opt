@@ -418,8 +418,9 @@ class GeneticAlgorithm(ABC):
         :raises ValidationException: when a value of `config` is not
             valid, when a Chromosome is a set of more genes than
             `self.gene_space` has, when the fitness function gives a NaN
-            score, or when `first_population` is empty, has a Chromosome that does not
-            have `self.chromosome_length` genes, or has a NaN score.
+            score, or when `first_population` is empty, has a Chromosome
+            that does not have `self.chromosome_length` genes, or has a
+            NaN score.
         """
         # Default parameters
         iter_func = iter_func or identity_func
@@ -634,7 +635,8 @@ class GeneticAlgorithm(ABC):
         """
         The genes of each Chromosome of the first population.
         :param population_size: number of Chromosomes of each population.
-        :return: a list of Gene Collections to use later to create Chromosomes.
+        :return: a list of Gene Collections to use later to create
+            Chromosomes.
         """
         return self.gene_space.select_random(
             n=(population_size, self.chromosome_length)
