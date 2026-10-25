@@ -2,6 +2,7 @@
 
 import {
   getExamples,
+  openSavedRun,
   type Examples,
   type FunctionProblem,
   type KnapsackProblem,
@@ -12,21 +13,24 @@ import {
 // Classes, so the store below does not proxy their fields. A run holds
 // every generation's genes and is only ever replaced whole, so it is
 // kept raw
-class Lab<P, D> {
-  problem = $state<P | null>(null)
-  // The problem the run was made with: the form can change after it
-  ran = $state.raw<P | null>(null)
-  run = $state.raw<Run<D> | null>(null)
+
+// Whether a request of a page is out, and how the last one failed
+class Request {
   running = $state(false)
   error = $state('')
 }
 
+class Lab<P, D> extends Request {
+  problem = $state<P | null>(null)
+  // The problem the run was made with: the form can change after it
+  ran = $state.raw<P | null>(null)
+  run = $state.raw<Run<D> | null>(null)
+}
+
 // The saved run opened, and the path typed
-class Saved {
+class Saved extends Request {
   path = $state('')
   run = $state.raw<SavedRun | null>(null)
-  loading = $state(false)
-  error = $state('')
 }
 
 export const store = $state({
@@ -62,6 +66,22 @@ export function resetLab<P, D>(target: Lab<P, D>, example: P): void {
   target.problem = structuredClone($state.snapshot(example)) as P
 }
 
+/** Await `task`, with `target.running` true until it ends. */
+async function track(
+  target: Request,
+  task: () => Promise<void>,
+): Promise<void> {
+  target.running = true
+  target.error = ''
+  try {
+    await task()
+  } catch (e) {
+    target.error = (e as Error).message
+  } finally {
+    target.running = false
+  }
+}
+
 /** Run a lab's problem, keeping a copy of what it ran with. */
 export async function runLab<P, D>(
   target: Lab<P, D>,
@@ -69,14 +89,18 @@ export async function runLab<P, D>(
 ): Promise<void> {
   if (!target.problem) return
   const problem = $state.snapshot(target.problem) as P
-  target.running = true
-  target.error = ''
-  try {
+  await track(target, async () => {
     target.run = await call(problem)
     target.ran = problem
-  } catch (e) {
-    target.error = (e as Error).message
-  } finally {
-    target.running = false
-  }
+  })
+}
+
+/** Open the saved run at the path typed. */
+export async function openSaved(): Promise<void> {
+  const saved = store.saved
+  const path = saved.path.trim()
+  if (!path) return
+  await track(saved, async () => {
+    saved.run = await openSavedRun(path)
+  })
 }

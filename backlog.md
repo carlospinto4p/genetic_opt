@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `frontend/src/pages/SavedRun.svelte:9-22` — `open()` repeats `runLab`'s running/error try/finally (`store.svelte.ts:59-75`); `store.saved` (`:37`) hand-copies the `Lab` shape — LOW — S
 - [ ] `frontend/src/pages/SavedRun.svelte:25-37` — parameter labels copied from `FitForm.svelte:22-84`; share one label map — LOW — S
 - [ ] `frontend/src/pages/Knapsack.svelte:14-15` — `off` helper copied at `Guide.svelte:51-52` — LOW — S
 - [ ] `frontend/src/components/PopulationTable.svelte:31-35` — duplicates keyed by `JSON.stringify(genes)` here, `genes.join('')` in `FunctionPlot.svelte:36-43` — LOW — S
@@ -30,7 +29,7 @@
 - [ ] `web/runs.py:353-357` — `saved_run` untested for a set chromosome whose saved genes are dicts (how `downstream` saves rules); `test_runs.py:285` covers only a list chromosome — MED — S
 - [ ] `algorithms/base.py:911` — only NaN scores are refused; an infinite score comes back from the API as `{"score": null}` with 200, untested (same for infinite variance) — MED — M
 - [ ] `frontend/src/lib/api.ts:127-147` — `request()` error handling untested: string `detail`, Pydantic error list, non-JSON body — MED — S
-- [ ] `frontend/src/lib/store.svelte.ts:133-165` — untested: `loadExamples` retry after failure (resets `loading`), `runLab` error path and `ran` snapshot — MED — M
+- [ ] `frontend/src/lib/store.svelte.ts` — untested: `loadExamples` retry after failure (resets `loading`); `runLab` and `openSaved` are covered by `store.test.ts` since v8.1.5 — MED — S
 - [ ] `frontend/src/components/*.svelte`, `pages/*.svelte` — ~2,500 lines with no component tests (Vitest has no DOM); extract and unit-test the index clamping (`RunView.svelte:32`); the chart scales moved to the tested `lib/chart.ts` in v7.0.1 — MED — M/L
 - [ ] `web/app.py:69-78,86` — `MAX_GENES` limit on weights/values and the `n_bits` 2-40 range untested; `test_app.py:61` covers only the population limit — LOW — S
 - [ ] `web/app.py:164-174` — `main()` and its reading of `GENETIC_OPT_WEB_PORT` untested — LOW — S

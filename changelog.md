@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.5 - 25th October 2026
+
+- `frontend/src/lib/store.svelte.ts`:
+  - Added `Request`, the `running` and `error` of a page's request,
+    which `Lab` and `Saved` extend in place of a copy each. `Saved`'s
+    `loading` is now `running`.
+  - Added `track`, which sets them around a request, for `runLab` and
+    the new `openSaved`.
+  - Added `openSaved`, which opens the saved run at the path typed. The
+    Open a saved run page calls it, in place of its own copy.
+- Added `frontend/src/lib/store.test.ts`: 5 tests of `runLab` and
+  `openSaved`, with `fetch` answered without a server.
+
+
 ### v8.1.4 - 25th October 2026
 
 - Added `nan_score_error` to the crate's `algorithm.rs`: the error of a

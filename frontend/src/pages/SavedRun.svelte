@@ -1,24 +1,13 @@
 <script lang="ts">
   import RunView from '../components/RunView.svelte'
-  import { openSavedRun } from '../lib/api'
   import { fmt } from '../lib/format'
-  import { store } from '../lib/store.svelte'
+  import { openSaved, store } from '../lib/store.svelte'
 
   let saved = store.saved
 
-  async function open(e: SubmitEvent) {
+  function open(e: SubmitEvent) {
     e.preventDefault()
-    const path = saved.path.trim()
-    if (!path) return
-    saved.loading = true
-    saved.error = ''
-    try {
-      saved.run = await openSavedRun(path)
-    } catch (err) {
-      saved.error = (err as Error).message
-    } finally {
-      saved.loading = false
-    }
+    openSaved()
   }
 
   // The parameters a saved file holds, with the names the forms use
@@ -56,8 +45,8 @@
       autocomplete="off"
     />
   </label>
-  <button class="primary" type="submit" disabled={saved.loading || !saved.path.trim()}>
-    {saved.loading ? 'Reading the files…' : 'Open'}
+  <button class="primary" type="submit" disabled={saved.running || !saved.path.trim()}>
+    {saved.running ? 'Reading the files…' : 'Open'}
   </button>
   <p class="muted">
     The server reads the folder on its own machine. Its <code>fit_data</code> folder
