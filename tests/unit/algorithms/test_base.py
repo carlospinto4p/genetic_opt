@@ -78,24 +78,25 @@ def test_fit_refuses_a_first_population_without_chromosomes():
         )
 
 
-class NanStartAlgorithm(ZeroStartAlgorithm):
-    """Its first population has a Chromosome whose score is NaN."""
+class NotFiniteStartAlgorithm(ZeroStartAlgorithm):
+    """Its first population has a Chromosome whose score is `value`."""
 
-    def __init__(self):
+    def __init__(self, value: float):
         super().__init__()
         self.fitness_func = lambda chromosome: Score(
-            value=float("nan") if sum(chromosome.genes) == 0 else 1.0
+            value=value if sum(chromosome.genes) == 0 else 1.0
         )
 
 
-def test_fit_refuses_a_nan_score():
-    algorithm = NanStartAlgorithm()
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_fit_refuses_a_score_that_is_not_finite(value):
+    algorithm = NotFiniteStartAlgorithm(float(value))
     config = FitConfig(
         n_generations=3, population_size=4, min_population_size=1, n_jobs=1
     )
     message = (
-        r"the fitness function gave a NaN score to the Chromosome "
-        r"\[0, 0, 0, 0, 0, 0, 0, 0, 0, 0\]"
+        rf"the fitness function gave a score that is not finite, {value}, "
+        r"to the Chromosome \[0, 0, 0, 0, 0, 0, 0, 0, 0, 0\]"
     )
     # The score is not cached, so a second run is refused too
     for _ in range(2):
@@ -998,7 +999,14 @@ def test_fit_starts_from_a_saved_population_without_scoring_it(tmp_path):
                 *last[:-1],
                 (Score(value=float("nan")), last[-1][1]),
             ],
-            "NaN score",
+            "a score that is not finite, nan,",
+        ),
+        (
+            lambda last: [
+                *last[:-1],
+                (Score(value=float("-inf")), last[-1][1]),
+            ],
+            "a score that is not finite, -inf,",
         ),
         (
             lambda last: [

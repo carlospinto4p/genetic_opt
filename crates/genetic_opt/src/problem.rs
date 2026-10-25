@@ -36,7 +36,7 @@ pub trait Problem: Sync {
 
     fn random_gene(&self, rng: &mut Rng) -> Self::Gene;
 
-    /// A score whose value is NaN stops the run with
+    /// A score whose value is not finite, NaN or infinite, stops the run with
     /// [`Error::Validation`](crate::Error::Validation).
     fn fitness(&self, genes: &[Self::Gene]) -> Score;
 

@@ -181,11 +181,14 @@ fn space_points(gene_space_size: usize, length: usize, as_set: bool) -> f64 {
     })
 }
 
-/// The error of a NaN score, given by `source` to the chromosome of
-/// `genes`. `Gene` is not `Debug`, but it is `Serialize`.
-fn nan_score_error<G: Serialize>(source: &str, genes: &[G]) -> Error {
+/// The error of a score `value` that is not finite, given by `source` to
+/// the chromosome of `genes`. `Gene` is not `Debug`, but it is
+/// `Serialize`.
+fn not_finite_score_error<G: Serialize>(source: &str, value: f64, genes: &[G]) -> Error {
     let genes = serde_json::to_string(genes).unwrap_or_default();
-    Error::Validation(format!("{source} a NaN score to the chromosome {genes}"))
+    Error::Validation(format!(
+        "{source} a score that is not finite, {value}, to the chromosome {genes}"
+    ))
 }
 
 type Population<G> = Vec<Arc<Individual<G>>>;
@@ -572,9 +575,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
         let mut individuals = Vec::with_capacity(population.len());
         for (genes, score) in population {
             let chromosome = self.chromosome(genes)?;
-            if score.value.is_nan() {
-                return Err(nan_score_error(
+            if !score.value.is_finite() {
+                return Err(not_finite_score_error(
                     "the first population gives",
+                    score.value,
                     chromosome.genes(),
                 ));
             }
@@ -649,8 +653,8 @@ impl<P: Problem> GeneticAlgorithm<P> {
     }
 
     /// Score the chromosomes not seen before, in parallel and one of each,
-    /// and pair every chromosome with its score. A NaN score is refused
-    /// before it is kept, so a later run does not take it either.
+    /// and pair every chromosome with its score. A score that is not
+    /// finite is refused before it is kept, so a later run does not take it either.
     fn score(
         &mut self,
         chromosomes: Vec<Chromosome<P::Gene>>,
@@ -691,9 +695,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 })
                 .collect()
         });
-        if let Some(individual) = scored.iter().find(|i| i.score.value.is_nan()) {
-            return Err(nan_score_error(
+        if let Some(individual) = scored.iter().find(|i| !i.score.value.is_finite()) {
+            return Err(not_finite_score_error(
                 "the fitness function gave",
+                individual.score.value,
                 individual.chromosome.genes(),
             ));
         }

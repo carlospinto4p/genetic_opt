@@ -918,7 +918,14 @@ fn a_given_population_that_does_not_fit_is_refused() {
                 (vec![0, 1, 2], Score::new(1000.0)),
                 (vec![4, 5, 6], Score::new(f64::NAN)),
             ],
-            "the first population gives a NaN score to the chromosome [4,5,6]",
+            "the first population gives a score that is not finite, NaN, to the chromosome [4,5,6]",
+        ),
+        (
+            vec![
+                (vec![0, 1, 2], Score::new(1000.0)),
+                (vec![4, 5, 6], Score::new(f64::INFINITY)),
+            ],
+            "the first population gives a score that is not finite, inf, to the chromosome [4,5,6]",
         ),
     ] {
         let problem = FirstGenes {
@@ -998,10 +1005,11 @@ fn chromosomes_the_problem_cannot_hold_are_refused() {
 }
 
 /// The sum of 3 genes, except for the genes `[4, 5, 6]`, whose score is
-/// not a number. Its first population is those genes and `[1, 2, 3]`.
-struct NanFor456;
+/// the value it holds. Its first population is those genes and
+/// `[1, 2, 3]`.
+struct ScoreFor456(f64);
 
-impl Problem for NanFor456 {
+impl Problem for ScoreFor456 {
     type Gene = u8;
     type Solution = u32;
 
@@ -1023,7 +1031,7 @@ impl Problem for NanFor456 {
 
     fn fitness(&self, genes: &[u8]) -> Score {
         if genes == [4, 5, 6] {
-            return Score::new(f64::NAN);
+            return Score::new(self.0);
         }
         Score::new(self.decode(genes).into())
     }
@@ -1042,21 +1050,27 @@ impl Problem for NanFor456 {
 }
 
 #[test]
-fn a_nan_score_stops_the_run() {
-    let mut algorithm = algorithm(NanFor456);
-    let mut config = FitConfig::new(5, 2);
-    config.min_population_size = 0;
-    // The score is not kept, so a second run is refused too.
-    for _ in 0..2 {
-        let error = algorithm.fit(&config).unwrap_err();
-        assert!(
-            matches!(
-                &error,
-                Error::Validation(message)
-                    if message == "the fitness function gave a NaN score to the chromosome [4,5,6]"
-            ),
-            "{error:?}"
+fn a_score_that_is_not_finite_stops_the_run() {
+    for (value, shown) in [
+        (f64::NAN, "NaN"),
+        (f64::INFINITY, "inf"),
+        (f64::NEG_INFINITY, "-inf"),
+    ] {
+        let mut algorithm = algorithm(ScoreFor456(value));
+        let mut config = FitConfig::new(5, 2);
+        config.min_population_size = 0;
+        let expected = format!(
+            "the fitness function gave a score that is not finite, {shown}, \
+             to the chromosome [4,5,6]"
         );
+        // The score is not kept, so a second run is refused too.
+        for _ in 0..2 {
+            let error = algorithm.fit(&config).unwrap_err();
+            assert!(
+                matches!(&error, Error::Validation(message) if *message == expected),
+                "{error:?}"
+            );
+        }
     }
 }
 

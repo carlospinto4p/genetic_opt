@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict
 from logging import INFO
-from math import isnan
+from math import isfinite
 from os import cpu_count
 from time import perf_counter, time
 from typing import Any
@@ -421,10 +421,11 @@ class GeneticAlgorithm(ABC):
             ended.
         :raises ValidationException: when a value of `config` is not
             valid, when a Chromosome is a set of more genes than
-            `self.gene_space` has, when the fitness function gives a NaN
-            score, or when `first_population` is empty, has a Chromosome
-            that does not have `self.chromosome_length` genes, or has a
-            NaN score.
+            `self.gene_space` has, when the fitness function gives a
+            score that is not finite (NaN or infinite), or when
+            `first_population` is empty, has a Chromosome that does not
+            have `self.chromosome_length` genes, or has a score that is
+            not finite.
         """
         # Default parameters
         iter_func = iter_func or identity_func
@@ -668,14 +669,15 @@ class GeneticAlgorithm(ABC):
         :param first_population: the scored Chromosomes.
         :return: the Chromosomes, new ones without a score.
         :raises ValidationException: when a Chromosome does not have
-            `self.chromosome_length` genes, or has a NaN score.
+            `self.chromosome_length` genes, or has a score that is not
+            finite.
         """
         chromosomes, scores = [], []
         for score, chromosome in first_population:
-            if isnan(score.value):
+            if not isfinite(score.value):
                 raise ValidationException(
-                    f"the first population gives a NaN score to the "
-                    f"Chromosome {chromosome}"
+                    f"the first population gives a score that is not "
+                    f"finite, {score.value}, to the Chromosome {chromosome}"
                 )
             first = self._new_chromosome(list(chromosome.genes))
             chromosomes.append(first)
@@ -928,7 +930,7 @@ class GeneticAlgorithm(ABC):
             each element of the population. Default to `FitConfig.n_jobs`.
         :return: None.
         :raises ValidationException: when the population is empty, or
-            when the fitness function gives a NaN score.
+            when the fitness function gives a score that is not finite.
         """
         if not self.population:
             raise ValidationException("Tried to sort an empty population")
@@ -956,10 +958,11 @@ class GeneticAlgorithm(ABC):
             for chromosome, (score, _) in zip(
                 new_population.values(), scores
             ):
-                if isnan(score.value):
+                if not isfinite(score.value):
                     raise ValidationException(
-                        f"the fitness function gave a NaN score to the "
-                        f"Chromosome {chromosome}"
+                        f"the fitness function gave a score that is not "
+                        f"finite, {score.value}, to the Chromosome "
+                        f"{chromosome}"
                     )
             self._chromosome_cache.update(zip(new_population, scores))
         for chromosome, chromosome_key in unscored:

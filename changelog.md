@@ -2,6 +2,29 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.7 - 25th October 2026
+
+- Fixed: a score that is infinite stops the run with a validation
+  error, as a NaN score has since v5.0.4, in both implementations and
+  for both a scored Chromosome and a given first population. The error
+  now names the value: "gave a score that is not finite, inf, to the
+  Chromosome ...". Before, an infinite score made the variance of the
+  generation NaN, kept the stop when the mean does not change from
+  firing, and reached the explainer as a `null` score.
+  - `algorithms/base.py`: `_sort_population` and `_first_chromosomes`
+    check `isfinite`.
+  - `crates/genetic_opt/src/algorithm.rs`: `not_finite_score_error`
+    replaces `nan_score_error`.
+  - `README.md` and the `Problem::fitness` doc say so.
+- Updated the tests to NaN, infinity and minus infinity:
+  - `tests/unit/algorithms/test_base.py`:
+    `test_fit_refuses_a_score_that_is_not_finite`, and a first
+    population with a `-inf` score.
+  - `crates/genetic_opt/tests/algorithm.rs`:
+    `a_score_that_is_not_finite_stops_the_run`, and a first population
+    with an infinite score.
+
+
 ### v9.0.6 - 25th October 2026
 
 - Fixed `loadExamples` in `frontend/src/lib/store.svelte.ts` keeping
