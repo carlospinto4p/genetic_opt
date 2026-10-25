@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { linePath, linearScale, plotSize } from './chart'
+import { linePath, linearScale, lonePoints, plotSize } from './chart'
 
 describe('plotSize', () => {
   it('takes the padding off both sides', () => {
@@ -45,5 +45,34 @@ describe('linePath', () => {
 
   it('is empty without points', () => {
     expect(linePath([])).toBe('')
+  })
+
+  it('stops at a gap and starts again after it', () => {
+    expect(linePath([[0, 1], [2, 3], null, null, [8, 9], [10, 11]])).toBe(
+      'M0,1L2,3M8,9L10,11',
+    )
+  })
+
+  it('starts after a gap at the beginning', () => {
+    expect(linePath([null, [2, 3], [4, 5]])).toBe('M2,3L4,5')
+  })
+})
+
+describe('lonePoints', () => {
+  it('finds a value between two gaps', () => {
+    expect(lonePoints([1, 2, null, 4, null, 6, 7])).toEqual([3])
+  })
+
+  it('finds a value at either end next to a gap', () => {
+    expect(lonePoints([1, null, 3])).toEqual([0, 2])
+  })
+
+  it('finds the value of a series of one', () => {
+    expect(lonePoints([5])).toEqual([0])
+  })
+
+  it('finds none in a line without gaps, or in a gap', () => {
+    expect(lonePoints([1, 2, 3])).toEqual([])
+    expect(lonePoints([null, null])).toEqual([])
   })
 })

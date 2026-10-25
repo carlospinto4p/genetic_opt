@@ -30,7 +30,24 @@ export function linearScale(
   return (v) => start + ((v - lo) / span) * length
 }
 
-/** The `d` of an SVG path through the points, in order. */
-export function linePath(points: [number, number][]): string {
-  return points.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join('')
+/**
+ * The `d` of an SVG path through the points, in order. A `null` point
+ * is a gap: the line stops there and starts again at the next one.
+ */
+export function linePath(points: ([number, number] | null)[]): string {
+  return points
+    .map((p, i) => (p ? `${points[i - 1] ? 'L' : 'M'}${p[0]},${p[1]}` : ''))
+    .join('')
+}
+
+/**
+ * The indices of the values with no value on either side, which a line
+ * cannot draw: a series of one, or one between two gaps.
+ */
+export function lonePoints(values: (number | null)[]): number[] {
+  return values.flatMap((v, i) =>
+    v !== null && (values[i - 1] ?? null) === null && (values[i + 1] ?? null) === null
+      ? [i]
+      : [],
+  )
 }

@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { linePath, linearScale, plotSize } from '../lib/chart'
+  import { linePath, linearScale, lonePoints, plotSize } from '../lib/chart'
   import { fmt, niceTicks } from '../lib/format'
 
   // Values per generation, one line per series, on one axis. A
   // click picks a generation; `selected` draws it as a vertical line.
+  // A `null` value, too large for a float, is a gap in the line.
   interface Series {
     name: string
     color: string
-    values: number[]
+    values: (number | null)[]
   }
 
   let {
@@ -33,7 +34,7 @@
 
   let n = $derived(series[0]?.values.length ?? 0)
   let ticks = $derived.by(() => {
-    const all = series.flatMap((s) => s.values)
+    const all = series.flatMap((s) => s.values.filter((v) => v !== null))
     return niceTicks(yMin ?? Math.min(...all), yMax ?? Math.max(...all))
   })
   // The left side fits the longest tick label, such as 0.000036
@@ -62,10 +63,14 @@
     )
   })
 
-  // Labels at the end of each line, pushed apart so they do not overlap
+  // Labels at the end of each line, pushed apart so they do not overlap.
+  // A line ending in a gap is labelled at its last value.
   let endLabels = $derived.by(() => {
     const labels = series
-      .map((s) => ({ name: s.name, color: s.color, y: y(s.values[n - 1]) }))
+      .flatMap((s) => {
+        const last = s.values.filter((v) => v !== null).at(-1)
+        return last === undefined ? [] : [{ name: s.name, color: s.color, y: y(last) }]
+      })
       .sort((a, b) => a.y - b.y)
     for (let i = 1; i < labels.length; i++) {
       labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 17)
@@ -73,8 +78,12 @@
     return labels
   })
 
-  function path(values: number[]): string {
-    return linePath(values.map((v, i) => [x(i), y(v)]))
+  function path(values: (number | null)[]): string {
+    return linePath(values.map((v, i) => (v === null ? null : [x(i), y(v)])))
+  }
+
+  function label(v: number | null): string {
+    return v === null ? 'too large' : format(v)
   }
 
   function indexAt(e: MouseEvent): number {
@@ -136,9 +145,9 @@
 
     {#each series as s (s.name)}
       <path d={path(s.values)} fill="none" stroke={s.color} stroke-width="2" />
-      {#if n === 1}
-        <circle cx={x(0)} cy={y(s.values[0])} r="4" fill={s.color} />
-      {/if}
+      {#each lonePoints(s.values) as i (i)}
+        <circle cx={x(i)} cy={y(s.values[i]!)} r="4" fill={s.color} />
+      {/each}
     {/each}
 
     {#each endLabels as l (l.name)}
@@ -153,10 +162,10 @@
         y1={pad.t}
         y2={pad.t + plotH}
       />
-      {#each series as s (s.name)}
+      {#each series.filter((s) => s.values[hover] !== null) as s (s.name)}
         <circle
           cx={x(hover)}
-          cy={y(s.values[hover])}
+          cy={y(s.values[hover]!)}
           r="4.5"
           fill={s.color}
           stroke="var(--bg-surface)"
@@ -175,7 +184,7 @@
         <div class="tooltip-row">
           <i style="background: {s.color}"></i>
           <span>{s.name}</span>
-          <b>{format(s.values[hover])}</b>
+          <b>{label(s.values[hover])}</b>
         </div>
       {/each}
     </div>

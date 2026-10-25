@@ -2,6 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.10 - 25th October 2026
+
+- Fixed: the explainer's score chart drew a mean or median too large
+  for a float, sent as `null` since v9.0.8, at 0, and stretched its
+  axis down to it. It now leaves a gap in the line:
+  - `frontend/src/lib/chart.ts`: `linePath` takes `null` points and
+    starts the line again after them. Added `lonePoints`, the values
+    with a gap on both sides, which the chart draws as dots.
+  - `frontend/src/components/LineChart.svelte`: the axis ignores the
+    gaps, a line ending in a gap is labelled at its last value, and the
+    tooltip reads "too large" for one.
+  - `frontend/src/lib/api.ts`: `Metrics` types `mean`, `median` and
+    `var` as `number | null`.
+- Added 6 tests to `frontend/src/lib/chart.test.ts`.
+
+
 ### v9.0.9 - 25th October 2026
 
 - Added `frontend/src/lib/generations.ts`: `generationAt`, the

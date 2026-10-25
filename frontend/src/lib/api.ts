@@ -40,9 +40,10 @@ export interface Breeding<D = unknown> {
 
 export interface Metrics {
   best: number
-  mean: number
-  median: number
-  var: number
+  // `null` when too large for a float, even with every score finite
+  mean: number | null
+  median: number | null
+  var: number | null
   n_uniques: number
   percent_uniques: number
 }
