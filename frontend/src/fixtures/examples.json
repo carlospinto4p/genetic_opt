@@ -1,0 +1,61 @@
+{
+  "knapsack": {
+    "weights": [
+      23,
+      31,
+      29,
+      44,
+      53,
+      38,
+      63,
+      85,
+      89,
+      82
+    ],
+    "values": [
+      92,
+      57,
+      49,
+      68,
+      60,
+      43,
+      67,
+      84,
+      87,
+      72
+    ],
+    "capacity": 165,
+    "fit": {
+      "n_generations": 100,
+      "population_size": 50,
+      "crossovers_prop": 0.7,
+      "besties_prop": 0.6,
+      "mutate_prob": 0.05,
+      "min_population_size": 10,
+      "stop_without_improvement": true,
+      "random_seed": 442,
+      "gene_space_random_seed": 2
+    }
+  },
+  "function": {
+    "low": -1.0,
+    "high": 2.0,
+    "n_bits": 16,
+    "fit": {
+      "n_generations": 100,
+      "population_size": 50,
+      "crossovers_prop": 0.7,
+      "besties_prop": 0.6,
+      "mutate_prob": 0.05,
+      "min_population_size": 10,
+      "stop_without_improvement": true,
+      "random_seed": 442,
+      "gene_space_random_seed": 2
+    }
+  },
+  "limits": {
+    "n_generations": 200,
+    "population_size": 200,
+    "genes": 40
+  }
+}

@@ -2,6 +2,33 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.11 - 25th October 2026
+
+- Added component tests for the explainer, 57 of them, run in jsdom by
+  `pnpm --dir frontend test` with the other front-end tests:
+  - `frontend/src/components/`: `LineChart`, `GeneStrip`,
+    `PopulationTable`, `BreedingView`, `RunView`, `FunctionPlot` and
+    `Sidebar`.
+  - `frontend/src/pages/`: `Knapsack`, `FunctionLab` and `SavedRun`,
+    with `FitForm` through them.
+  - `frontend/src/App.test.ts`: the name and version from `/api/info`,
+    and the page shown for the address.
+- `Guide.svelte` and `ServerError.svelte` have none: they show fixed
+  text.
+- Added the set-up:
+  - `frontend/package.json`: `jsdom` and `@testing-library/svelte` as
+    dev dependencies. Neither has an install script.
+  - `frontend/vite.config.ts`: the `svelteTesting` plugin, and
+    `test-setup.ts` as a setup file. A component test sets
+    `// @vitest-environment jsdom`; the rest still run without a DOM.
+  - `frontend/src/test-setup.ts`: `ResizeObserver` and `scrollTo`,
+    which jsdom lacks, and a width of 600 for every element.
+  - `frontend/src/test-pages.ts`: `serve`, the server's replies in
+    place of `fetch`, and `renderPage`, a page with an empty store.
+  - `frontend/src/fixtures/`: four replies recorded from the server, on
+    small runs of the default problems.
+
+
 ### v9.0.10 - 25th October 2026
 
 - Fixed: the explainer's score chart drew a mean or median too large
