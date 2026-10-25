@@ -8,6 +8,7 @@ from genetic_opt.chromosome import Chromosome
 from genetic_opt.crossover import CrossoverFunc, single_point_crossover
 from genetic_opt.gene_space import AbstractGeneSpace, BinaryGeneSpace
 from genetic_opt.score import Score
+from genetic_opt.seeds import GENE_SPACE_RANDOM_SEED, RANDOM_SEED
 
 
 class BinaryGeneticAlgorithm(GeneticAlgorithm):
@@ -26,8 +27,8 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         fitness_func: Callable[[Chromosome], Score],
         minimize: bool,
         experiment_name: str | None = None,
-        random_seed: int = 442,
-        gene_space_random_seed: int = 2,
+        random_seed: int = RANDOM_SEED,
+        gene_space_random_seed: int = GENE_SPACE_RANDOM_SEED,
         crossover: CrossoverFunc = single_point_crossover,
         **kwargs: Any,
     ) -> None:
@@ -77,12 +78,7 @@ class BinaryGeneticAlgorithm(GeneticAlgorithm):
         :return: a tuple of chromosomes.
         """
         cr1, cr2 = (
-            Chromosome(
-                size=self.chromosome_length,
-                genes=genes,
-                is_gene_set=self.chromosome_as_set,
-                random_seed=self.random_seed,
-            )
+            self._new_chromosome(genes)
             for genes in self.crossover(c1.genes, c2.genes, self.random_state)
         )
         return cr1, cr2

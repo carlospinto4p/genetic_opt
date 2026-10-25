@@ -1,4 +1,6 @@
+import re
 from itertools import pairwise
+from pathlib import Path
 
 import pytest
 
@@ -6,14 +8,22 @@ from genetic_opt.algorithms import FitConfig
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.examples.binary import BinaryFunction, wavy_function
 from genetic_opt.web.runs import (
+    KNAPSACK_CAPACITY,
+    KNAPSACK_VALUES,
+    KNAPSACK_WEIGHTS,
     function_curve,
     function_run,
     knapsack_run,
     record_run,
 )
 
-WEIGHTS = [23, 31, 29, 44, 53, 38, 63, 85, 89, 82]
-VALUES = [92, 57, 49, 68, 60, 43, 67, 84, 87, 72]
+ROOT = Path(__file__).parents[3]
+CRATE = ROOT / "crates" / "genetic_opt"
+WEIGHTS, VALUES = KNAPSACK_WEIGHTS, KNAPSACK_VALUES
+
+
+def numbers(text: str) -> list[int]:
+    return [int(n) for n in re.findall(r"\d+", text)]
 
 
 def run_knapsack(**config) -> dict:
@@ -213,3 +223,24 @@ def test_function_run_sends_the_curve():
     assert (run["curve"][0][0], run["curve"][-1][0]) == (0.0, 1.0)
     for chromosome in run["generations"][-1]["population"]:
         assert chromosome["score"] == wavy_function(chromosome["decoded"])
+
+
+# ── Knapsack Data Tests ────────────────────────────────────────────────
+
+KNAPSACK = KNAPSACK_WEIGHTS, KNAPSACK_VALUES, [KNAPSACK_CAPACITY]
+
+
+def test_the_readme_example_has_the_knapsack_of_the_explainer():
+    readme = (ROOT / "README.md").read_text()
+    call = re.search(r"Knapsack\(\s*weights=(.*?)\n\)", readme, re.DOTALL)
+    weights, values, capacity = call.group(1).split("\n    ")
+    assert tuple(map(numbers, (weights, values, capacity))) == KNAPSACK
+
+
+# The source package holds the tests but not the crate.
+@pytest.mark.skipif(not CRATE.is_dir(), reason="needs the Rust crate")
+def test_the_rust_example_has_the_knapsack_of_the_explainer():
+    example = (CRATE / "examples" / "knapsack.rs").read_text()
+    call = re.search(r"Knapsack::new\((.*?)\)\?;", example, re.DOTALL)
+    lines = [line for line in call.group(1).splitlines() if line.strip()]
+    assert tuple(map(numbers, lines)) == KNAPSACK

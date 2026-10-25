@@ -6,6 +6,7 @@ from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.score import Score
+from genetic_opt.seeds import GENE_SPACE_RANDOM_SEED, RANDOM_SEED
 
 # Interval and number of bits of `BinaryFunction` when none are given
 FUNCTION_LOW, FUNCTION_HIGH, FUNCTION_BITS = -1.0, 2.0, 16
@@ -126,8 +127,8 @@ class BinaryFunction(BinaryGeneticAlgorithm):
         low: float = FUNCTION_LOW,
         high: float = FUNCTION_HIGH,
         n_bits: int = FUNCTION_BITS,
-        random_seed: int = 442,
-        gene_space_random_seed: int = 2,
+        random_seed: int = RANDOM_SEED,
+        gene_space_random_seed: int = GENE_SPACE_RANDOM_SEED,
     ) -> None:
         """
         :param low: lowest `x` of the interval.

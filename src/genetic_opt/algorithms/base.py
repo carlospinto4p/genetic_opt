@@ -32,6 +32,7 @@ from genetic_opt.metrics import (
 from genetic_opt.runs.fit_result import FitParameters, FitResult, StopReason
 from genetic_opt.runs.save import FitSaver
 from genetic_opt.score import Score
+from genetic_opt.seeds import RANDOM_SEED
 
 # Number of best Chromosomes a `FitResult` reports
 N_BESTS = 5
@@ -133,7 +134,7 @@ class GeneticAlgorithm(ABC):
         fitness_func: Callable[[Chromosome], Score],
         minimize: bool,
         experiment_name: str | None = None,
-        random_seed: int = 442,
+        random_seed: int = RANDOM_SEED,
         extra_config: dict | None = None,
         save: SaveConfig | None = None,
         mutation_invariant: Callable[[Chromosome, Chromosome], bool]
@@ -642,6 +643,19 @@ class GeneticAlgorithm(ABC):
             n=(population_size, self.chromosome_length)
         )
 
+    def _new_chromosome(self, genes: Any) -> Chromosome:
+        """
+        A Chromosome of this Algorithm's length and kind with the genes.
+        :param genes: the genes of the Chromosome.
+        :return: the new Chromosome, without a score.
+        """
+        return Chromosome(
+            size=self.chromosome_length,
+            genes=genes,
+            is_gene_set=self.chromosome_as_set,
+            random_seed=self.random_seed,
+        )
+
     def _first_chromosomes(
         self, first_population: list[tuple[Score, Chromosome]]
     ) -> list[Chromosome]:
@@ -660,12 +674,7 @@ class GeneticAlgorithm(ABC):
                     f"the first population gives a NaN score to the "
                     f"Chromosome {chromosome}"
                 )
-            first = Chromosome(
-                size=self.chromosome_length,
-                genes=list(chromosome.genes),
-                is_gene_set=self.chromosome_as_set,
-                random_seed=self.random_seed,
-            )
+            first = self._new_chromosome(list(chromosome.genes))
             chromosomes.append(first)
             scores.append((repr(first), (score, chromosome.score_time)))
         # Once every Chromosome is checked, so a refused population

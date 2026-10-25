@@ -2,6 +2,26 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.1 - 25th October 2026
+
+- Added `GeneticAlgorithm._new_chromosome(genes)` in
+  `algorithms/base.py`: a Chromosome of the Algorithm's length, kind
+  and seed. `_first_chromosomes` and `BinaryGeneticAlgorithm`'s
+  `crossover_func` use it, in place of a copy each.
+- Added `seeds.py`: `RANDOM_SEED` (442) and `GENE_SPACE_RANDOM_SEED`
+  (2), the default seeds. The defaults of these read them, in place of
+  the numbers:
+  - `GeneticAlgorithm`, `BinaryGeneticAlgorithm`.
+  - `Chromosome`, `AbstractGeneSpace`, `ValuesGeneSpace`.
+  - `examples/binary.py`'s `BinaryFunction`.
+  - `web/app.py`'s `FitParams`.
+- `tests/unit/web/test_runs.py`:
+  - Added two tests that the knapsack of the README example and of the
+    Rust `examples/knapsack.rs` are `web/runs.py`'s `KNAPSACK_WEIGHTS`,
+    `KNAPSACK_VALUES` and `KNAPSACK_CAPACITY`.
+  - The knapsack runs use those constants, in place of a copy.
+
+
 ### v8.1.0 - 25th October 2026
 
 - Added `serialize_fitness_func_calls` to `runs/fit_result_io.py`: the

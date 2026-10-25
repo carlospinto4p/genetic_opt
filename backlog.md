@@ -8,10 +8,7 @@
 
 #### Refactoring
 
-- [ ] `algorithms/base.py:625-630` — the same `Chromosome(size=..., is_gene_set=..., random_seed=...)` call at `base.py:669-677` and `binary.py:80-85`; one `_new_chromosome(genes)` — LOW — S
-- [ ] `web/app.py:49-50` — seeds 442 and 2 repeated at `web/runs.py:55-56` and `algorithms/binary.py:30-31` — LOW — S
-- [ ] `web/runs.py:20-22` — README knapsack data copied at `crates/genetic_opt/examples/knapsack.rs:15-17` — LOW — S
-- [ ] `algorithms/config.py:54-63` — `FitConfig` defaults duplicated in Rust (`algorithm.rs:102-117`) with no drift test (like `test_versions.py`) — LOW — S
+- [ ] `algorithms/config.py:54-63` — `FitConfig` defaults duplicated in Rust (`algorithm.rs:102-117`) with no drift test (like `test_versions.py`); the same for the default seed 442, `seeds.py`'s `RANDOM_SEED`, copied at `algorithm.rs:46` and `save.rs:150` — LOW — S
 - [ ] `crates/genetic_opt/src/algorithm.rs:524` — NaN-score error text built twice (also `:644`) — LOW — S
 - [ ] `frontend/src/pages/SavedRun.svelte:9-22` — `open()` repeats `runLab`'s running/error try/finally (`store.svelte.ts:59-75`); `store.saved` (`:37`) hand-copies the `Lab` shape — LOW — S
 - [ ] `frontend/src/pages/SavedRun.svelte:25-37` — parameter labels copied from `FitForm.svelte:22-84`; share one label map — LOW — S

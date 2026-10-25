@@ -11,6 +11,7 @@ from genetic_opt.functions import identity_func
 from genetic_opt.gene_collection import GeneCollection, GeneList, GeneSet
 from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.score import Score
+from genetic_opt.seeds import RANDOM_SEED
 
 
 class Chromosome:
@@ -24,7 +25,7 @@ class Chromosome:
         size: int,
         genes: Collection | None = None,
         gene_space: AbstractGeneSpace | None = None,
-        random_seed: int = 442,
+        random_seed: int = RANDOM_SEED,
         is_gene_set: bool = False,
     ) -> None:
         """

@@ -22,6 +22,7 @@ from genetic_opt.examples.binary import (
     FUNCTION_LOW,
 )
 from genetic_opt.exceptions import ValidationException
+from genetic_opt.seeds import GENE_SPACE_RANDOM_SEED, RANDOM_SEED
 from genetic_opt.web.runs import (
     KNAPSACK_CAPACITY,
     KNAPSACK_VALUES,
@@ -61,8 +62,10 @@ class FitParams(BaseModel):
         FitConfig.min_population_size, ge=0, le=MAX_POPULATION
     )
     stop_without_improvement: bool = FitConfig.stop_without_improvement
-    random_seed: int = Field(442, ge=0, lt=2**32)
-    gene_space_random_seed: int = Field(2, ge=0, lt=2**32)
+    random_seed: int = Field(RANDOM_SEED, ge=0, lt=2**32)
+    gene_space_random_seed: int = Field(
+        GENE_SPACE_RANDOM_SEED, ge=0, lt=2**32
+    )
 
     def fit_config(self) -> FitConfig:
         """The `FitConfig` of these parameters, scored in one process."""

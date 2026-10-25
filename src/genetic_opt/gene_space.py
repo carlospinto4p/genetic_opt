@@ -8,6 +8,7 @@ from numpy import empty, ndarray
 from numpy.random import RandomState
 
 from genetic_opt.exceptions import ValidationException
+from genetic_opt.seeds import RANDOM_SEED
 
 
 class AbstractGeneSpace(ABC):
@@ -17,7 +18,7 @@ class AbstractGeneSpace(ABC):
     genotype, which represents a real problem phenotype.
     """
 
-    def __init__(self, random_seed: int = 442) -> None:
+    def __init__(self, random_seed: int = RANDOM_SEED) -> None:
         """
         Initialize the Gene Space.
         Elements inside are genes, which form chromosomes.
@@ -65,7 +66,9 @@ class ValuesGeneSpace(AbstractGeneSpace):
     GeneSpace which uses the values it is given as its symbols.
     """
 
-    def __init__(self, values: Sequence, random_seed: int = 442) -> None:
+    def __init__(
+        self, values: Sequence, random_seed: int = RANDOM_SEED
+    ) -> None:
         """
         Initialize the Gene Space.
         :param values: the genes, each one once. Their order, with the
