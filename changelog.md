@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.4 - 25th October 2026
+
+- Added `nan_score_error` to the crate's `algorithm.rs`: the error of a
+  NaN score, which the first population and `score` both return, in
+  place of a copy each. The messages are unchanged.
+
+
 ### v8.1.3 - 25th October 2026
 
 - Added `tests/unit/test_rust_defaults.py`: two tests that the Rust

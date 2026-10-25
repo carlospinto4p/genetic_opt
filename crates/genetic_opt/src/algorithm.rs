@@ -181,6 +181,13 @@ fn space_points(gene_space_size: usize, length: usize, as_set: bool) -> f64 {
     })
 }
 
+/// The error of a NaN score, given by `source` to the chromosome of
+/// `genes`. `Gene` is not `Debug`, but it is `Serialize`.
+fn nan_score_error<G: Serialize>(source: &str, genes: &[G]) -> Error {
+    let genes = serde_json::to_string(genes).unwrap_or_default();
+    Error::Validation(format!("{source} a NaN score to the chromosome {genes}"))
+}
+
 type Population<G> = Vec<Arc<Individual<G>>>;
 type Bests<P> = Vec<Best<<P as Problem>::Gene, <P as Problem>::Solution>>;
 
@@ -566,10 +573,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
         for (genes, score) in population {
             let chromosome = self.chromosome(genes)?;
             if score.value.is_nan() {
-                let genes = serde_json::to_string(chromosome.genes()).unwrap_or_default();
-                return Err(Error::Validation(format!(
-                    "the first population gives a NaN score to the chromosome {genes}"
-                )));
+                return Err(nan_score_error(
+                    "the first population gives",
+                    chromosome.genes(),
+                ));
             }
             individuals.push(Individual {
                 chromosome,
@@ -685,11 +692,10 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 .collect()
         });
         if let Some(individual) = scored.iter().find(|i| i.score.value.is_nan()) {
-            // `Gene` is not `Debug`, but it is `Serialize`.
-            let genes = serde_json::to_string(individual.chromosome.genes()).unwrap_or_default();
-            return Err(Error::Validation(format!(
-                "the fitness function gave a NaN score to the chromosome {genes}"
-            )));
+            return Err(nan_score_error(
+                "the fitness function gave",
+                individual.chromosome.genes(),
+            ));
         }
         self.scored += scored.len();
         for individual in &scored {

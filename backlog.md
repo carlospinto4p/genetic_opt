@@ -8,7 +8,6 @@
 
 #### Refactoring
 
-- [ ] `crates/genetic_opt/src/algorithm.rs:524` — NaN-score error text built twice (also `:644`) — LOW — S
 - [ ] `frontend/src/pages/SavedRun.svelte:9-22` — `open()` repeats `runLab`'s running/error try/finally (`store.svelte.ts:59-75`); `store.saved` (`:37`) hand-copies the `Lab` shape — LOW — S
 - [ ] `frontend/src/pages/SavedRun.svelte:25-37` — parameter labels copied from `FitForm.svelte:22-84`; share one label map — LOW — S
 - [ ] `frontend/src/pages/Knapsack.svelte:14-15` — `off` helper copied at `Guide.svelte:51-52` — LOW — S
