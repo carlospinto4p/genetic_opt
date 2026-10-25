@@ -155,7 +155,7 @@ wheels = [
 
 [[package]]
 name = "genetic-opt"
-version = "8.1.7"
+version = "8.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "joblib" },

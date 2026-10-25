@@ -8,9 +8,7 @@
 
 #### Refactoring
 
-- [ ] `frontend/src/components/BreedingView.svelte:20` — `n_random` is snake_case among camelCase — LOW — S
 - [ ] `frontend/src/App.svelte:19` — `.catch(() => {})` hides a failed `/api/info`, so the sidebar silently shows no version — LOW — S
-- [ ] `frontend/src/components/RunView.svelte:213-216` — `stopText` falls through to "mean stalled" for unknown stop reasons; make the switch over `StopReason` exhaustive — LOW — S
 - [ ] `gene_collection.py:299-309` — abstract `select_random` and its two versions (`:370-380`, `:450-460`) are never called in src, tests or `downstream` — LOW — S
 - [ ] `algorithms/base.py:339` — `no_improvement_condition` builds the whole improvement dict to read one key; Rust's `mean_stalled` (`algorithm.rs:718-723`) compares means directly — LOW — S
 

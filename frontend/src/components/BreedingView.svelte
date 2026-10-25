@@ -20,7 +20,7 @@
   const SHOWN = 4
   let showAll = $state(false)
 
-  let n_random = $derived(breeding.n_crossovers - breeding.n_besties)
+  let nRandom =$derived(breeding.n_crossovers - breeding.n_besties)
   let pairs = $derived(showAll ? breeding.pairs : breeding.pairs.slice(0, SHOWN))
   let children = $derived(breeding.pairs.flatMap((p) => p.children))
   let stayed = $derived(children.filter((c) => c.stayed).length)
@@ -43,7 +43,7 @@
   <h3>1. Pick the parents</h3>
   <p>
     {breeding.n_crossovers} parents: the {breeding.n_besties} best of the last
-    generation, and {n_random} drawn at random from the rest. A random one can
+    generation, and {nRandom} drawn at random from the rest. A random one can
     be drawn twice. They are shuffled, then paired in order.
   </p>
   <div class="ranks" aria-label="Ranks of the last generation picked as parents">

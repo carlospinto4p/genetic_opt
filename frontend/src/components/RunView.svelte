@@ -55,24 +55,27 @@
     playing = !playing
   }
 
-  let stopText = $derived.by(() => {
-    if (run.stop_reason === 'completed') return `It ran all ${last} generations.`
-    if (run.stop_reason === 'stopped') {
-      return (
-        `It stopped at generation ${last} of the ${params.n_generations} asked. ` +
-        `The saved files do not say why.`
-      )
+  // The return type makes the check fail when `StopReason` grows a case
+  let stopText = $derived.by((): string => {
+    switch (run.stop_reason) {
+      case 'completed':
+        return `It ran all ${last} generations.`
+      case 'stopped':
+        return (
+          `It stopped at generation ${last} of the ${params.n_generations} asked. ` +
+          `The saved files do not say why.`
+        )
+      case 'min_population':
+        return (
+          `It stopped at generation ${last}: fewer than ` +
+          `${params.min_population_size} different chromosomes were left.`
+        )
+      case 'no_improvement':
+        return (
+          `It stopped at generation ${last}: the mean score was the same as in ` +
+          `the generation before.`
+        )
     }
-    if (run.stop_reason === 'min_population') {
-      return (
-        `It stopped at generation ${last}: fewer than ` +
-        `${params.min_population_size} different chromosomes were left.`
-      )
-    }
-    return (
-      `It stopped at generation ${last}: the mean score was the same as in ` +
-      `the generation before.`
-    )
   })
 
   let metrics = $derived(run.generations.map((g) => g.metrics))

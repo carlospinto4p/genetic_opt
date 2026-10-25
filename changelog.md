@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.8 - 25th October 2026
+
+- `BreedingView.svelte`: renamed `n_random` to `nRandom`, to match the
+  camelCase names around it.
+- `RunView.svelte`: `stopText` is now a `switch` with one case for each
+  `StopReason` and a `string` return type, so `svelte-check` fails when
+  a new stop reason has no text. Before, an unknown reason fell through
+  to the "mean score was the same" text.
+
+
 ### v8.1.7 - 25th October 2026
 
 - `web/app.py`: typed the `func` argument of `_run` as
