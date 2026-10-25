@@ -7,6 +7,7 @@ from typing import Any
 from genetic_opt.chromosome import Chromosome
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.functions import format_bytes, identity_func
+from genetic_opt.gene_collection import sorted_genes
 from genetic_opt.runs.files import get_files_inside_folder
 from genetic_opt.runs.fit_result_io import (
     load_fit_result,
@@ -34,7 +35,7 @@ def _saved_genes(chromosome: Chromosome) -> list:
     """The genes of a saved Chromosome, those of a set sorted."""
     if not chromosome.is_gene_set:
         return list(chromosome.genes)
-    return sorted(chromosome.genes, key=lambda g: (type(g).__name__, g))
+    return sorted_genes(chromosome.genes)
 
 
 def saved_run(

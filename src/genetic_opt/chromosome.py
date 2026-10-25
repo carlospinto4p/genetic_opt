@@ -8,7 +8,12 @@ from typing import Any
 from numpy.random import RandomState
 
 from genetic_opt.functions import identity_func
-from genetic_opt.gene_collection import GeneCollection, GeneList, GeneSet
+from genetic_opt.gene_collection import (
+    GeneCollection,
+    GeneList,
+    GeneSet,
+    sorted_genes,
+)
 from genetic_opt.gene_space import AbstractGeneSpace
 from genetic_opt.score import Score
 from genetic_opt.seeds import RANDOM_SEED
@@ -118,7 +123,7 @@ class Chromosome:
     def __repr__(self) -> str:
         if self.is_gene_set:
             # Sort the set representation to make it unique
-            return f"{{{sorted(self.genes).__repr__()[1:-1]}}}"
+            return f"{{{sorted_genes(self.genes).__repr__()[1:-1]}}}"
         return self.genes.__repr__()
 
     @property

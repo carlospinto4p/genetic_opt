@@ -4,7 +4,7 @@ import pytest
 from numpy.random import RandomState
 
 from genetic_opt.chromosome import Chromosome
-from genetic_opt.gene_space import BinaryGeneSpace
+from genetic_opt.gene_space import BinaryGeneSpace, ValuesGeneSpace
 from genetic_opt.score import Score
 from tests.unit.conftest import OnesGeneSpace
 
@@ -58,6 +58,29 @@ def test_mutation_leaves_the_chromosome_as_it_was():
     assert chromosome.genes == [0] * size
     assert chromosome.score.value == 3
     assert by_chromosome[chromosome] == "kept"
+
+
+def test_a_set_chromosome_with_mixed_gene_types_has_one_repr():
+    chromosome = Chromosome(size=3, genes={2, "a", 1}, is_gene_set=True)
+    same_genes = Chromosome(size=3, genes=["a", 1, 2], is_gene_set=True)
+    assert repr(chromosome) == "{1, 2, 'a'}"
+    assert chromosome.id == same_genes.id
+
+
+def test_a_set_chromosome_with_mixed_gene_types_mutates():
+    gene_space = ValuesGeneSpace([1, "a", 2, "b", 3.5], random_seed=4)
+    chromosome = Chromosome(size=3, gene_space=gene_space, is_gene_set=True)
+    mutated = chromosome.random_mutate(
+        gene_space=gene_space, gene_mutate_prob=1
+    )
+    assert len(mutated.genes) == 3
+    assert mutated.genes <= {1, "a", 2, "b", 3.5}
+
+
+def test_a_set_chromosome_of_ints_and_floats_keeps_its_repr():
+    # The id is a hash of the repr, so a run saved before keeps its ids
+    chromosome = Chromosome(size=3, genes={2, 1.5, 1}, is_gene_set=True)
+    assert repr(chromosome) == "{1, 1.5, 2}"
 
 
 @pytest.mark.parametrize("other", [None, "[1, 0, 1]", [1, 0, 1]])

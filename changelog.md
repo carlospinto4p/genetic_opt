@@ -2,6 +2,19 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.2 - 25th October 2026
+
+- Fixed a set Chromosome whose genes are of types that do not compare,
+  such as `{1, "a"}` from a `ValuesGeneSpace`: its `repr`, and so its
+  `id`, and its mutation raised `TypeError`.
+  - Added `sorted_genes` to `gene_collection.py`: the plain sort, or
+    the sort by type name first when the plain one raises. Genes that
+    compare keep their order, so saved ids do not change.
+  - `Chromosome.__repr__`, `GeneSet.random_mutate` and
+    `web/saved_runs.py` use it.
+- Added three tests to `tests/unit/test_chromosome.py`.
+
+
 ### v9.0.1 - 25th October 2026
 
 - `algorithms/base.py`: `no_improvement_condition` compares the means of

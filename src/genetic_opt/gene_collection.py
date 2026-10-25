@@ -30,6 +30,21 @@ def _draw_genes(gene_space: AbstractGeneSpace, n: int) -> list:
     return genes.tolist() if isinstance(genes, ndarray) else list(genes)
 
 
+def sorted_genes(genes: Collection) -> list:
+    """
+    Sort genes into one order, whatever order a set holds them in.
+    :param genes: genes to sort.
+    :return: the genes sorted, or sorted by the name of their type first
+        when genes of different types cannot be compared, such as `1`
+        and `"a"`. Genes that compare keep the plain order, which the
+        ids of the Chromosomes already saved depend on.
+    """
+    try:
+        return sorted(genes)
+    except TypeError:
+        return sorted(genes, key=lambda gene: (type(gene).__name__, gene))
+
+
 def _check_genes_or_gene_space(
     size: int,
     genes: Collection | None,
@@ -212,7 +227,7 @@ class GeneSet(GeneCollection):
         """
         # The order of a set of strings changes with the hash seed that
         # Python draws at each launch, so a seed would not give one run
-        genes = sorted(self.genes)
+        genes = sorted_genes(self.genes)
         mutates = (
             random_state.random(len(genes)) < gene_mutate_prob
         ).tolist()
