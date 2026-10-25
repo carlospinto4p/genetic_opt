@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.5 - 25th October 2026
+
+- Added `frontend/src/lib/api.test.ts`: 5 tests of the error `request()`
+  throws, from a text `detail`, from the list of errors of a refused
+  request, from a body that is not JSON and from JSON without a
+  `detail`, and of the JSON of a response that is ok.
+
+
 ### v9.0.4 - 25th October 2026
 
 - Added tests of what a run gives and what the explainer opens:

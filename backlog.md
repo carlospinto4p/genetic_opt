@@ -9,7 +9,6 @@
 #### Test coverage
 
 - [ ] `algorithms/base.py:911` — only NaN scores are refused; an infinite score comes back from the API as `{"score": null}` with 200, untested (same for infinite variance) — MED — M
-- [ ] `frontend/src/lib/api.ts:127-147` — `request()` error handling untested: string `detail`, Pydantic error list, non-JSON body — MED — S
 - [ ] `frontend/src/lib/store.svelte.ts` — untested: `loadExamples` retry after failure (resets `loading`); `runLab` and `openSaved` are covered by `store.test.ts` since v8.1.5 — MED — S
 - [ ] `frontend/src/components/*.svelte`, `pages/*.svelte` — ~2,500 lines with no component tests (Vitest has no DOM); extract and unit-test the index clamping (`RunView.svelte:32`); the chart scales moved to the tested `lib/chart.ts` in v7.0.1 — MED — M/L
 - [ ] `web/app.py:69-78,86` — `MAX_GENES` limit on weights/values and the `n_bits` 2-40 range untested; `test_app.py:61` covers only the population limit — LOW — S
