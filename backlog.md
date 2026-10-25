@@ -1,5 +1,20 @@
 # Backlog - Genetic-Opt
 
+### 2026.10.25 (8.1.0 uploaded by hand for `downstream`)
+
+- [ ] **Write down how to publish a release.** No file here says how,
+  and the publish job in `.gitlab-ci.yml` cannot run since GitLab CI is
+  off. 8.1.0 was uploaded from a developer machine on 25th October 2026
+  so that `downstream` could pin `genetic_opt>=8.1,<9`; the registry had
+  4.1.0 at most before. What worked, with `UV_PUBLISH_USERNAME` and
+  `UV_PUBLISH_PASSWORD` set:
+  - `uv build --out-dir <dir>`
+  - `uv publish --publish-url https://gitlab.com/api/v4/projects/48069240/packages/pypi <dir>/genetic_opt-8.1.0.tar.gz <dir>/genetic_opt-8.1.0-py3-none-any.whl`
+  - Options: a `publish-url` on a `gitlab_genetic_opt` index entry in
+    `pyproject.toml`, so `uv publish --index gitlab_genetic_opt` works
+    as in `tao`; a short `docs/releasing.md`; and deleting or keeping
+    the CI job. — MED — S
+
 ### 2026.10.17 (v5.10.2 /scan)
 
 #### Performance
