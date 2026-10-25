@@ -2,6 +2,20 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.4 - 25th October 2026
+
+- Added tests of what a run gives and what the explainer opens:
+  - `tests/unit/algorithms/test_base.py`: the bests of a run are
+    unique, at most `N_BESTS` and best first, maximizing and
+    minimizing.
+  - `crates/genetic_opt/tests/algorithm.rs`: the same cap and order in
+    `the_population_keeps_its_size_and_is_sorted_best_first`.
+  - `tests/integration/test_rust_layout.py`: `saved_run` opens a run
+    saved by the crate, a list and a set, as BSON and as JSON.
+  - `tests/unit/web/test_saved_runs.py`: `saved_run` sends the
+    dictionary genes of a set as sorted JSON text.
+
+
 ### v9.0.3 - 25th October 2026
 
 - Fixed `niceTicks` in `frontend/src/lib/format.ts` never ending on a

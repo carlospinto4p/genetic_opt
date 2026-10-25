@@ -550,6 +550,14 @@ fn the_population_keeps_its_size_and_is_sorted_best_first() {
     }
     let bests: HashSet<_> = result.bests.iter().map(|b| &b.encoded.chromosome).collect();
     assert_eq!(bests.len(), result.bests.len());
+    // Five of the thirty, best first
+    assert_eq!(result.bests.len(), 5);
+    assert!(
+        result
+            .bests
+            .windows(2)
+            .all(|pair| pair[0].score.value >= pair[1].score.value)
+    );
 }
 
 #[test]

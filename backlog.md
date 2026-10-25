@@ -8,9 +8,6 @@
 
 #### Test coverage
 
-- [ ] `algorithms/base.py:782-785` — no Python test that `bests` are unique, at most `N_BESTS` (5) and best-first; the Rust test (`tests/algorithm.rs:517-518`) checks uniqueness but not the cap — MED — S
-- [ ] `web/runs.py:408-409` — no test feeds `saved_run` (or `/api/runs/saved`) a run saved by the Rust crate, though `runs.py:361` promises it; `tests/integration/test_rust_layout.py` could — MED — S
-- [ ] `web/runs.py:353-357` — `saved_run` untested for a set chromosome whose saved genes are dicts (how `downstream` saves rules); `test_runs.py:285` covers only a list chromosome — MED — S
 - [ ] `algorithms/base.py:911` — only NaN scores are refused; an infinite score comes back from the API as `{"score": null}` with 200, untested (same for infinite variance) — MED — M
 - [ ] `frontend/src/lib/api.ts:127-147` — `request()` error handling untested: string `detail`, Pydantic error list, non-JSON body — MED — S
 - [ ] `frontend/src/lib/store.svelte.ts` — untested: `loadExamples` retry after failure (resets `loading`); `runLab` and `openSaved` are covered by `store.test.ts` since v8.1.5 — MED — S

@@ -111,6 +111,30 @@ def test_saved_run_sends_a_dictionary_gene_as_json_text(tmp_path):
     }
 
 
+def test_saved_run_sends_the_dictionary_genes_of_a_set_sorted(tmp_path):
+    # A set of genes saved as dictionaries, as `downstream` saves its rules
+    algorithm = NumbersAlgorithm(
+        minimize=False,
+        save=SaveConfig(
+            path=f"{tmp_path}/",
+            serialize_decoded_chromosome_func=int,
+            as_bson=False,
+            serialize_gene_func=lambda g: {"n": g, "id": [g, 1]},
+            plot_metrics=False,
+        ),
+    )
+    fit_result = fit_saved(algorithm, n_generations=1)
+    run = saved_run(algorithm.save_path)
+    for generation, population in zip(
+        run["generations"], fit_result["history"], strict=True
+    ):
+        assert [c["genes"] for c in generation["population"]] == [
+            sorted(json.dumps({"id": [g, 1], "n": g}) for g in c.genes)
+            for _, c in population
+        ]
+    json.dumps(run, allow_nan=False)
+
+
 def test_saved_run_sends_an_infinite_space_as_none(tmp_path):
     # 2 ** 1100 Chromosomes do not fit a float
     algorithm = BinaryGeneticAlgorithm(

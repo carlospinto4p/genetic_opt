@@ -26,6 +26,7 @@ from genetic_opt.runs.fit_result_io import (
 )
 from genetic_opt.runs.plots import save_fit_plots
 from genetic_opt.score import Score
+from genetic_opt.web.saved_runs import saved_run
 
 CRATE_MANIFEST = (
     Path(__file__).parents[2] / "crates" / "genetic_opt" / "Cargo.toml"
@@ -287,6 +288,41 @@ def test_python_plots_a_run_saved_by_the_rust_crate(
     assert drawn == str(run_folder / "fit_plots.jpg")
     # Every JPEG file starts with these bytes.
     assert (run_folder / "fit_plots.jpg").read_bytes()[:3] == b"\xff\xd8\xff"
+
+
+@pytest.mark.parametrize(
+    ("example", "length", "best", "stop_reason"),
+    [
+        ("knapsack", 10, 309.0, "min_population"),
+        ("numbers", 3, 30.0, "completed"),
+    ],
+)
+@pytest.mark.parametrize("extension", ["bson", "json"])
+def test_the_explainer_opens_a_run_saved_by_the_rust_crate(
+    tmp_path, examples, example, length, best, stop_reason, extension
+):
+    subprocess.run([examples[example], str(tmp_path), extension], check=True)
+    (run_folder,) = tmp_path.iterdir()
+    (run_folder,) = run_folder.iterdir()
+    fit_data = str(run_folder / "fit_data")
+    loaded = load_fit_result(fit_data, lambda chromosome: chromosome.genes)
+
+    run = saved_run(str(run_folder))
+    assert run["folder"] == fit_data
+    assert run["chromosome_length"] == length
+    assert run["fit_parameters"] == loaded["fit_parameters"]
+    assert run["genetic_opt_version"] == __version__
+    assert run["stop_reason"] == stop_reason
+    assert len(run["generations"]) == len(loaded["history"])
+    for generation, population in zip(
+        run["generations"], loaded["history"], strict=True
+    ):
+        assert [c["score"] for c in generation["population"]] == [
+            score.value for score, _ in population
+        ]
+    assert run["generations"][-1]["metrics"]["best"] == best
+    # Sent as JSON, which has no infinity
+    json.dumps(run, allow_nan=False)
 
 
 def test_the_rust_example_saves_bson_when_no_format_is_given(

@@ -115,6 +115,34 @@ def test_fit_with_0_generations_scores_the_first_population_only():
     assert len(result["last_population"]) == 20
 
 
+class PairsStartAlgorithm(ZeroStartAlgorithm):
+    """Its first population holds 0 to 9 ones, each twice."""
+
+    def __init__(self, minimize: bool):
+        super().__init__()
+        self.minimize = minimize
+
+    def init_population(self, population_size: int) -> list[list[int]]:
+        return [
+            [1] * ones + [0] * (self.chromosome_length - ones)
+            for ones in range(10)
+            for _ in range(2)
+        ]
+
+
+@pytest.mark.parametrize(
+    ("minimize", "expected"),
+    [(False, [9, 8, 7, 6, 5]), (True, [0, 1, 2, 3, 4])],
+)
+def test_bests_are_unique_at_most_n_bests_and_best_first(minimize, expected):
+    result = PairsStartAlgorithm(minimize=minimize).fit(
+        FitConfig(n_generations=0, population_size=20, n_jobs=1),
+    )
+    assert algorithms.N_BESTS == len(expected)
+    assert [s.value for s in result["bests"]["scores"]] == expected
+    assert [sum(genes) for genes in result["bests"]["result"]] == expected
+
+
 def _fit_numbers(minimize: bool) -> tuple[NumbersAlgorithm, FitResult]:
     """Run `NumbersAlgorithm` for 60 generations of 30 Chromosomes."""
     algorithm = NumbersAlgorithm(minimize=minimize)
