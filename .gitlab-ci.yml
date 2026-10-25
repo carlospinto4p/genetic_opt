@@ -1,3 +1,6 @@
+# GitLab CI is off, so this job cannot run: releases are uploaded from a
+# developer machine, as `docs/releasing.md` says.
+#
 # Publish the package to this project's GitLab PyPI registry so dependent
 # libraries can install it as a versioned dependency using a deploy token
 # with `read_package_registry` scope, e.g.:

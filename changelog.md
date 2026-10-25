@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.2 - 25th October 2026
+
+- Added `docs/releasing.md`: how to upload a release by hand, since
+  GitLab CI is off, and how to check what the registry serves.
+- `pyproject.toml`: added the `gitlab_genetic_opt` index entry, whose
+  `publish-url` makes `uv publish --index gitlab_genetic_opt` work.
+- `.gitlab-ci.yml`: a note that the publish job cannot run while CI is
+  off, pointing to `docs/releasing.md`.
+
+
 ### v8.1.1 - 25th October 2026
 
 - Added `GeneticAlgorithm._new_chromosome(genes)` in

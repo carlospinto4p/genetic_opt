@@ -1,6 +1,6 @@
 [project]
 name = "genetic-opt"
-version = "8.1.1"
+version = "8.1.2"
 description = "Genetic algorithm optimizers package."
 authors = [{ name = "Carlos Pinto", email = "carlospinto4p@gmail.com" }]
 readme = "README.md"
@@ -33,6 +33,15 @@ dev = [
     "pytest-xdist>=3.8.0,<4.0.0",
     "ruff>=0.16.4,<1.0.0",
 ]
+
+# This package's own registry. `publish-url` is what makes
+# `uv publish --index gitlab_genetic_opt` work; nothing installs from
+# it here. See `docs/releasing.md`.
+[[tool.uv.index]]
+name = "gitlab_genetic_opt"
+url = "https://gitlab.com/api/v4/projects/48069240/packages/pypi/simple"
+publish-url = "https://gitlab.com/api/v4/projects/48069240/packages/pypi"
+explicit = true
 
 [build-system]
 requires = ["hatchling>=1.32.4,<2.0.0"]
