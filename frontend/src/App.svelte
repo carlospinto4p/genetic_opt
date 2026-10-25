@@ -16,7 +16,7 @@
         name = info.name
         version = info.version
       })
-      .catch(() => {})
+      .catch((error) => console.warn('Could not load /api/info:', error))
   })
 
   let main: HTMLElement | undefined = $state()

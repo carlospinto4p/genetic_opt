@@ -2,6 +2,13 @@
 ## Changelog - Genetic-Opt
 
 
+### v8.1.9 - 25th October 2026
+
+- `App.svelte`: a failed `/api/info` request is now logged with
+  `console.warn`, in place of an empty `.catch`, so the browser console
+  says why the sidebar shows no version.
+
+
 ### v8.1.8 - 25th October 2026
 
 - `BreedingView.svelte`: renamed `n_random` to `nRandom`, to match the
