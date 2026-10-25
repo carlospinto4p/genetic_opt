@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.3 - 25th October 2026
+
+- Fixed `niceTicks` in `frontend/src/lib/format.ts` never ending on a
+  range that is not finite, such as the ±Infinity that `LineChart`
+  passes for an empty series. Such a range gets the ticks of 0 to 1.
+- Added two tests to `frontend/src/lib/format.test.ts`.
+
+
 ### v9.0.2 - 25th October 2026
 
 - Fixed a set Chromosome whose genes are of types that do not compare,

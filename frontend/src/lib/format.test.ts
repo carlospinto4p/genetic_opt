@@ -24,6 +24,15 @@ describe('niceTicks', () => {
     expect(ticks[ticks.length - 1]).toBeGreaterThan(100)
   })
 
+  it('ends on the range of an empty series', () => {
+    // `Math.min()` and `Math.max()` of no values, as `LineChart` passes
+    expect(niceTicks(Math.min(), Math.max())).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1])
+  })
+
+  it('ends on a range that is not a number', () => {
+    expect(niceTicks(NaN, 1)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1])
+  })
+
   it('ends on a range of zero', () => {
     const ticks = niceTicks(0, 0)
     expect(ticks.length).toBeLessThan(20)

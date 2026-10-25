@@ -14,6 +14,11 @@ export function pct(value: number): string {
 
 /** Round tick values covering `[min, max]`. */
 export function niceTicks(min: number, max: number, count = 5): number[] {
+  // An empty series gives ±Infinity, and `t` below never reaches it
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    min = 0
+    max = 1
+  }
   // A range of float noise, or none, is widened around the values: a
   // step that small would not move `t` below, and the loop never ends.
   const size = Math.max(Math.abs(min), Math.abs(max))
