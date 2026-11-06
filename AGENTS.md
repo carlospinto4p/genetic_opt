@@ -6,8 +6,7 @@ is a routing adapter, not a second copy of the rules: the canonical sources are
 change them there rather than here.
 
 User instructions take precedence over these files. Project rules take
-precedence over the global conventions in `/home/carlos/.claude/CLAUDE.md` and
-`/home/carlos/.claude/rules/`, which also apply.
+precedence over any global conventions you also use.
 
 ## Read first
 
@@ -33,7 +32,6 @@ Paths are relative to `.claude/rules/`. Several rules can apply at once.
 
 The project has no skills, hooks or plugins of its own; `.claude/` holds only
 the rules above, their index `00-rule-index.md`, and `settings.json`, which
-denies Claude Code reads of secret files. Any change to an agent instruction,
-rule, skill, hook or configuration follows the global
-`/home/carlos/.claude/rules/claude-opencode-sync.md`, which keeps Claude Code,
-Codex and OpenCode aligned in the same session.
+denies Claude Code reads of secret files. A change to an agent instruction,
+rule or configuration is made for Claude Code, Codex and OpenCode in the same
+session, so the three stay aligned.

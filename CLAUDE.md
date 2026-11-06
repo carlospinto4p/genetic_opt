@@ -64,7 +64,7 @@ saved by either one has the same layout on disk, and
 
 ## Changes that break `downstream`
 
-`downstream` (`~/development/python/rialto/downstream`) uses this package.
+`downstream`, a separate project, uses this package.
 When a change here breaks its code, file an item in its `backlog.md`
 in the same task, with the lines that break and what to write in their
 place, then commit and push it there. Saying so in the reply is not

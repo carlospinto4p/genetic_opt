@@ -1,7 +1,9 @@
 [project]
 name = "genetic-opt"
-version = "9.0.12"
+version = "9.0.13"
 description = "Genetic algorithm optimizers package."
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Carlos Pinto", email = "carlospinto4p@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.14"

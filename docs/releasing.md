@@ -8,9 +8,8 @@ machine. 8.1.0 was uploaded that way on 25th October 2026, so that
 `downstream` could pin `genetic_opt>=8.1,<9`; before it the registry held
 4.1.0 at most.
 
-When to publish is decided by `~/.claude/rules/publish-on-demand.md`:
-the version a consumer is about to install, when it is about to install
-it. A version bump alone does not put anything in the registry.
+Publish the version a consumer is about to install, when it is about to
+install it. A version bump alone does not put anything in the registry.
 
 ## The command
 

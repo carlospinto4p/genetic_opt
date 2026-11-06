@@ -2,6 +2,16 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.13 - 6th November 2026
+
+- Prepared the repository to be public on GitHub:
+  - Added `LICENSE` (MIT) and the `license` and `license-files` fields in
+    `pyproject.toml`.
+  - `pyproject.toml`: the author email is now the GitHub account's.
+  - `AGENTS.md`, `CLAUDE.md`, `docs/releasing.md`: removed the paths to the
+    owner's home folder and the references to personal global rules.
+
+
 ### v9.0.12 - 28th October 2026
 
 - Rotated changelog: archived 25 entries to `changelog/2026.md`.
