@@ -1,12 +1,10 @@
 # Releasing genetic_opt
 
 genetic_opt ships as a private package to its own GitLab registry,
-`gitlab_genetic_opt` (GitLab project `48069240`), which `downstream`
-installs from. GitLab CI is off, so the `publish-package` job in
+`gitlab_genetic_opt` (GitLab project `48069240`), which the projects that
+use it install from. GitLab CI is off, so the `publish-package` job in
 `.gitlab-ci.yml` cannot run: every release is uploaded from a developer
-machine. 8.1.0 was uploaded that way on 25th October 2026, so that
-`downstream` could pin `genetic_opt>=8.1,<9`; before it the registry held
-4.1.0 at most.
+machine.
 
 Publish the version a consumer is about to install, when it is about to
 install it. A version bump alone does not put anything in the registry.

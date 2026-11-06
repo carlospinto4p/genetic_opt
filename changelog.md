@@ -2,6 +2,15 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.14 - 6th November 2026
+
+- Made the agent instructions generic for the public repository:
+  - `CLAUDE.md`, `AGENTS.md`: removed the section on changes that break
+    `downstream`. It moved to `CLAUDE.local.md`, which `.gitignore` already
+    excludes.
+  - `docs/releasing.md`: no longer names `downstream` or the version it needed.
+
+
 ### v9.0.13 - 6th November 2026
 
 - Prepared the repository to be public on GitHub:

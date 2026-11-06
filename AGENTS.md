@@ -11,8 +11,7 @@ precedence over any global conventions you also use.
 ## Read first
 
 `CLAUDE.md` holds the core rules, the commands for the Python package and the
-Rust crate `crates/genetic_opt`, and what to do when a change here breaks
-`downstream`.
+Rust crate `crates/genetic_opt`.
 
 `backlog.md` holds the open work. `roadmap.md` sets no phase yet; its
 "What NOT to do" section still applies.
