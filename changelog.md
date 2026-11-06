@@ -2,13 +2,22 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.15 - 6th November 2026
+
+- Removed the name of the downstream project from every tracked file:
+  `changelog.md`, `changelog/2026.md`, `roadmap.md`,
+  `frontend/src/lib/format.test.ts` and
+  `tests/unit/web/test_saved_runs.py` (comments only), so the repository
+  can be public.
+
+
 ### v9.0.14 - 6th November 2026
 
 - Made the agent instructions generic for the public repository:
   - `CLAUDE.md`, `AGENTS.md`: removed the section on changes that break
-    `downstream`. It moved to `CLAUDE.local.md`, which `.gitignore` already
-    excludes.
-  - `docs/releasing.md`: no longer names `downstream` or the version it needed.
+    the downstream project. It moved to `CLAUDE.local.md`, which
+    `.gitignore` already excludes.
+  - `docs/releasing.md`: no longer names the downstream project or the version it needed.
 
 
 ### v9.0.13 - 6th November 2026
@@ -370,8 +379,8 @@
   `genetic_opt.algorithms`.
 - Updated the paths in `README.md`, `CLAUDE.md` and the crate's doc
   comments.
-- `downstream` imports `genetic_opt.files` and `genetic_opt.fit_result_io`;
-  its backlog has the two lines to change.
+- The downstream project imports `genetic_opt.files` and
+  `genetic_opt.fit_result_io`; its backlog has the two lines to change.
 
 
 ### v7.1.0 - 18th October 2026

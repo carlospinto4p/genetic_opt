@@ -7,7 +7,7 @@ describe('niceTicks', () => {
   })
 
   it('ends on a range of float noise', () => {
-    // Best and mean of every generation of a saved `downstream` run, equal
+    // Best and mean of every generation of a saved run, equal
     // but for the last digit. This range looped forever before v5.10.0.
     const min = 3.6298514769120786e-5
     const max = 3.629851476912079e-5

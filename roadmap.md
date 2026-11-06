@@ -32,5 +32,5 @@ _None yet._
   - Either way installing the package would need a wheel built for
     the machine or a Rust toolchain.
   - Reopen it if the Python engine shows up as the slow part of a real
-    run. In `downstream` 0.6.0 the slow part was the backtest, moved to
+    run. In a downstream project the slow part was the backtest, moved to
     Rust there.

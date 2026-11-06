@@ -85,7 +85,7 @@ def test_saved_run_sorts_the_genes_of_a_set(tmp_path):
 
 
 def test_saved_run_sends_a_dictionary_gene_as_json_text(tmp_path):
-    # Genes saved as dictionaries, as `downstream` saves its rules
+    # Genes saved as dictionaries, as a rule optimizer saves its rules
     algorithm = BinaryGeneticAlgorithm(
         chromosome_length=6,
         chromosome_as_set=False,
@@ -112,7 +112,7 @@ def test_saved_run_sends_a_dictionary_gene_as_json_text(tmp_path):
 
 
 def test_saved_run_sends_the_dictionary_genes_of_a_set_sorted(tmp_path):
-    # A set of genes saved as dictionaries, as `downstream` saves its rules
+    # A set of genes saved as dictionaries, as a rule optimizer does
     algorithm = NumbersAlgorithm(
         minimize=False,
         save=SaveConfig(
