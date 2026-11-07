@@ -182,6 +182,12 @@ corepack pnpm --dir frontend install
 corepack pnpm --dir frontend dev
 ```
 
+![The page that explains the words of a genetic algorithm, with a real chromosome](docs/screenshots/how-it-works.png)
+
+![A run of the "Find a maximum" example: the score by generation and the population on the curve](docs/screenshots/find-a-maximum.png)
+
+![One generation of the Knapsack example: each pair of parents crossed, and the children mutated](docs/screenshots/knapsack-breeding.png)
+
 `GENETIC_OPT_WEB_PORT` moves the API to another port, for both.
 `GENETIC_OPT_WEB_RUNS_ROOT`, when set, is the folder the saved runs the
 page opens must be inside. A saved run over 4 GB (3.7 GiB) is refused.

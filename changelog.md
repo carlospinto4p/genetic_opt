@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.17 - 7th November 2026
+
+- `README.md`: three screenshots of the explainer in its "Explainer"
+  section, in `docs/screenshots/`: the "How it works" page, a "Find a
+  maximum" run, and one Knapsack generation being bred. Taken from real
+  runs with the default parameters.
+
+
 ### v9.0.16 - 7th November 2026
 
 - Rotated changelog: archived 4 entries to `changelog/2026.md`.
