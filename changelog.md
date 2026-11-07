@@ -2,6 +2,11 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.16 - 7th November 2026
+
+- Rotated changelog: archived 4 entries to `changelog/2026.md`.
+
+
 ### v9.0.15 - 6th November 2026
 
 - Removed the name of the downstream project from every tracked file:
@@ -348,44 +353,3 @@
 ### v8.0.3 - 25th October 2026
 
 - Rotated changelog: archived 2 entries to `changelog/2026.md`.
-
-
-### v8.0.2 - 22nd October 2026
-
-- `.claude/rules/committing.md`: synced the trimmed canonical
-  from programme (7.9k to 5.5k characters, same headings and
-  instructions) to cut the instruction text loaded per session.
-
-
-### v8.0.1 - 19th October 2026
-
-- Rotated changelog: archived 74 entries to `changelog/2026.md`.
-
-
-### v8.0.0 - 18th October 2026
-
-- Moved the code that saves a run, reads it back and plots it to the new
-  `genetic_opt.runs` package. The old import paths are gone:
-  - `genetic_opt.files` is `genetic_opt.runs.files`.
-  - `genetic_opt.fit_result` is `genetic_opt.runs.fit_result`.
-  - `genetic_opt.fit_result_io` is `genetic_opt.runs.fit_result_io`.
-  - `genetic_opt.algorithms.save` is `genetic_opt.runs.save`.
-  - `genetic_opt.algorithms.plots` is `genetic_opt.runs.plots`.
-- `runs/save.py` imports `SaveConfig` only for type checking, as
-  `algorithms.base` imports it back.
-- Moved the tests of those modules to `tests/unit/runs/`.
-- Added a test to `tests/unit/test_imports.py` that imports each module
-  of `genetic_opt.runs` in a new interpreter, before
-  `genetic_opt.algorithms`.
-- Updated the paths in `README.md`, `CLAUDE.md` and the crate's doc
-  comments.
-- The downstream project imports `genetic_opt.files` and
-  `genetic_opt.fit_result_io`; its backlog has the two lines to change.
-
-
-### v7.1.0 - 18th October 2026
-
-- `genetic_opt.algorithms` exports `BinaryGeneticAlgorithm`, as it does
-  `GeneticAlgorithm`. The README example that builds one now shows the
-  import.
-- Added a test of the export to `tests/unit/algorithms/test_binary.py`.
