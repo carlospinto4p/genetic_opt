@@ -2,6 +2,11 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.18 - 10th November 2026
+
+- Rotated changelog: archived 2 entries to `changelog/2026.md`.
+
+
 ### v9.0.17 - 7th November 2026
 
 - `README.md`: three screenshots of the explainer in its "Explainer"
@@ -347,17 +352,3 @@
   - `runs/fit_result.py`: the docstring of `Bests`.
   - `tests/unit/algorithms/test_base.py`: the docstring of
     `_counting_bag`.
-
-
-### v8.0.4 - 25th October 2026
-
-- `GeneticAlgorithm.fit` refuses a Chromosome set of more genes than
-  the gene space has before the run starts, with the message of the
-  Rust crate. It was refused only when the first Chromosome was built.
-- Added `test_fit_refuses_a_set_larger_than_the_gene_space` in
-  `tests/unit/algorithms/test_base.py`.
-
-
-### v8.0.3 - 25th October 2026
-
-- Rotated changelog: archived 2 entries to `changelog/2026.md`.

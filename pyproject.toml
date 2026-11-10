@@ -1,6 +1,6 @@
 [project]
 name = "genetic-opt"
-version = "9.0.17"
+version = "9.0.18"
 description = "Genetic algorithm optimizers package."
 license = "MIT"
 license-files = ["LICENSE"]
