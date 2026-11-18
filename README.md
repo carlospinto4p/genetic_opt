@@ -103,6 +103,11 @@ from genetic_opt.runs.plots import save_fit_plots
 save_fit_plots("<run folder>")
 ```
 
+The plot is drawn in the `seaborn-v0_8` style of `matplotlib`, which
+applies only while it is drawn and saved: plots of your own keep your
+settings. `runs.plots.pyplot_config()` applies that style in a `with`
+block.
+
 `fit` returns a dictionary, and `runs.fit_result_io.load_fit_result`
 returns one with the same keys for a saved run. Those keys, and the
 ones of a single file loaded with

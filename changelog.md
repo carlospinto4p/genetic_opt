@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.1.0 - 18th November 2026
+
+- `src/genetic_opt/runs/plots.py`:
+  - Added `pyplot_config()`: applies `PYPLOT_STYLE` and
+    `PYPLOT_RC_PARAMS` inside a `with` block only, and restores the
+    previous `matplotlib` settings when it ends.
+  - `plot_genetic_algo_metrics` no longer calls `set_pyplot_config`,
+    which changed the `matplotlib` settings for the rest of the
+    process. It draws with the current settings.
+  - `save_fit_plots` draws and saves the plot inside `pyplot_config()`.
+- `src/genetic_opt/runs/save.py`: `fit` draws and saves `fit_plots.jpg`
+  inside `pyplot_config()`. The image is the same as before, byte for
+  byte.
+- Added to `tests/unit/runs/test_plots.py`: `fit` and `save_fit_plots`
+  leave the `matplotlib` settings as they were, and `pyplot_config()`
+  applies the style only inside its block.
+- `README.md`: says the plot style applies only while it is drawn.
+
+
 ### v9.0.22 - 18th November 2026
 
 - Moved `decode_genes`, `count_ones` and `ones_algorithm` from

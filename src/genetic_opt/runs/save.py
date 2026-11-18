@@ -15,6 +15,7 @@ from genetic_opt.runs.fit_result import FitParameters, FitResult
 from genetic_opt.runs.fit_result_io import serialize_fit_result
 from genetic_opt.runs.plots import (
     plot_genetic_algo_metrics,
+    pyplot_config,
     save_current_figure,
 )
 
@@ -130,9 +131,10 @@ class FitSaver:
         with `save.other_metrics_to_plot` too.
         :param fit_result: what `GeneticAlgorithm.fit` returns.
         """
-        plot_genetic_algo_metrics(
-            metrics=fit_result["metrics"],
-            fit_metrics=fit_result["fit_metrics"],
-            other_keys=self.save.other_metrics_to_plot,
-        )
-        save_current_figure(f"{self.folder}/fit_plots")
+        with pyplot_config():
+            plot_genetic_algo_metrics(
+                metrics=fit_result["metrics"],
+                fit_metrics=fit_result["fit_metrics"],
+                other_keys=self.save.other_metrics_to_plot,
+            )
+            save_current_figure(f"{self.folder}/fit_plots")

@@ -1,6 +1,7 @@
 """Genetic Opt plot functions for Algorithms training."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from operator import itemgetter
 from pathlib import Path
 from typing import Any
@@ -53,13 +54,30 @@ def set_pyplot_config() -> None:
     rcParams.update(PYPLOT_RC_PARAMS)
 
 
+@contextmanager
+def pyplot_config() -> Iterator[None]:
+    """
+    Apply the style `PYPLOT_STYLE` and the parameters `PYPLOT_RC_PARAMS`
+    of `matplotlib` inside the `with` block only, and restore the
+    previous ones when it ends. Save the figure inside the block too:
+    `matplotlib` draws the ticks when the figure is saved, with the
+    parameters of that moment.
+    """
+    import matplotlib.pyplot as plt
+
+    with plt.style.context(PYPLOT_STYLE), plt.rc_context(PYPLOT_RC_PARAMS):
+        yield
+
+
 def plot_genetic_algo_metrics(
     metrics: list[Metric],
     fit_metrics: FitMetrics,
     other_keys: dict[str, Callable[[Chromosome], float]] | None = None,
 ) -> None:
     """
-    Plot genetic algorithm training metrics summary.
+    Plot genetic algorithm training metrics summary, with the current
+    `matplotlib` parameters. Call it inside `pyplot_config()` for the
+    style of the plot `fit` saves.
     :param metrics: list of Metric objects, one for each algorithm
         population.
     :param fit_metrics: the `fit_metrics` of a `FitResult`.
@@ -71,7 +89,6 @@ def plot_genetic_algo_metrics(
     """
     import matplotlib.pyplot as plt
 
-    set_pyplot_config()
     population_idxs = [i for i, _ in enumerate(metrics)]
     if other_keys:
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=4, figsize=(13, 17))
@@ -163,13 +180,14 @@ def save_fit_plots(
         decode_func=identity_func,
         load_gene_func=load_gene_func,
     )
-    plot_genetic_algo_metrics(
-        metrics=loaded["metrics"],
-        fit_metrics=loaded["fit_metrics"],
-        other_keys=other_metrics_to_plot,
-    )
     path = f"{run_folder}/fit_plots"
-    save_current_figure(path)
+    with pyplot_config():
+        plot_genetic_algo_metrics(
+            metrics=loaded["metrics"],
+            fit_metrics=loaded["fit_metrics"],
+            other_keys=other_metrics_to_plot,
+        )
+        save_current_figure(path)
     return ensure_file_extension(path, "jpg")
 
 

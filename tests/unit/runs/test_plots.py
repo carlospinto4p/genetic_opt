@@ -1,12 +1,15 @@
 from pathlib import Path
 
+import matplotlib
 import matplotlib.pyplot as plt
 import pytest
 
 from genetic_opt.algorithms import FitConfig
 from genetic_opt.runs.fit_result_io import load_fit_result
 from genetic_opt.runs.plots import (
+    PYPLOT_RC_PARAMS,
     plot_genetic_algo_metrics,
+    pyplot_config,
     save_fit_plots,
 )
 from tests.conftest import decode_genes, ones_algorithm
@@ -101,3 +104,26 @@ def test_a_saved_run_gets_the_plot_that_fit_saves(
     )
     assert drawn == str(plot_path)
     assert plot_path.read_bytes() == saved_by_fit
+
+
+def test_saving_the_plot_leaves_the_pyplot_settings_as_they_were(tmp_path):
+    before = dict(matplotlib.rcParams)
+    algorithm = ones_algorithm(tmp_path, plot_metrics=True)
+    algorithm.fit(FitConfig(n_generations=1, population_size=20, n_jobs=1))
+    assert dict(matplotlib.rcParams) == before
+    save_fit_plots(algorithm.save_path, load_gene_func=int)
+    assert dict(matplotlib.rcParams) == before
+
+
+# ── pyplot_config Tests ────────────────────────────────────────────────
+
+
+def test_pyplot_config_applies_the_style_only_inside_the_block():
+    before = dict(matplotlib.rcParams)
+    with pyplot_config():
+        assert (
+            matplotlib.rcParams["font.size"] == PYPLOT_RC_PARAMS["font.size"]
+        )
+        # A setting of the seaborn style, which `PYPLOT_RC_PARAMS` omits
+        assert matplotlib.rcParams["axes.facecolor"] == "#EAEAF2"
+    assert dict(matplotlib.rcParams) == before
