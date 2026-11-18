@@ -417,7 +417,9 @@ def test_an_error_of_the_fitness_function_stops_the_run(
 
     # The workers of the broken run do not stay in the way of the next.
     algorithm.fitness_func = count_ones
-    assert algorithm.fit(config)["bests"]["scores"]
+    bests = algorithm.fit(config)["bests"]
+    assert bests["scores"]
+    assert bests["scores"] == [count_ones(c) for c in bests["encoded"]]
 
 
 def test_mutation_differs_between_chromosomes():
@@ -914,25 +916,29 @@ def test_fit_runs_a_fitness_function_that_uses_the_algorithm(
 ):
     # The function takes the whole algorithm to each worker process, so
     # the algorithm must pickle while its pool of workers is open.
-    knapsack = Knapsack(
-        weights=[23, 31, 29, 44, 53], values=[92, 57, 49, 68, 60], capacity=80
-    )
+    def best_values(n_jobs: int) -> list[float]:
+        # A new Knapsack for each run: a second run of one draws other
+        # genes.
+        knapsack = Knapsack(
+            weights=[23, 31, 29, 44, 53],
+            values=[92, 57, 49, 68, 60],
+            capacity=80,
+        )
 
-    def fit_with_algorithm(chromosome: Chromosome) -> Score:
-        return Score(
-            value=sum(
-                value * gene
-                for value, gene in zip(knapsack.values, chromosome.genes)
+        def fit_with_algorithm(chromosome: Chromosome) -> Score:
+            return Score(
+                value=sum(
+                    value * gene
+                    for value, gene in zip(knapsack.values, chromosome.genes)
+                )
             )
-        )
 
-    knapsack.fitness_func = fit_with_algorithm
-    result = knapsack.fit(
-        FitConfig(
-            n_generations=2, population_size=20, n_jobs=min(2, cpu_count())
-        )
-    )
-    assert result["bests"]["scores"][0].value > 0
+        knapsack.fitness_func = fit_with_algorithm
+        config = FitConfig(n_generations=2, population_size=20, n_jobs=n_jobs)
+        return [s.value for s in knapsack.fit(config)["bests"]["scores"]]
+
+    # Two jobs, or the one that a machine with one core allows.
+    assert best_values(min(2, cpu_count())) == best_values(1)
 
 
 def test_the_algorithm_pickles_without_its_run():

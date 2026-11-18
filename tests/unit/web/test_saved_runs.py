@@ -61,11 +61,19 @@ def test_saved_run_reads_the_fit_data_folder_too(tmp_path):
     )
 
 
-def test_saved_run_reads_a_bson_run(tmp_path):
-    algorithm = ones_algorithm(tmp_path, save_as_bson=True)
-    fit_result = fit_saved(algorithm)
-    run = saved_run(algorithm.save_path)
-    assert len(run["generations"]) == len(fit_result["history"])
+def test_saved_run_reads_a_bson_run_as_the_same_run_in_json(tmp_path):
+    # Two new algorithms with one seed make the same run
+    runs = []
+    for as_bson in (True, False):
+        algorithm = ones_algorithm(
+            tmp_path / str(as_bson), save_as_bson=as_bson
+        )
+        fit_saved(algorithm)
+        run = saved_run(algorithm.save_path)
+        assert run.pop("folder") == f"{algorithm.save_path}/fit_data"
+        runs.append(run)
+    assert runs[0]["generations"]
+    assert runs[0] == runs[1]
 
 
 def test_saved_run_sorts_the_genes_of_a_set(tmp_path):

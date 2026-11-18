@@ -2,6 +2,25 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.21 - 18th November 2026
+
+- Made tests from the 17th October 2026 scan check more than that a
+  result exists:
+  - `frontend/src/lib/router.test.ts`: added, 4 tests. A hash naming
+    no page, or no hash, shows `/`, also after a `hashchange`.
+  - `tests/unit/algorithms/test_base.py`: after a run whose fitness
+    function raised, each best score of the next run is the one
+    `count_ones` gives its Chromosome. A fitness function that uses
+    the algorithm gives the same best scores with 2 jobs as with 1,
+    each run on a new `Knapsack`, as a second run of one draws other
+    genes.
+  - `tests/unit/web/test_saved_runs.py`: a run saved as BSON reads as
+    the same run saved as JSON.
+  - `tests/integration/web/test_app.py`: the function curve covers the
+    interval asked for, with the values of `wavy_function`. Every 422
+    test now also checks the field or the message of the error.
+
+
 ### v9.0.20 - 18th November 2026
 
 - Fixed `GeneticAlgorithm.fit` raising `TypeError` when `os.cpu_count()`

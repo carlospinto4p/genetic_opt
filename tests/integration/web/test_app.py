@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from genetic_opt import __version__
 from genetic_opt.algorithms import FitConfig
+from genetic_opt.examples.binary import wavy_function
 from genetic_opt.web.app import (
     MAX_GENERATIONS,
     MAX_GENES,
@@ -62,10 +63,20 @@ def test_run_knapsack_with_the_defaults(client):
 
 
 def test_run_function_sends_the_curve(client):
-    body = {"n_bits": 8, "fit": {"n_generations": 3, "population_size": 20}}
+    body = {
+        "low": -2.0,
+        "high": 3.0,
+        "n_bits": 8,
+        "fit": {"n_generations": 3, "population_size": 20},
+    }
     run = client.post("/api/runs/function", json=body).json()
     assert run["chromosome_length"] == 8
-    assert len(run["curve"]) == 401
+    curve = run["curve"]
+    assert len(curve) == 401
+    # Drawn over the interval asked for, as the function the run uses
+    assert curve[0][0] == -2.0
+    assert abs(curve[-1][0] - 3.0) < 1e-9
+    assert all(y == wavy_function(x) for x, y in curve)
 
 
 def test_run_knapsack_refuses_weights_and_values_of_two_lengths(client):
@@ -79,16 +90,32 @@ def test_run_knapsack_refuses_a_minimum_over_the_population(client):
     body = {"fit": {"population_size": 5, "min_population_size": 10}}
     response = client.post("/api/runs/knapsack", json=body)
     assert response.status_code == 422
+    assert (
+        "10 is greater than population_size = 5"
+        in (response.json()["detail"])
+    )
 
 
 def test_run_refuses_a_population_over_the_limit(client):
     body = {"fit": {"population_size": MAX_POPULATION + 1}}
-    assert client.post("/api/runs/knapsack", json=body).status_code == 422
+    response = client.post("/api/runs/knapsack", json=body)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == [
+        "body",
+        "fit",
+        "population_size",
+    ]
 
 
 def test_run_refuses_generations_over_the_limit(client):
     body = {"fit": {"n_generations": MAX_GENERATIONS + 1}}
-    assert client.post("/api/runs/function", json=body).status_code == 422
+    response = client.post("/api/runs/function", json=body)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == [
+        "body",
+        "fit",
+        "n_generations",
+    ]
 
 
 @pytest.mark.parametrize("field", ["weights", "values"])
@@ -140,21 +167,26 @@ def test_examples_give_the_limits_of_a_run(client):
 
 def test_run_function_refuses_an_empty_interval(client):
     body = {"low": 1.0, "high": 1.0}
-    assert client.post("/api/runs/function", json=body).status_code == 422
+    response = client.post("/api/runs/function", json=body)
+    assert response.status_code == 422
+    assert (
+        "low (1.0) must be under high (1.0)"
+        in (response.json()["detail"][0]["msg"])
+    )
 
 
 @pytest.mark.parametrize(
-    "interval",
+    ("interval", "field"),
     [
-        '{"low": NaN}',
-        '{"high": Infinity}',
-        f'{{"low": {-MAX_INTERVAL_END * 10}}}',
+        ('{"low": NaN}', "low"),
+        ('{"high": Infinity}', "high"),
+        (f'{{"low": {-MAX_INTERVAL_END * 10}}}', "low"),
         # Their difference is infinite
-        '{"low": -1e308, "high": 1e308}',
+        ('{"low": -1e308, "high": 1e308}', "low"),
     ],
 )
 def test_run_function_refuses_an_interval_without_finite_ends(
-    client, interval
+    client, interval, field
 ):
     response = client.post(
         "/api/runs/function",
@@ -162,20 +194,25 @@ def test_run_function_refuses_an_interval_without_finite_ends(
         headers={"content-type": "application/json"},
     )
     assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", field]
 
 
 @pytest.mark.parametrize(
-    "body",
+    ("body", "loc"),
     [
-        {"weights": [10, -1], "values": [1, 2]},
-        {"weights": [10, 20], "values": [1, -2]},
-        {"fit": {"min_population_size": MAX_POPULATION + 1}},
+        ({"weights": [10, -1], "values": [1, 2]}, ["weights", 1]),
+        ({"weights": [10, 20], "values": [1, -2]}, ["values", 1]),
+        (
+            {"fit": {"min_population_size": MAX_POPULATION + 1}},
+            ["fit", "min_population_size"],
+        ),
     ],
     ids=["weight", "value", "min_population_size"],
 )
-def test_run_knapsack_refuses_values_out_of_range(client, body):
+def test_run_knapsack_refuses_values_out_of_range(client, body, loc):
     response = client.post("/api/runs/knapsack", json=body)
     assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", *loc]
 
 
 def test_run_knapsack_refuses_values_too_large_for_a_float(client):
