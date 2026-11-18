@@ -81,6 +81,16 @@ describe('Knapsack page', () => {
     expect(bags[4]).toBe('objects 1, 4, 7')
   })
 
+  it('refuses a value too large to send, without calling the server', async () => {
+    const fetch = serve({ '/api/examples': examples, '/api/runs/knapsack': () => knapsackRun })
+    const fireEvent = await page()
+    const value = rows()[1].querySelectorAll('input')[1]
+    await fireEvent.input(value, { target: { value: '1e21' } })
+    await fireEvent.click(screen.getByText('Run the algorithm'))
+    expect(screen.getByText(/The value of object 2 is over/)).toBeTruthy()
+    expect(fetch.mock.calls).toHaveLength(1)
+  })
+
   it('shows the error of a run the server refuses', async () => {
     serve({
       '/api/examples': examples,

@@ -1,9 +1,5 @@
 # Backlog - Genetic-Opt
 
-### 2026.10.25 (v9.0.10)
-
-- [ ] `frontend/src/pages/Knapsack.svelte:73` — a value of 1e21 or more typed on the Knapsack page is refused by the server with "Unable to parse input string as an integer, exceeded maximum size". The `type="number"` input makes it a float, `JSON.stringify` writes floats from 1e21 up as `1e+21`, and the `int` field in `web/app.py` does not parse that. Found checking v9.0.10: the `null` mean it draws can be reached only by calling `/api/runs/knapsack` directly, with values written out in full. Decide whether the page sends large values as whole numbers or refuses them with a plain message — LOW — S
-
 ### 2026.10.17 (v5.10.2 /scan)
 
 #### Performance

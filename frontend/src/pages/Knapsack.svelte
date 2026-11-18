@@ -5,7 +5,7 @@
   import ServerError from '../components/ServerError.svelte'
   import { runKnapsack } from '../lib/api'
   import { fmt } from '../lib/format'
-  import { offGenes } from '../lib/knapsack'
+  import { offGenes, tooLarge } from '../lib/knapsack'
   import { loadExamples, resetLab, runLab, store } from '../lib/store.svelte'
 
   loadExamples()
@@ -20,6 +20,11 @@
   function removeObject(i: number) {
     lab.problem!.weights.splice(i, 1)
     lab.problem!.values.splice(i, 1)
+  }
+
+  function run() {
+    lab.error = tooLarge(lab.problem!)
+    if (!lab.error) runLab(lab, runKnapsack)
   }
 
   let totalWeight = $derived(
@@ -113,7 +118,7 @@
         <button
           class="primary"
           disabled={lab.running}
-          onclick={() => runLab(lab, runKnapsack)}
+          onclick={run}
         >
           {lab.running ? 'Running…' : 'Run the algorithm'}
         </button>

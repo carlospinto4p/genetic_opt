@@ -2,6 +2,17 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.19 - 18th November 2026
+
+- Fixed the Knapsack page sending a weight, value or capacity of 1e21
+  or more, which `JSON.stringify` writes as `1e+21` and the server
+  refused with "Unable to parse input string as an integer". The page
+  now refuses any of them over `Number.MAX_SAFE_INTEGER` itself, with a
+  message naming the object, and calls no server.
+  - Added `tooLarge` to `frontend/src/lib/knapsack.ts`, with 5 tests in
+    `knapsack.test.ts` and one in `pages/Knapsack.test.ts`.
+
+
 ### v9.0.18 - 10th November 2026
 
 - Rotated changelog: archived 2 entries to `changelog/2026.md`.
