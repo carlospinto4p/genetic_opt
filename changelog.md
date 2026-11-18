@@ -2,6 +2,14 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.22 - 18th November 2026
+
+- Moved `decode_genes`, `count_ones` and `ones_algorithm` from
+  `tests/unit/conftest.py` to `tests/conftest.py`, as
+  `tests/integration/web/test_app.py` uses `ones_algorithm` too. The
+  unit tests that use them import them from there.
+
+
 ### v9.0.21 - 18th November 2026
 
 - Made tests from the 17th October 2026 scan check more than that a

@@ -19,7 +19,7 @@ from genetic_opt.runs.fit_result_io import (
     load_fit_result_file,
     serialize_fitness_func_calls,
 )
-from tests.unit.conftest import count_ones, decode_genes, ones_algorithm
+from tests.conftest import count_ones, decode_genes, ones_algorithm
 
 # ── serialize_fitness_func_calls Tests ─────────────────────────────────
 

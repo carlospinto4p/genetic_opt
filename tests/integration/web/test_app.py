@@ -14,7 +14,7 @@ from genetic_opt.web.app import (
     MAX_POPULATION,
     app,
 )
-from tests.unit.conftest import ones_algorithm
+from tests.conftest import ones_algorithm
 
 
 @pytest.fixture

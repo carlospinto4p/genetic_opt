@@ -8,5 +8,4 @@
 
 #### Test coverage
 
-- [ ] `tests/integration/web/test_app.py:7` — imports `ones_algorithm` from `tests.unit.conftest`; move the shared helper to `tests/conftest.py` — LOW — S
 - [ ] `runs/plots.py:40-52` — `set_pyplot_config` changes global matplotlib style/`rcParams` and plot tests never restore them — LOW — S

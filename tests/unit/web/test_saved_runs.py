@@ -7,12 +7,8 @@ from genetic_opt.algorithms import FitConfig, SaveConfig
 from genetic_opt.algorithms.binary import BinaryGeneticAlgorithm
 from genetic_opt.exceptions import ValidationException
 from genetic_opt.web.saved_runs import saved_run
-from tests.unit.conftest import (
-    NumbersAlgorithm,
-    count_ones,
-    decode_genes,
-    ones_algorithm,
-)
+from tests.conftest import count_ones, decode_genes, ones_algorithm
+from tests.unit.conftest import NumbersAlgorithm
 
 
 def fit_saved(algorithm, **config) -> dict:

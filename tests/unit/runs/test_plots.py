@@ -9,7 +9,7 @@ from genetic_opt.runs.plots import (
     plot_genetic_algo_metrics,
     save_fit_plots,
 )
-from tests.unit.conftest import decode_genes, ones_algorithm
+from tests.conftest import decode_genes, ones_algorithm
 
 # ── plot_genetic_algo_metrics Tests ────────────────────────────────────
 

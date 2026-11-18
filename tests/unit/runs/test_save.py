@@ -11,7 +11,8 @@ from genetic_opt.runs.fit_result_io import (
     load_fit_result,
     load_fit_result_file,
 )
-from tests.unit.conftest import NumbersAlgorithm, decode_genes, ones_algorithm
+from tests.conftest import decode_genes, ones_algorithm
+from tests.unit.conftest import NumbersAlgorithm
 
 # ── FitSaver Tests ─────────────────────────────────────────────────────
 

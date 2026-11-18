@@ -29,13 +29,8 @@ from genetic_opt.runs.fit_result import (
 )
 from genetic_opt.runs.fit_result_io import load_fit_result
 from genetic_opt.score import Score
-from tests.unit.conftest import (
-    NumbersAlgorithm,
-    OnesGeneSpace,
-    count_ones,
-    decode_genes,
-    ones_algorithm,
-)
+from tests.conftest import count_ones, decode_genes, ones_algorithm
+from tests.unit.conftest import NumbersAlgorithm, OnesGeneSpace
 
 # ── GeneticAlgorithm Tests ─────────────────────────────────────────────
 
