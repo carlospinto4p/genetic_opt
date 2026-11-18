@@ -1,5 +1,42 @@
 import { describe, expect, it } from 'vitest'
-import { niceTicks } from './format'
+import { fmt, niceTicks, pct } from './format'
+
+describe('fmt', () => {
+  it('writes a whole number in full, with thousands separators', () => {
+    expect(fmt(1024)).toBe('1,024')
+    expect(fmt(9007199254740991)).toBe('9,007,199,254,740,991')
+  })
+
+  it('keeps four significant digits by default', () => {
+    expect(fmt(1 / 3)).toBe('0.3333')
+    expect(fmt(12345.678)).toBe('12,350')
+  })
+
+  it('keeps the digits asked for', () => {
+    expect(fmt(2 / 3, 6)).toBe('0.666667')
+  })
+
+  it('drops float noise', () => {
+    expect(fmt(0.1 + 0.2)).toBe('0.3')
+    expect(fmt(23.334999999999987)).toBe('23.33')
+  })
+
+  it('writes a value that is not finite as JavaScript does', () => {
+    expect(fmt(Infinity)).toBe('Infinity')
+    expect(fmt(NaN)).toBe('NaN')
+  })
+})
+
+describe('pct', () => {
+  it('keeps one decimal', () => {
+    expect(pct(12.345)).toBe('12.3%')
+  })
+
+  it('drops a decimal of zero', () => {
+    expect(pct(100)).toBe('100%')
+    expect(pct(0.04)).toBe('0%')
+  })
+})
 
 describe('niceTicks', () => {
   it('covers an ordinary range with round steps', () => {

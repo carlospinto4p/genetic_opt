@@ -91,6 +91,44 @@ def test_run_refuses_generations_over_the_limit(client):
     assert client.post("/api/runs/function", json=body).status_code == 422
 
 
+@pytest.mark.parametrize("field", ["weights", "values"])
+def test_run_knapsack_refuses_more_objects_than_the_limit(client, field):
+    body = {"weights": [1] * MAX_GENES, "values": [1] * MAX_GENES}
+    body[field] = [1] * (MAX_GENES + 1)
+    response = client.post("/api/runs/knapsack", json=body)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", field]
+
+
+def test_run_knapsack_takes_as_many_objects_as_the_limit(client):
+    body = {
+        "weights": [1] * MAX_GENES,
+        "values": [1] * MAX_GENES,
+        "capacity": 5,
+        "fit": {"n_generations": 1, "population_size": 10},
+    }
+    response = client.post("/api/runs/knapsack", json=body)
+    assert response.json()["chromosome_length"] == MAX_GENES
+
+
+@pytest.mark.parametrize("n_bits", [1, MAX_GENES + 1])
+def test_run_function_refuses_bits_out_of_range(client, n_bits):
+    body = {"n_bits": n_bits}
+    response = client.post("/api/runs/function", json=body)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "n_bits"]
+
+
+@pytest.mark.parametrize("n_bits", [2, MAX_GENES])
+def test_run_function_takes_the_ends_of_the_bits_range(client, n_bits):
+    body = {
+        "n_bits": n_bits,
+        "fit": {"n_generations": 1, "population_size": 10},
+    }
+    response = client.post("/api/runs/function", json=body)
+    assert response.json()["chromosome_length"] == n_bits
+
+
 def test_examples_give_the_limits_of_a_run(client):
     limits = client.get("/api/examples").json()["limits"]
     assert limits == {

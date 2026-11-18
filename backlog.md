@@ -8,10 +8,6 @@
 
 #### Test coverage
 
-- [ ] `web/app.py:69-78,86` — `MAX_GENES` limit on weights/values and the `n_bits` 2-40 range untested; `test_app.py:61` covers only the population limit — LOW — S
-- [ ] `web/app.py:164-174` — `main()` and its reading of `GENETIC_OPT_WEB_PORT` untested — LOW — S
-- [ ] `algorithms/base.py:581-582` — `cpu_count()` returning `None` makes the comparison raise `TypeError`; untested — LOW — S
-- [ ] `frontend/src/lib/format.ts:2-13` — `fmt` and `pct` untested; a `null` score renders as the text "null" — LOW — S
 - [ ] `frontend/src/lib/router.svelte.ts:11-14` — no test that an unknown hash falls back to `/` — LOW — S
 - [ ] `tests/unit/algorithms/test_base.py:363` — `assert ...["bests"]["scores"]` only checks non-empty — LOW — S
 - [ ] `tests/unit/algorithms/test_base.py:786` — `value > 0`; compare with the same run at `n_jobs=1` — LOW — S

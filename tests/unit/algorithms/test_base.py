@@ -1222,6 +1222,25 @@ def test_fit_refuses_no_jobs_and_more_jobs_than_cores(monkeypatch, n_jobs):
     assert not calls
 
 
+@pytest.mark.parametrize("n_jobs", [1, -1])
+def test_fit_runs_one_job_when_the_cores_are_unknown(monkeypatch, n_jobs):
+    # `os.cpu_count` returns None when it cannot tell
+    monkeypatch.setattr(algorithms, "cpu_count", lambda: None)
+    knapsack, _ = _counting_bag()
+    result = knapsack.fit(
+        FitConfig(n_generations=2, population_size=20, n_jobs=n_jobs)
+    )
+    assert result["fit_parameters"]["n_jobs"] == 1
+
+
+def test_fit_refuses_two_jobs_when_the_cores_are_unknown(monkeypatch):
+    monkeypatch.setattr(algorithms, "cpu_count", lambda: None)
+    knapsack, calls = _counting_bag()
+    with pytest.raises(ValidationException, match="n_jobs"):
+        knapsack.fit(FitConfig(n_generations=2, population_size=20, n_jobs=2))
+    assert not calls
+
+
 def test_chromosomes_sharing_an_id_keep_their_own_scores(monkeypatch):
     knapsack, _ = _counting_bag()
     config = FitConfig(n_generations=5, population_size=30, n_jobs=1)

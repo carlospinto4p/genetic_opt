@@ -631,12 +631,14 @@ class GeneticAlgorithm(ABC):
                 f"the {len(self.gene_space)} genes there are"
             )
         n_jobs = config.n_jobs
+        # `cpu_count` is None when it cannot tell: count one core
+        cores = cpu_count() or 1
         if n_jobs < 0:
             # A negative number leaves cores out, down to one job
-            n_jobs = max(cpu_count() + n_jobs + 1, 1)
-        if n_jobs <= 0 or n_jobs > cpu_count():
+            n_jobs = max(cores + n_jobs + 1, 1)
+        if n_jobs <= 0 or n_jobs > cores:
             raise ValidationException(
-                f"{n_jobs = } received is not valid! {cpu_count() = }"
+                f"{n_jobs = } received is not valid! {cores = }"
             )
         parameters = asdict(config)
         # Not saved, as the crate does not save them either

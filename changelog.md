@@ -2,6 +2,21 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.0.20 - 18th November 2026
+
+- Fixed `GeneticAlgorithm.fit` raising `TypeError` when `os.cpu_count()`
+  returns `None`: it now counts one core, so `n_jobs=1` and negative
+  `n_jobs` run one job and `n_jobs=2` is refused with a
+  `ValidationException`. 3 tests in `tests/unit/algorithms/test_base.py`.
+- Added tests from the 17th October 2026 scan:
+  - `tests/integration/web/test_app.py`: the `MAX_GENES` limit on
+    `weights` and `values`, and the 2 to 40 range of `n_bits`, at and
+    past each end (8 tests).
+  - `tests/unit/web/test_app.py`: `main()` serving on `DEFAULT_PORT`
+    and on `GENETIC_OPT_WEB_PORT` (2 tests).
+  - `frontend/src/lib/format.test.ts`: `fmt` and `pct` (7 tests).
+
+
 ### v9.0.19 - 18th November 2026
 
 - Fixed the Knapsack page sending a weight, value or capacity of 1e21
