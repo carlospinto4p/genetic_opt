@@ -2,6 +2,11 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.1.1 - 19th November 2026
+
+- Rotated changelog: archived 6 entries to `changelog/2026.md`.
+
+
 ### v9.1.0 - 18th November 2026
 
 - `src/genetic_opt/runs/plots.py`:
@@ -354,73 +359,3 @@
     Open a saved run page calls it, in place of its own copy.
 - Added `frontend/src/lib/store.test.ts`: 5 tests of `runLab` and
   `openSaved`, with `fetch` answered without a server.
-
-
-### v8.1.4 - 25th October 2026
-
-- Added `nan_score_error` to the crate's `algorithm.rs`: the error of a
-  NaN score, which the first population and `score` both return, in
-  place of a copy each. The messages are unchanged.
-
-
-### v8.1.3 - 25th October 2026
-
-- Added `tests/unit/test_rust_defaults.py`: two tests that the Rust
-  crate's `FitConfig::new` and `AlgorithmConfig::default` in
-  `algorithm.rs` have the defaults of `FitConfig` and `seeds.py`'s
-  `RANDOM_SEED`. They read the Rust source, and skip without the crate.
-
-
-### v8.1.2 - 25th October 2026
-
-- Added `docs/releasing.md`: how to upload a release by hand, since
-  GitLab CI is off, and how to check what the registry serves.
-- `pyproject.toml`: added the `gitlab_genetic_opt` index entry, whose
-  `publish-url` makes `uv publish --index gitlab_genetic_opt` work.
-- `.gitlab-ci.yml`: a note that the publish job cannot run while CI is
-  off, pointing to `docs/releasing.md`.
-
-
-### v8.1.1 - 25th October 2026
-
-- Added `GeneticAlgorithm._new_chromosome(genes)` in
-  `algorithms/base.py`: a Chromosome of the Algorithm's length, kind
-  and seed. `_first_chromosomes` and `BinaryGeneticAlgorithm`'s
-  `crossover_func` use it, in place of a copy each.
-- Added `seeds.py`: `RANDOM_SEED` (442) and `GENE_SPACE_RANDOM_SEED`
-  (2), the default seeds. The defaults of these read them, in place of
-  the numbers:
-  - `GeneticAlgorithm`, `BinaryGeneticAlgorithm`.
-  - `Chromosome`, `AbstractGeneSpace`, `ValuesGeneSpace`.
-  - `examples/binary.py`'s `BinaryFunction`.
-  - `web/app.py`'s `FitParams`.
-- `tests/unit/web/test_runs.py`:
-  - Added two tests that the knapsack of the README example and of the
-    Rust `examples/knapsack.rs` are `web/runs.py`'s `KNAPSACK_WEIGHTS`,
-    `KNAPSACK_VALUES` and `KNAPSACK_CAPACITY`.
-  - The knapsack runs use those constants, in place of a copy.
-
-
-### v8.1.0 - 25th October 2026
-
-- Added `serialize_fitness_func_calls` to `runs/fit_result_io.py`: the
-  `fitness_func_calls` of a run with an infinite `space_points` as
-  `None`. `serialize_fit_result` and `web/saved_runs.py`'s `saved_run`
-  both use it, in place of a copy each.
-- Added tests:
-  - `tests/unit/runs/test_fit_result_io.py`: 3 cases of
-    `serialize_fitness_func_calls`.
-  - `tests/unit/web/test_saved_runs.py`: `saved_run` sends an infinite
-    `space_points` as `None`.
-
-
-### v8.0.5 - 25th October 2026
-
-- `pyproject.toml`: ruff checks line length (`E501`) on top of its
-  default rules. `line-length = 78` was set but the rule was off.
-- Shortened the 5 lines over 78 characters:
-  - `algorithms/base.py`: two docstring lines.
-  - `functions.py`: the log line of `time_it_with_logger`.
-  - `runs/fit_result.py`: the docstring of `Bests`.
-  - `tests/unit/algorithms/test_base.py`: the docstring of
-    `_counting_bag`.
