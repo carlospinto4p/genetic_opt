@@ -89,6 +89,8 @@ export interface SavedRun extends Run<null> {
     // Runs saved before 5.9.0 have neither, and picked at random
     selection?: 'random' | 'tournament'
     tournament_size?: number
+    // Runs saved before 9.2.0 do not have it, and kept the copies
+    keep_copies?: boolean
   }
   genetic_opt_version: string
 }

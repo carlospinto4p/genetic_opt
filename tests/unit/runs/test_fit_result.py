@@ -53,4 +53,5 @@ def test_the_fit_result_types_name_the_keys_of_each_result(tmp_path):
     assert FitParameters.__optional_keys__ == {
         "selection",
         "tournament_size",
+        "keep_copies",
     }

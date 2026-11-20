@@ -697,6 +697,39 @@ fn fit_config_new_sets_the_defaults() {
     assert_eq!(config.max_stale_generations, None);
     assert_eq!(config.selection, Selection::Random);
     assert_eq!(config.tournament_size, 3);
+    assert!(config.keep_copies);
+}
+
+/// For each generation bred in a run of `Numbers`, whether a copy of a
+/// chromosome comes before a chromosome met for the first time in its
+/// population. The first population is drawn at random, not bred, so
+/// it is left out.
+fn copy_before_a_new_one(keep_copies: bool) -> Vec<bool> {
+    let mut config = numbers_config();
+    config.n_generations = 15;
+    config.keep_copies = keep_copies;
+    let mut algorithm = algorithm(numbers(false));
+    algorithm.fit(&config).unwrap();
+    algorithm.history()[1..]
+        .iter()
+        .map(|population| {
+            let mut seen = HashSet::new();
+            let mut copied = false;
+            population.iter().any(|individual| {
+                let new = seen.insert(&individual.chromosome);
+                copied |= !new;
+                copied && new
+            })
+        })
+        .collect()
+}
+
+#[test]
+fn without_copies_no_copy_comes_before_a_different_chromosome() {
+    // The run that keeps them does put a copy first, so the check finds
+    // one when there is one.
+    assert!(copy_before_a_new_one(true).contains(&true));
+    assert!(!copy_before_a_new_one(false).contains(&true));
 }
 
 #[test]
@@ -751,6 +784,7 @@ fn the_algorithm_shows_the_last_population_and_the_metrics_of_the_run() {
     assert_eq!(parameters.n_jobs, 1);
     assert_eq!(parameters.selection, Selection::Random);
     assert_eq!(parameters.tournament_size, 3);
+    assert!(parameters.keep_copies);
 }
 
 /// One gene from 0 to 19, scored by its value, whose crossover keeps the

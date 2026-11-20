@@ -51,6 +51,13 @@ class FitConfig:
         `tournament_size` Chromosomes drawn at random from the rest.
     :param tournament_size: number of Chromosomes drawn for each
         tournament, 1 or more. With 1, a tournament is a random pick.
+    :param keep_copies: whether a new population keeps the best
+        Chromosomes as they come, copies included. With False it keeps
+        each different Chromosome once, best first, and copies only
+        when there are fewer different ones than the population size.
+        Copies of the best Chromosome can otherwise take the whole
+        population within a few generations, and stop the run on
+        `min_population_size`.
     """
 
     n_generations: int
@@ -65,6 +72,7 @@ class FitConfig:
     max_stale_generations: int | None = None
     selection: Literal["random", "tournament"] = "random"
     tournament_size: int = 3
+    keep_copies: bool = True
 
 
 @dataclass(frozen=True)

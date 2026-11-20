@@ -88,6 +88,8 @@ class FitParameters(TypedDict):
     # this nor `tournament_size`, and picked the rest at random.
     selection: NotRequired[str]
     tournament_size: NotRequired[int]
+    # Runs saved before 9.2.0 do not have it, and kept the copies.
+    keep_copies: NotRequired[bool]
 
 
 class FitSummary(TypedDict):

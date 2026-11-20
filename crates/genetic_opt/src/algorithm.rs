@@ -84,6 +84,13 @@ pub struct FitConfig {
     /// Chromosomes drawn for each tournament, 1 or more. With 1, a
     /// tournament is a random pick.
     pub tournament_size: usize,
+    /// Whether a new population keeps the best chromosomes as they come,
+    /// copies included. With `false` it keeps each different chromosome
+    /// once, best first, and copies only when there are fewer different
+    /// ones than the population size. Copies of the best chromosome can
+    /// otherwise take the whole population within a few generations, and
+    /// stop the run on `min_population_size`.
+    pub keep_copies: bool,
 }
 
 /// How the parents that are not among the best chromosomes are picked.
@@ -113,6 +120,7 @@ impl FitConfig {
             max_stale_generations: None,
             selection: Selection::Random,
             tournament_size: 3,
+            keep_copies: true,
         }
     }
 }
@@ -130,6 +138,7 @@ pub struct FitParameters {
     pub n_jobs: usize,
     pub selection: Selection,
     pub tournament_size: usize,
+    pub keep_copies: bool,
 }
 
 /// What a run found. Every population it went through stays in
@@ -232,7 +241,9 @@ enum Asked<G> {
 ///   sample of the rest, at random or by tournament, crosses them in
 ///   random pairs and mutates the children.
 /// - It joins the children to the population, sorts everything by score
-///   and keeps as many as the population had.
+///   and keeps as many as the population had: with
+///   [`FitConfig::keep_copies`] set to `false`, each different chromosome
+///   once before any copy.
 ///
 /// A chromosome is scored once: an equal one met later takes its score.
 pub struct GeneticAlgorithm<P: Problem> {
@@ -392,6 +403,16 @@ impl<P: Problem> GeneticAlgorithm<P> {
                 }
             });
             if let Some(previous) = self.history.last() {
+                if !config.keep_copies {
+                    // Each different chromosome once, best first, then the
+                    // copies. The partition keeps the order of each part.
+                    let mut seen = HashSet::new();
+                    let (mut firsts, mut copies): (Vec<_>, Vec<_>) = population
+                        .into_iter()
+                        .partition(|individual| seen.insert(Scored(Arc::clone(individual))));
+                    firsts.append(&mut copies);
+                    population = firsts;
+                }
                 population.truncate(previous.len());
             }
             self.population = population;
@@ -533,6 +554,7 @@ impl<P: Problem> GeneticAlgorithm<P> {
             n_jobs,
             selection: config.selection,
             tournament_size: config.tournament_size,
+            keep_copies: config.keep_copies,
         })
     }
 

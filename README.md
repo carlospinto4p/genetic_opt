@@ -55,6 +55,16 @@ bag.fit(
 )
 ```
 
+Each new population is the best of the children and the population
+before them, as many as the population had. By default it keeps
+copies: a child equal to the best Chromosome ranks next to it, so
+copies of the best can take the whole population within a few
+generations and stop the run on `min_population_size`. With
+`keep_copies=False` it keeps each different Chromosome once, best
+first, and copies only when there are fewer different ones than the
+population size. It is saved with the run. In the crate it is
+`FitConfig::keep_copies`.
+
 The parameters of a run go in a `FitConfig`. To save the runs, the
 algorithm gets a `SaveConfig`:
 

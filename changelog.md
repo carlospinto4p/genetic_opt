@@ -2,6 +2,30 @@
 ## Changelog - Genetic-Opt
 
 
+### v9.2.0 - 20th November 2026
+
+- Added `keep_copies` to `FitConfig`, in both implementations, `True` by
+  default. With `False` a new population keeps each different
+  Chromosome once, best first, and copies only when there are fewer
+  different ones than the population size. With copies kept, a child
+  equal to the best Chromosome ranks next to it, and copies of the best
+  took 17 of 20 places in 8 generations of a downstream fit, which then
+  stopped on `min_population_size`.
+  - `algorithms/base.py`: `next_generation_selection` puts the copies
+    after the different Chromosomes before cutting the population.
+  - `crates/genetic_opt/src/algorithm.rs`: the same in `fit_from`, and
+    the field in `FitConfig` and `FitParameters`.
+  - Saved with the run. `FitParameters` in `runs/fit_result.py` and the
+    explainer's `api.ts` have it as not required: runs saved before
+    9.2.0 do not have it.
+- Added tests:
+  - `tests/unit/algorithms/test_base.py`: a generation whose children
+    are copies of the best, with and without copies, a run in which no
+    copy comes before a different Chromosome, and the saved setting.
+  - `crates/genetic_opt/tests/algorithm.rs`: the run and the default.
+- `README.md`: says what `keep_copies` does.
+
+
 ### v9.1.1 - 19th November 2026
 
 - Rotated changelog: archived 6 entries to `changelog/2026.md`.

@@ -1137,6 +1137,7 @@ def test_fit_parameters_are_the_config_with_the_seed_and_the_jobs():
         "n_jobs": 1,
         "selection": "random",
         "tournament_size": 3,
+        "keep_copies": True,
         "random_seed": 666,
     }
 
@@ -1210,6 +1211,97 @@ def test_a_tournament_run_is_saved_with_its_selection(tmp_path):
         "tournament",
         4,
     )
+
+
+def _next_population(keep_copies: bool) -> list[int]:
+    """
+    The gene of each Chromosome of the generation after the population
+    3, 2, 1, 0, scored by its gene, when both children are copies of the
+    best one.
+    """
+    algorithm = NumbersAlgorithm(minimize=False)
+    algorithm.population = []
+    for value in (3, 2, 1, 0):
+        chromosome = Chromosome(size=1, genes=[value])
+        chromosome.score = Score(value=value)
+        algorithm.population.append(chromosome)
+    algorithm.cross_parents = lambda parents: [
+        Chromosome(size=1, genes=[3]) for _ in parents
+    ]
+    algorithm.next_generation_selection(
+        FitConfig(
+            n_generations=1,
+            population_size=4,
+            crossovers_prop=0.5,
+            mutate_prob=0.0,
+            keep_copies=keep_copies,
+        ),
+        n_jobs=1,
+    )
+    return [chromosome.genes[0] for chromosome in algorithm.population]
+
+
+def test_the_next_population_keeps_copies_by_default():
+    assert _next_population(keep_copies=True) == [3, 3, 3, 2]
+
+
+def test_without_copies_the_next_population_keeps_each_chromosome_once():
+    assert _next_population(keep_copies=False) == [3, 2, 1, 0]
+
+
+def _copy_before_a_new_one(keep_copies: bool) -> list[bool]:
+    """
+    For each generation bred in a run of the sets of 3 numbers, whether
+    a copy of a Chromosome comes before a Chromosome met for the first
+    time in its population. The first population is drawn at random,
+    not bred, so it is left out.
+    """
+    algorithm = NumbersAlgorithm(minimize=False)
+    algorithm.fit(
+        FitConfig(
+            n_generations=15,
+            population_size=20,
+            min_population_size=1,
+            stop_without_improvement=False,
+            n_jobs=1,
+            keep_copies=keep_copies,
+        ),
+    )
+    found = []
+    for generation in algorithm.history[1:]:
+        seen, copied = set(), False
+        for _, chromosome in generation:
+            if chromosome in seen:
+                copied = True
+            elif copied:
+                break
+            seen.add(chromosome)
+        else:
+            found.append(False)
+            continue
+        found.append(True)
+    return found
+
+
+def test_without_copies_no_copy_comes_before_a_different_chromosome():
+    # The run that keeps them does put a copy first, so the check finds
+    # one when there is one
+    assert any(_copy_before_a_new_one(keep_copies=True))
+    assert not any(_copy_before_a_new_one(keep_copies=False))
+
+
+def test_a_run_without_copies_is_saved_with_the_setting(tmp_path):
+    algorithm = ones_algorithm(tmp_path, save_as_bson=False)
+    algorithm.fit(
+        FitConfig(
+            n_generations=3,
+            population_size=20,
+            n_jobs=1,
+            keep_copies=False,
+        ),
+    )
+    loaded = load_fit_result(f"{algorithm.save_path}/fit_data", decode_genes)
+    assert loaded["fit_parameters"]["keep_copies"] is False
 
 
 @pytest.mark.parametrize("n_jobs", [0, 3])

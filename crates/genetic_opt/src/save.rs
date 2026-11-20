@@ -151,6 +151,7 @@ mod tests {
             n_jobs: 1,
             selection: crate::Selection::Random,
             tournament_size: 3,
+            keep_copies: true,
         };
         let fit_metrics = FitMetrics {
             fitness_func_calls: FitnessFuncCalls {

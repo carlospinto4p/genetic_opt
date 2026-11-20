@@ -126,7 +126,8 @@ class GeneticAlgorithm(ABC):
       size C = M + A.
     - Randomly mutates each chromosome of the population.
     - Join this population of size C with the previous population T and
-      select the T bests.
+      select the T bests: with `FitConfig.keep_copies` set to False,
+      each different Chromosome once before any copy.
 
     This selection can be changed overriding the function
     `next_generation_selection`.
@@ -775,8 +776,8 @@ class GeneticAlgorithm(ABC):
         """
         Handles the selection of the next generation. See the class doc.
         :param config: the parameters of the run. Its `crossovers_prop`,
-            `besties_prop`, `mutate_prob`, `selection` and
-            `tournament_size` are read.
+            `besties_prop`, `mutate_prob`, `selection`, `tournament_size`
+            and `keep_copies` are read.
         :param iter_func: function to keep track of the iterations.
             For example, `tqdm.tqdm` or `tqdm.notebook.tqdm`.
         :param n_jobs: number of jobs to use to parallelize the evaluation of
@@ -819,6 +820,14 @@ class GeneticAlgorithm(ABC):
         self.population = mutated_children + self.population
         # Sort the new population
         self._sort_population(iter_func=iter_func, n_jobs=n_jobs)
+        if not config.keep_copies:
+            # Each different Chromosome once, best first, then the copies
+            seen: set[Chromosome] = set()
+            firsts, copies = [], []
+            for chromosome in self.population:
+                (copies if chromosome in seen else firsts).append(chromosome)
+                seen.add(chromosome)
+            self.population = firsts + copies
         # Cap the new population to maintain its original size
         self.population = self.population[:population_length]
         generation_fitting_time = round(time() - init_time, 2)
